@@ -11,7 +11,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~56.0.4",
+    "expo": "~57.0.20",
     "expo-constants": "~56.0.25",
     "expo-linking": "~56.0.17",
     "expo-router": "~56.2.20",
@@ -32,8 +32,8 @@
     "eslint-config-expo": "~56.0.4",
     "eslint-config-prettier": "^10.1.2",
     "prettier": "^3.2.5",
-    "tailwindcss": "^3.4.0",
     "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^3.4.0",
     "typescript": "~6.0.3"
   },
   "main": "expo-router/entry",
