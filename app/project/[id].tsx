@@ -74,32 +74,32 @@ export default function ProjectDetailScreen() {
   }, [token, pet]);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-neutral-950">
       <View className="flex-row items-center px-5 pb-3 pt-16">
         <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className="text-indigo-600">Atras</Text>
+          <Text className="text-emerald-400">Atras</Text>
         </Pressable>
-        <Text className="flex-1 text-2xl font-bold text-gray-900" numberOfLines={1}>
+        <Text className="flex-1 text-2xl font-bold text-white" numberOfLines={1}>
           {fullName}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, gap: 20 }}>
-        {error ? <Text className="text-sm text-red-500">{error}</Text> : null}
+        {error ? <Text className="text-sm text-red-400">{error}</Text> : null}
 
-        <View className="rounded-2xl border border-gray-200 p-5">
+        <View className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
           {petLoading ? (
-            <ActivityIndicator color="#4f46e5" />
+            <ActivityIndicator color="#10b981" />
           ) : pet ? (
             <>
-              <Text className="text-xl font-bold text-gray-900">{pet.name}</Text>
-              <Text className="text-sm text-gray-500">Especie: {pet.species}</Text>
+              <Text className="text-xl font-bold text-white">{pet.name}</Text>
+              <Text className="text-sm text-neutral-400">Especie: {pet.species}</Text>
               <View className="mt-3 gap-1.5">
                 <StatBar label="Salud" value={pet.health} />
                 <StatBar label="Hambre" value={pet.hunger} />
                 <StatBar label="XP" value={pet.xp} />
               </View>
-              <Text className="mt-2 text-sm text-gray-500">Nivel {pet.level}</Text>
+              <Text className="mt-2 text-sm text-neutral-400">Nivel {pet.level}</Text>
               <View className="mt-4 flex-row gap-3">
                 <Button title="Alimentar" onPress={() => void feedPet()} style={{ flex: 1 }} />
                 <Button
@@ -112,7 +112,7 @@ export default function ProjectDetailScreen() {
             </>
           ) : (
             <View className="items-center gap-3 py-2">
-              <Text className="text-center text-gray-500">
+              <Text className="text-center text-neutral-400">
                 Este proyecto aún no tiene mascota. Créala para empezar a cuidarla.
               </Text>
               <Button title="Crear mascota" onPress={() => void createPet()} />
@@ -121,16 +121,16 @@ export default function ProjectDetailScreen() {
         </View>
 
         <View>
-          <Text className="mb-2 text-lg font-semibold text-gray-900">Commits recientes</Text>
+          <Text className="mb-2 text-lg font-semibold text-white">Commits recientes</Text>
           {commitsLoading ? (
-            <ActivityIndicator color="#4f46e5" />
+            <ActivityIndicator color="#10b981" />
           ) : commits.length === 0 ? (
-            <Text className="text-sm text-gray-400">Sin commits para mostrar.</Text>
+            <Text className="text-sm text-neutral-500">Sin commits para mostrar.</Text>
           ) : (
             commits.map((c) => (
-              <View key={c.sha} className="mb-2 rounded-xl border border-gray-100 p-3">
-                <Text className="text-sm font-medium text-gray-900">{c.message}</Text>
-                <Text className="text-xs text-gray-500">{c.author}</Text>
+              <View key={c.sha} className="mb-2 rounded-xl border border-neutral-800 bg-neutral-900 p-3">
+                <Text className="text-sm font-medium text-white">{c.message}</Text>
+                <Text className="text-xs text-neutral-400">{c.author}</Text>
               </View>
             ))
           )}
@@ -145,11 +145,11 @@ function StatBar({ label, value }: { label: string; value: number }) {
   return (
     <View>
       <View className="flex-row justify-between">
-        <Text className="text-xs text-gray-500">{label}</Text>
-        <Text className="text-xs text-gray-500">{clamped}</Text>
+        <Text className="text-xs text-neutral-400">{label}</Text>
+        <Text className="text-xs text-neutral-400">{clamped}</Text>
       </View>
-      <View className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100">
-        <View className="h-full rounded-full bg-indigo-500" style={{ width: `${clamped}%` }} />
+      <View className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-800">
+        <View className="h-full rounded-full bg-emerald-500" style={{ width: `${clamped}%` }} />
       </View>
     </View>
   );

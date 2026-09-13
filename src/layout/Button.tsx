@@ -7,15 +7,15 @@ type ButtonProps = PressableProps & {
 };
 
 const variantStyles = {
-  primary: 'bg-indigo-600 active:bg-indigo-700',
-  secondary: 'bg-gray-100 active:bg-gray-200',
+  primary: 'bg-emerald-600 active:bg-emerald-700',
+  secondary: 'bg-white/10 active:bg-white/20',
   ghost: 'bg-transparent',
 } as const;
 
 const textStyles = {
   primary: 'text-white',
-  secondary: 'text-gray-800',
-  ghost: 'text-indigo-600',
+  secondary: 'text-white',
+  ghost: 'text-emerald-400',
 } as const;
 
 export function Button({ title, variant = 'primary', disabled, style, ...rest }: ButtonProps) {
