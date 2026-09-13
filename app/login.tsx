@@ -7,7 +7,7 @@ export default function LoginScreen() {
   const { token, isLoading, signIn } = useAuth();
 
   if (token) {
-    return <Redirect href="/" />;
+    return <Redirect href="/projects" />;
   }
 
   return (

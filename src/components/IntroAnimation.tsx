@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: '#fff',
-    fontSize: 34,
-    fontWeight: '700',
+    fontSize: 28,
+    fontFamily: 'PressStart2P_400Regular',
   },
 });

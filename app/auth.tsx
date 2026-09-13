@@ -6,8 +6,8 @@ export default function OAuthRedirectScreen() {
   const { token } = useAuth();
 
   if (!token) {
-    return <View className="flex-1 bg-white" />;
+    return <View className="flex-1 bg-neutral-950" />;
   }
 
-  return <Redirect href="/" />;
+  return <Redirect href="/projects" />;
 }
