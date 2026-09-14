@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, StyleSheet } from 'react-native';
+import { colors, fonts } from '@/theme/tokens';
 
 export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
-  const opacity = useRef(new Animated.Value(1)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [scale] = useState(() => new Animated.Value(0.8));
 
   useEffect(() => {
     Animated.sequence([
@@ -14,13 +15,11 @@ export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
       // se desvanece todo el overlay
       Animated.timing(opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
     ]).start(() => onFinish());
-  }, []);
+  }, [scale, opacity, onFinish]);
 
   return (
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
-      <Animated.Text style={[styles.logo, { transform: [{ scale }] }]}>
-        Tamagit
-      </Animated.Text>
+      <Animated.Text style={[styles.logo, { transform: [{ scale }] }]}>TAMAGIT</Animated.Text>
     </Animated.View>
   );
 }
@@ -28,14 +27,14 @@ export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: colors.bgDeep,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 999,
   },
   logo: {
-    color: '#fff',
-    fontSize: 28,
-    fontFamily: 'PressStart2P_400Regular',
+    color: colors.mint,
+    fontSize: 24,
+    fontFamily: fonts.pixel,
   },
 });

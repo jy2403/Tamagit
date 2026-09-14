@@ -1,13 +1,38 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Commit, Pet } from '@/lib/types';
-import { Button } from '@/layout/Button';
+import { PixelBackground } from '@/components/PixelBackground';
+import { PixelBadge } from '@/components/PixelBadge';
+import { PixelButton } from '@/components/PixelButton';
+import { BackButton } from '@/components/BackButton';
+import { ProgressRing } from '@/components/ProgressRing';
+import { SpeechBubble, bubbleTextStyle } from '@/components/SpeechBubble';
+import { PixelCatSprite } from '@/components/PixelCatSprite';
+import { colors, fonts, radii } from '@/theme/tokens';
+
+function petMessage(pet: Pet): string {
+  if (pet.hunger >= 70) {
+    return `Miau... tengo mucha hambre (${pet.hunger}). ¿Me das de comer, porfa?`;
+  }
+  if (pet.health <= 40) {
+    return `No me siento muy bien (salud ${pet.health}). Cuídamelo, ¿sí?`;
+  }
+  if (pet.xp < 30) {
+    return `¡Hola! Soy ${pet.name}, nivel ${pet.level}. ¡Entra mucho para que suba de nivel!`;
+  }
+  return `¡Mew! ${pet.name} al habla. Todo bien por aquí, sigue haciendo commits.`;
+}
 
 export default function ProjectDetailScreen() {
-  const { id, fullName } = useLocalSearchParams<{ id: string; fullName?: string; name?: string }>();
+  const { id, fullName, name } = useLocalSearchParams<{
+    id: string;
+    fullName?: string;
+    name?: string;
+  }>();
   const { token } = useAuth();
   const router = useRouter();
   const [pet, setPet] = useState<Pet | null>(null);
@@ -15,6 +40,7 @@ export default function ProjectDetailScreen() {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pressedAction, setPressedAction] = useState<'feed' | 'train' | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -43,114 +69,271 @@ export default function ProjectDetailScreen() {
     }
   }, [token, id]);
 
-  const feedPet = useCallback(async () => {
-    if (!token || !pet) return;
-    setError(null);
-    try {
-      const data = await apiFetch<Pet>(`/pets/${pet.id}`, {
-        token,
-        method: 'PATCH',
-        body: { hunger: Math.min(100, pet.hunger + 15) },
-      });
-      setPet(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo alimentar a la mascota');
-    }
-  }, [token, pet]);
+  const runAction = useCallback(
+    async (action: 'feed' | 'train') => {
+      if (!token || !pet) return;
+      setError(null);
+      setPressedAction(action);
+      try {
+        const body =
+          action === 'feed' ? { hunger: Math.min(100, pet.hunger + 15) } : { xp: pet.xp + 10 };
+        const data = await apiFetch<Pet>(`/pets/${pet.id}`, { token, method: 'PATCH', body });
+        setPet(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudo actualizar a la mascota');
+      } finally {
+        setPressedAction(null);
+      }
+    },
+    [token, pet]
+  );
 
-  const trainPet = useCallback(async () => {
-    if (!token || !pet) return;
-    setError(null);
-    try {
-      const data = await apiFetch<Pet>(`/pets/${pet.id}`, {
-        token,
-        method: 'PATCH',
-        body: { xp: pet.xp + 10 },
-      });
-      setPet(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo entrenar a la mascota');
-    }
-  }, [token, pet]);
+  if (!token) {
+    return <Redirect href="/login" />;
+  }
+
+  const projectTitle = name || fullName || 'Proyecto';
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-row items-center px-5 pb-3 pt-16">
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className="text-emerald-400">Atras</Text>
-        </Pressable>
-        <Text className="flex-1 text-2xl font-bold text-white" numberOfLines={1}>
-          {fullName}
-        </Text>
-      </View>
+    <PixelBackground showGlow>
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <BackButton onPress={() => router.back()} />
+          </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 20 }}>
-        {error ? <Text className="text-sm text-red-400">{error}</Text> : null}
+          <View style={styles.titleBlock}>
+            <PixelBadge tone="dark" style={styles.projectBadge}>
+              {`Proyecto: ${projectTitle}`}
+            </PixelBadge>
+          </View>
 
-        <View className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
-          {petLoading ? (
-            <ActivityIndicator color="#10b981" />
-          ) : pet ? (
+          <View style={styles.characterStage}>
+            <View style={styles.characterFrame}>
+              {petLoading ? (
+                <ActivityIndicator color={colors.mint} />
+              ) : pet?.imageUrl ? (
+                <Image
+                  source={{ uri: pet.imageUrl }}
+                  style={styles.petImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <PixelCatSprite color={colors.mint} cell={9} />
+              )}
+            </View>
+
+            {pet ? (
+              <PixelBadge tone="dark" style={styles.petNameBadge}>
+                {pet.name}
+              </PixelBadge>
+            ) : null}
+            {pet ? (
+              <PixelBadge tone="mint" style={styles.levelBadge}>
+                {`NIVEL ${pet.level}`}
+              </PixelBadge>
+            ) : null}
+          </View>
+
+          {pet ? (
+            <View style={styles.statsRow}>
+              <ProgressRing label="SALUD" value={pet.health} />
+              <ProgressRing label="HAMBRE" value={pet.hunger} />
+              <ProgressRing label="XP" value={pet.xp} />
+            </View>
+          ) : null}
+
+          {error ? (
+            <Text style={styles.error} numberOfLines={2}>
+              {error}
+            </Text>
+          ) : null}
+
+          {pet ? (
             <>
-              <Text className="text-xl font-bold text-white">{pet.name}</Text>
-              <Text className="text-sm text-neutral-400">Especie: {pet.species}</Text>
-              <View className="mt-3 gap-1.5">
-                <StatBar label="Salud" value={pet.health} />
-                <StatBar label="Hambre" value={pet.hunger} />
-                <StatBar label="XP" value={pet.xp} />
-              </View>
-              <Text className="mt-2 text-sm text-neutral-400">Nivel {pet.level}</Text>
-              <View className="mt-4 flex-row gap-3">
-                <Button title="Alimentar" onPress={() => void feedPet()} style={{ flex: 1 }} />
-                <Button
-                  title="Entrenar"
-                  onPress={() => void trainPet()}
+              <SpeechBubble style={styles.bubble}>
+                <Text style={bubbleTextStyle}>{petMessage(pet)}</Text>
+              </SpeechBubble>
+
+              <View style={styles.actionsRow}>
+                <PixelButton
+                  title="ALIMENTAR"
                   variant="secondary"
-                  style={{ flex: 1 }}
+                  small
+                  style={styles.actionButton}
+                  onPress={() => void runAction('feed')}
+                  disabled={pressedAction !== null}
+                />
+                <PixelButton
+                  title="ENTRENAR"
+                  variant="ghost"
+                  small
+                  style={styles.actionButton}
+                  onPress={() => void runAction('train')}
+                  disabled={pressedAction !== null}
                 />
               </View>
             </>
-          ) : (
-            <View className="items-center gap-3 py-2">
-              <Text className="text-center text-neutral-400">
-                Este proyecto aún no tiene mascota. Créala para empezar a cuidarla.
+          ) : petLoading ? null : (
+            <SpeechBubble style={styles.bubble}>
+              <Text style={bubbleTextStyle}>
+                Este proyecto aún no tiene mascota. Crea una para empezar a cuidarla y verla crecer.
               </Text>
-              <Button title="Crear mascota" onPress={() => void createPet()} />
-            </View>
+            </SpeechBubble>
           )}
-        </View>
 
-        <View>
-          <Text className="mb-2 text-lg font-semibold text-white">Commits recientes</Text>
+          {!petLoading && !pet ? (
+            <PixelButton
+              title="CREAR MASCOTA"
+              onPress={() => void createPet()}
+              style={styles.createButton}
+            />
+          ) : null}
+
           {commitsLoading ? (
-            <ActivityIndicator color="#10b981" />
-          ) : commits.length === 0 ? (
-            <Text className="text-sm text-neutral-500">Sin commits para mostrar.</Text>
-          ) : (
-            commits.map((c) => (
-              <View key={c.sha} className="mb-2 rounded-xl border border-neutral-800 bg-neutral-900 p-3">
-                <Text className="text-sm font-medium text-white">{c.message}</Text>
-                <Text className="text-xs text-neutral-400">{c.author}</Text>
-              </View>
-            ))
-          )}
-        </View>
-      </ScrollView>
-    </View>
+            <View style={styles.commitsBox}>
+              <ActivityIndicator color={colors.mint} />
+            </View>
+          ) : null}
+
+          {!commitsLoading && commits.length > 0 ? (
+            <View style={styles.commitsBox}>
+              <Text style={styles.commitsTitle}>COMMITS RECIENTES</Text>
+              {commits.slice(0, 6).map((c) => (
+                <View key={c.sha} style={styles.commitCard}>
+                  <Text style={styles.commitMessage} numberOfLines={2}>
+                    {c.message}
+                  </Text>
+                  <Text style={styles.commitAuthor}>{c.author}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {!commitsLoading && commits.length === 0 ? (
+            <Text style={styles.noCommits}>Sin commits para mostrar.</Text>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+    </PixelBackground>
   );
 }
 
-function StatBar({ label, value }: { label: string; value: number }) {
-  const clamped = Math.max(0, Math.min(100, value));
-  return (
-    <View>
-      <View className="flex-row justify-between">
-        <Text className="text-xs text-neutral-400">{label}</Text>
-        <Text className="text-xs text-neutral-400">{clamped}</Text>
-      </View>
-      <View className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-800">
-        <View className="h-full rounded-full bg-emerald-500" style={{ width: `${clamped}%` }} />
-      </View>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingTop: 12,
+    paddingBottom: 18,
+  },
+  titleBlock: {
+    alignItems: 'center',
+    marginBottom: 22,
+  },
+  projectBadge: {
+    maxWidth: '100%',
+    alignSelf: 'center',
+  },
+  characterStage: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  characterFrame: {
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    borderWidth: 4,
+    borderColor: colors.mint,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  petImage: {
+    width: 178,
+    height: 178,
+  },
+  petNameBadge: {
+    marginTop: 16,
+  },
+  levelBadge: {
+    marginTop: 10,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+    paddingVertical: 6,
+  },
+  bubble: {
+    marginTop: 4,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+    marginTop: 20,
+  },
+  actionButton: {
+    flexGrow: 1,
+    maxWidth: 160,
+  },
+  createButton: {
+    marginTop: 20,
+  },
+  error: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 13,
+    color: colors.danger,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  commitsBox: {
+    marginTop: 32,
+    gap: 10,
+  },
+  commitsTitle: {
+    fontFamily: fonts.pixel,
+    fontSize: 11,
+    color: colors.mint,
+    marginBottom: 2,
+  },
+  commitCard: {
+    backgroundColor: colors.ink,
+    borderWidth: 3,
+    borderColor: colors.ink,
+    borderRadius: radii.sm,
+    padding: 12,
+  },
+  commitMessage: {
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    color: colors.white,
+  },
+  commitAuthor: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.mintSoft,
+    marginTop: 4,
+  },
+  noCommits: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.mintSoft,
+    textAlign: 'center',
+    marginTop: 28,
+  },
+});

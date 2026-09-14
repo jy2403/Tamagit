@@ -12,6 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { apiFetch, buildLoginUrl } from '@/lib/api';
 import { clearSession, getToken, getUser, setToken, setUser } from '@/lib/storage';
 import type { User } from '@/lib/types';
+import React from 'react';
 
 type AuthContextValue = {
   user: User | null;

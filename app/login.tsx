@@ -1,7 +1,13 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/layout/Button';
+import { PixelBackground } from '@/components/PixelBackground';
+import { PixelBadge } from '@/components/PixelBadge';
+import { PixelButton } from '@/components/PixelButton';
+import { PixelCatSprite } from '@/components/PixelCatSprite';
+import { colors, fonts, radii } from '@/theme/tokens';
+import React from 'react';
 
 export default function LoginScreen() {
   const { token, isLoading, signIn } = useAuth();
@@ -11,31 +17,100 @@ export default function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-1 items-center justify-center rounded-b-[40px] bg-emerald-600 px-6">
-        <View className="h-24 w-24 items-center justify-center rounded-full bg-white/20">
-          <Text className="text-4xl font-bold text-white">🥚</Text>
-        </View>
-        <Text className="mt-4 text-3xl font-bold text-white">Tamagit</Text>
-        <Text className="mt-2 text-center text-base text-emerald-100">
-          Conecta tu GitHub y cría una mascota por cada proyecto.
-        </Text>
-      </View>
+    <PixelBackground>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.top}>
+          <PixelBadge tone="mint" style={styles.logoBadge} textStyle={styles.logoText}>
+            TAMAGIT
+          </PixelBadge>
 
-      <View className="-mt-8 flex-1 rounded-t-[32px] bg-neutral-950 px-6 pt-8">
-        <View className="gap-4">
-          {isLoading ? (
-            <View className="items-center py-6">
-              <ActivityIndicator size="large" color="#10b981" />
-            </View>
-          ) : (
-            <Button title="Conectar con GitHub" onPress={() => void signIn()} />
-          )}
-          <Text className="text-center text-xs text-neutral-500">
-            Se abre una ventana de GitHub para autorizar tu cuenta.
+          <View style={styles.petCard}>
+            <PixelCatSprite color={colors.ink} cell={6} />
+          </View>
+
+          <Text style={styles.tagline}>
+            Conecta tu GitHub y cría una mascota por cada proyecto.
           </Text>
         </View>
-      </View>
-    </View>
+
+        <View style={styles.bottom}>
+          {isLoading ? (
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" color={colors.mint} />
+            </View>
+          ) : (
+            <PixelButton
+              title="CONECTAR GITHUB"
+              onPress={() => void signIn()}
+              style={styles.button}
+            />
+          )}
+          <Text style={styles.hint}>Se abre una ventana de GitHub para autorizar tu cuenta.</Text>
+        </View>
+      </SafeAreaView>
+    </PixelBackground>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  top: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoBadge: {
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: radii.sm,
+  },
+  logoText: {
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  petCard: {
+    marginTop: 40,
+    width: 190,
+    height: 190,
+    borderRadius: radii.lg,
+    backgroundColor: colors.mint,
+    borderWidth: 4,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tagline: {
+    marginTop: 28,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.mintSoft,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  bottom: {
+    paddingBottom: 24,
+    gap: 14,
+  },
+  loading: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  button: {
+    width: '100%',
+  },
+  hint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.mintDark,
+    textAlign: 'center',
+  },
+});

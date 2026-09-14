@@ -1,12 +1,13 @@
 import { Redirect } from 'expo-router';
-import { View } from 'react-native';
+import { PixelBackground } from '@/components/PixelBackground';
 import { useAuth } from '@/context/AuthContext';
+import React from 'react';
 
 export default function OAuthRedirectScreen() {
   const { token } = useAuth();
 
   if (!token) {
-    return <View className="flex-1 bg-neutral-950" />;
+    return <PixelBackground />;
   }
 
   return <Redirect href="/projects" />;

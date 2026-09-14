@@ -1,4 +1,13 @@
-import { Pressable, Text, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { colors, fonts, radii } from '@/theme/tokens';
+import React from 'react';
 
 type ButtonProps = PressableProps & {
   title: string;
@@ -6,29 +15,61 @@ type ButtonProps = PressableProps & {
   style?: StyleProp<ViewStyle>;
 };
 
-const variantStyles = {
-  primary: 'bg-emerald-600 active:bg-emerald-700',
-  secondary: 'bg-white/10 active:bg-white/20',
-  ghost: 'bg-transparent',
-} as const;
+const variantBg: Record<'primary' | 'secondary' | 'ghost', string> = {
+  primary: colors.ink,
+  secondary: colors.mint,
+  ghost: 'transparent',
+};
 
-const textStyles = {
-  primary: 'text-white',
-  secondary: 'text-white',
-  ghost: 'text-emerald-400',
-} as const;
+const variantText: Record<'primary' | 'secondary' | 'ghost', string> = {
+  primary: colors.mint,
+  secondary: colors.ink,
+  ghost: colors.mint,
+};
 
 export function Button({ title, variant = 'primary', disabled, style, ...rest }: ButtonProps) {
-  const base = 'items-center justify-center rounded-xl px-5 py-3';
-  const stateStyle = disabled ? 'opacity-50' : '';
-
   return (
     <Pressable
-      className={`${base} ${variantStyles[variant]} ${stateStyle}`}
+      {...rest}
       disabled={disabled}
-      style={style}
-      {...rest}>
-      <Text className={`font-semibold ${textStyles[variant]}`}>{title}</Text>
+      style={({ pressed }) => [
+        styles.base,
+        {
+          backgroundColor: variantBg[variant],
+          borderColor: variant === 'ghost' ? 'transparent' : colors.ink,
+        },
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+        style,
+      ]}>
+      <Text style={[styles.text, { color: variantText[variant] }]}>{title}</Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderRadius: radii.md,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  text: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [{ translateY: 1 }],
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+});
