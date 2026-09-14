@@ -1,6 +1,14 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Project } from '@/lib/types';
@@ -84,16 +92,27 @@ export default function ProjectsScreen() {
             {user?.githubUsername ? `@${user.githubUsername}` : 'Conectado con GitHub'}
           </Text>
         </View>
-        <Pressable onPress={() => void signOut()} className="rounded-lg px-3 py-2">
-          <Text className="font-medium text-emerald-400">Salir</Text>
-        </Pressable>
+        <View className="flex-row items-center">
+          <Pressable
+            onPress={() => router.push('/profile' as Href)}
+            className="rounded-lg px-3 py-2">
+            <Text className="font-medium text-emerald-400">Perfil</Text>
+          </Pressable>
+          <Pressable onPress={() => void signOut()} className="rounded-lg px-3 py-2">
+            <Text className="font-medium text-neutral-400">Salir</Text>
+          </Pressable>
+        </View>
       </View>
 
       {firstPet ? (
         <View className="mx-5 mb-3 items-center rounded-2xl border-2 border-emerald-800 bg-emerald-950/40 py-4">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-white/10">
             {firstPet.imageUrl ? (
-              <Image source={{ uri: firstPet.imageUrl }} className="h-full w-full" resizeMode="contain" />
+              <Image
+                source={{ uri: firstPet.imageUrl }}
+                className="h-full w-full"
+                resizeMode="contain"
+              />
             ) : (
               <Text className="text-3xl">🥚</Text>
             )}
@@ -124,7 +143,9 @@ export default function ProjectsScreen() {
           data={projects}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ padding: 16, gap: 12 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />
+          }
           ListEmptyComponent={
             <View className="items-center justify-center px-6 py-16">
               <Text className="text-center text-base text-neutral-400">
@@ -148,7 +169,9 @@ export default function ProjectsScreen() {
               <View className="mt-2 flex-row flex-wrap gap-1.5">
                 {item.mainLanguage ? (
                   <View className="rounded-full bg-emerald-900/60 px-2.5 py-1">
-                    <Text className="text-xs font-medium text-emerald-300">{item.mainLanguage}</Text>
+                    <Text className="text-xs font-medium text-emerald-300">
+                      {item.mainLanguage}
+                    </Text>
                   </View>
                 ) : null}
                 {item.tools.slice(0, 4).map((tool) => (
