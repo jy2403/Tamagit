@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Commit, Pet } from '@/lib/types';
 import { Button } from '@/layout/Button';
+import { Pet3DView } from '@/components/Pet3DView';
 
 export default function ProjectDetailScreen() {
   const { id, fullName } = useLocalSearchParams<{ id: string; fullName?: string; name?: string }>();
@@ -162,7 +163,12 @@ export default function ProjectDetailScreen() {
               ) : (
                 <>
                   <Text className="text-xl font-bold text-white">{pet.name}</Text>
-                  <Text className="text-sm text-neutral-400">Especie: {pet.species}</Text>
+                  <View className="mt-3 h-80 w-full overflow-hidden rounded-2xl border border-neutral-800">
+                    <Pet3DView species={pet.species} style={{ flex: 1 }} />
+                  </View>
+                  <Text className="mt-2 text-center text-xs text-neutral-500">
+                    Desliza para girar · Pellizca para hacer zoom
+                  </Text>
                   <View className="mt-3 gap-1.5">
                     <StatBar label="Salud" value={pet.health} />
                     <StatBar label="Hambre" value={pet.hunger} />
