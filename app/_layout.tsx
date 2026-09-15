@@ -21,8 +21,20 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: '#0f0f0f' },
-        }}
-      />
+        }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="projects" />
+        <Stack.Screen name="project/[id]" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="admin" />
+        <Stack.Screen name="admin/items" />
+        <Stack.Screen name="admin/foods" />
+        <Stack.Screen name="admin/users" />
+        <Stack.Screen name="admin/users/[id]" />
+        <Stack.Screen name="admin/pets/[petId]" />
+      </Stack>
       {showIntro && <IntroAnimation onFinish={() => setShowIntro(false)} />}
     </AuthProvider>
   );

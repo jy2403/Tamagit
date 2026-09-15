@@ -21,7 +21,10 @@ type AdminCrudListProps = {
   singular: string;
   emptyMessage: string;
   fields: CrudField[];
-  initial: CrudRow[];
+  rows: CrudRow[];
+  onCreate: (data: Record<string, string>) => Promise<void>;
+  onUpdate: (id: string, data: Record<string, string>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 };
 
 export function AdminCrudList({
@@ -29,12 +32,15 @@ export function AdminCrudList({
   singular,
   emptyMessage,
   fields,
-  initial,
+  rows,
+  onCreate,
+  onUpdate,
+  onDelete,
 }: AdminCrudListProps) {
   const router = useRouter();
-  const [rows, setRows] = useState<CrudRow[]>(initial);
   const [query, setQuery] = useState('');
   const [form, setForm] = useState<CrudRow | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const iconKey = fields.find((f) => f.key === 'icon')?.key;
   const nameKey = fields.find((f) => f.key === 'name')?.key;
@@ -65,16 +71,22 @@ export function AdminCrudList({
 
   const openEdit = (row: CrudRow) => setForm({ ...row });
 
-  const save = () => {
-    if (!form || !isFormValid) return;
-    const values = Object.fromEntries(fields.map((f) => [f.key, (form[f.key] ?? '').trim()]));
-    setRows((prev) => {
+  const save = async () => {
+    if (!form || !isFormValid || saving) return;
+    const data = Object.fromEntries(fields.map((f) => [f.key, (form[f.key] ?? '').trim()]));
+    setSaving(true);
+    try {
       if (editing) {
-        return prev.map((r) => (r.id === form.id ? { ...values, id: form.id } : r));
+        await onUpdate(form.id, data);
+      } else {
+        await onCreate(data);
       }
-      return [{ ...values, id: String(Date.now()) }, ...prev];
-    });
-    setForm(null);
+      setForm(null);
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const remove = (row: CrudRow) => {
@@ -84,7 +96,13 @@ export function AdminCrudList({
       {
         text: 'Eliminar',
         style: 'destructive',
-        onPress: () => setRows((prev) => prev.filter((r) => r.id !== row.id)),
+        onPress: async () => {
+          try {
+            await onDelete(row.id);
+          } catch (e) {
+            Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar');
+          }
+        },
       },
     ]);
   };
@@ -107,7 +125,12 @@ export function AdminCrudList({
             />
           ))}
           <View className="flex-row gap-3">
-            <Button title="Guardar" onPress={save} disabled={!isFormValid} style={{ flex: 1 }} />
+            <Button
+              title={saving ? 'Guardando...' : 'Guardar'}
+              onPress={() => void save()}
+              disabled={!isFormValid || saving}
+              style={{ flex: 1 }}
+            />
             <Button
               title="Cancelar"
               onPress={() => setForm(null)}

@@ -1,24 +1,91 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
+import type { Food } from '@/lib/types';
 
 const fields: CrudField[] = [
-  { key: 'icon', label: 'Icono', placeholder: 'Ej: 🍎' },
   { key: 'name', label: 'Nombre', placeholder: 'Ej: Manzana' },
+  { key: 'hungerRestore', label: 'Hambre restaurada', placeholder: 'Ej: 30', isNumber: true },
+  { key: 'price', label: 'Precio', placeholder: 'Ej: 50', isNumber: true },
 ];
 
-const initial: CrudRow[] = [
-  { id: '1', icon: '🍎', name: 'Manzana' },
-  { id: '2', icon: '🍕', name: 'Pizza' },
-  { id: '3', icon: '🥗', name: 'Ensalada' },
-  { id: '4', icon: '🍣', name: 'Sushi' },
-];
+function toRow(food: Food): CrudRow {
+  return {
+    id: String(food.id),
+    name: food.name,
+    hungerRestore: String(food.hungerRestore),
+    price: String(food.price),
+  };
+}
 
 export default function AdminFoodsScreen() {
   const { token, isLoading } = useAuth();
+  const [rows, setRows] = useState<CrudRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch<Food[]>('/foods', { token });
+      setRows(data.map(toRow));
+    } catch {
+      Alert.alert('Error', 'No se pudieron cargar las comidas');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const onCreate = useCallback(
+    async (data: Record<string, string>) => {
+      if (!token) return;
+      await apiFetch('/foods', {
+        token,
+        method: 'POST',
+        body: {
+          name: data.name,
+          hungerRestore: Number(data.hungerRestore) || 30,
+          price: Number(data.price) || 0,
+        },
+      });
+      await load();
+    },
+    [token, load]
+  );
+
+  const onUpdate = useCallback(
+    async (id: string, data: Record<string, string>) => {
+      if (!token) return;
+      await apiFetch(`/foods/${id}`, {
+        token,
+        method: 'PATCH',
+        body: {
+          name: data.name,
+          hungerRestore: Number(data.hungerRestore) || 30,
+          price: Number(data.price) || 0,
+        },
+      });
+      await load();
+    },
+    [token, load]
+  );
+
+  const onDelete = useCallback(
+    async (id: string) => {
+      if (!token) return;
+      await apiFetch(`/foods/${id}`, { token, method: 'DELETE' });
+      await load();
+    },
+    [token, load]
+  );
+
+  if (isLoading || loading) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-950">
         <ActivityIndicator size="large" color="#10b981" />
@@ -36,7 +103,10 @@ export default function AdminFoodsScreen() {
       singular="comida"
       emptyMessage="Aún no hay comidas. Crea la primera con el botón Nuevo."
       fields={fields}
-      initial={initial}
+      rows={rows}
+      onCreate={onCreate}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
     />
   );
 }

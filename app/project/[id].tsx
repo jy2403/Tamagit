@@ -81,22 +81,43 @@ export default function ProjectDetailScreen() {
     setEditingName(true);
   }, [pet]);
 
-  const saveName = useCallback(() => {
-    if (!pet) return;
+  const saveName = useCallback(async () => {
+    if (!pet || !token) return;
     const trimmed = nameDraft.trim();
     if (trimmed && trimmed !== pet.name) {
-      setPet({ ...pet, name: trimmed });
+      try {
+        const data = await apiFetch<Pet>(`/pets/${pet.id}`, {
+          token,
+          method: 'PATCH',
+          body: { name: trimmed },
+        });
+        setPet(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudo cambiar el nombre');
+      }
     }
     setEditingName(false);
-  }, [pet, nameDraft]);
+  }, [pet, token, nameDraft]);
 
   const deletePet = useCallback(() => {
-    if (!pet) return;
+    if (!pet || !token) return;
     Alert.alert('Eliminar mascota', `¿Seguro que quieres eliminar a ${pet.name}?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => setPet(null) },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiFetch(`/pets/${pet.id}`, { token, method: 'DELETE' });
+            setPet(null);
+            router.back();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'No se pudo eliminar la mascota');
+          }
+        },
+      },
     ]);
-  }, [pet]);
+  }, [pet, token, router]);
 
   return (
     <View className="flex-1 bg-neutral-950">
@@ -208,7 +229,7 @@ function StatBar({ label, value }: { label: string; value: number }) {
         <Text className="text-xs text-neutral-400">{clamped}</Text>
       </View>
       <View className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-800">
-        <View className="h-full rounded-full bg-emerald-500" style={{ width: `${clamped}%` }} />
+        <View className="h-full rounded-full bg-emerald-600" style={{ width: `${clamped}%` }} />
       </View>
     </View>
   );

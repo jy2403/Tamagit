@@ -40,6 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signOut = useCallback(async () => {
+    await clearSession();
+    setTokenState(null);
+    setUserState(null);
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
@@ -47,6 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedToken) {
           setTokenState(storedToken);
           setUserState(storedUser);
+
+          try {
+            const profile = await apiFetch<User>('/users/me', { token: storedToken });
+            if (profile.isBanned) {
+              await clearSession();
+              setTokenState(null);
+              setUserState(null);
+            } else {
+              await setUser(profile);
+              setUserState(profile);
+            }
+          } catch {
+            // Keep existing session if fetch fails (e.g., offline)
+          }
         }
       } finally {
         setIsLoading(false);
@@ -77,12 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       handleUrl(result.url);
     }
   }, [handleUrl]);
-
-  const signOut = useCallback(async () => {
-    await clearSession();
-    setTokenState(null);
-    setUserState(null);
-  }, []);
 
   const value = useMemo(
     () => ({ user, token, isLoading, signIn, signOut }),

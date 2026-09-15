@@ -17,7 +17,7 @@ export default function LoginScreen() {
           <Text className="text-4xl font-bold text-white">🥚</Text>
         </View>
         <Text className="mt-4 text-3xl font-bold text-white">Tamagit</Text>
-        <Text className="mt-2 text-center text-base text-emerald-100">
+        <Text className="mt-2 text-center text-base text-emerald-300">
           Conecta tu GitHub y cría una mascota por cada proyecto.
         </Text>
       </View>

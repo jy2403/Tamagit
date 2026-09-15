@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import type { Project } from '@/lib/types';
+import type { Notification, Project } from '@/lib/types';
 import { Button } from '@/layout/Button';
+import { showNotificationsOnce } from '@/lib/notifications';
 
 export default function ProjectsScreen() {
   const { token, user, signOut, isLoading } = useAuth();
@@ -42,6 +43,7 @@ export default function ProjectsScreen() {
         setError(e instanceof Error ? e.message : 'No se pudieron cargar los proyectos');
         setLoading(false);
       });
+    void showNotificationsOnce(token);
   }, [token, fetchProjects, applyProjects]);
 
   const sync = useCallback(async () => {
@@ -93,6 +95,13 @@ export default function ProjectsScreen() {
           </Text>
         </View>
         <View className="flex-row items-center">
+          {user?.isAdmin ? (
+            <Pressable
+              onPress={() => router.push('/admin' as Href)}
+              className="rounded-lg px-3 py-2">
+              <Text className="font-medium text-emerald-400">Admin</Text>
+            </Pressable>
+          ) : null}
           <Pressable
             onPress={() => router.push('/profile' as Href)}
             className="rounded-lg px-3 py-2">
