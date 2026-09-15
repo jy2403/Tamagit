@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 
@@ -61,7 +61,50 @@ export default function AdminScreen() {
             </Text>
           </View>
         ) : null}
+
+        <View>
+          <Text className="mb-2 text-lg font-semibold text-white">Catálogo</Text>
+          <View className="gap-2">
+            <AdminLink
+              href="/admin/items"
+              icon="🎩"
+              title="Items"
+              description="Cosméticos para las mascotas"
+            />
+            <AdminLink
+              href="/admin/foods"
+              icon="🍎"
+              title="Comidas"
+              description="Alimentos para las mascotas"
+            />
+          </View>
+        </View>
       </ScrollView>
     </View>
+  );
+}
+
+type AdminLinkProps = {
+  href: Href;
+  icon: string;
+  title: string;
+  description: string;
+};
+
+function AdminLink({ href, icon, title, description }: AdminLinkProps) {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push(href)}
+      className="flex-row items-center rounded-2xl border border-neutral-800 bg-neutral-900 p-4 active:bg-neutral-800">
+      <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
+        <Text className="text-xl">{icon}</Text>
+      </View>
+      <View className="flex-1">
+        <Text className="text-base font-semibold text-white">{title}</Text>
+        <Text className="text-xs text-neutral-400">{description}</Text>
+      </View>
+      <Text className="text-sm text-emerald-400">Ver</Text>
+    </Pressable>
   );
 }

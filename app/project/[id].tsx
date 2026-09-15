@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Commit, Pet } from '@/lib/types';
@@ -15,6 +15,8 @@ export default function ProjectDetailScreen() {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [commitsLoading, setCommitsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
 
   useEffect(() => {
     if (!token) return;
@@ -73,6 +75,29 @@ export default function ProjectDetailScreen() {
     }
   }, [token, pet]);
 
+  const startRename = useCallback(() => {
+    if (!pet) return;
+    setNameDraft(pet.name);
+    setEditingName(true);
+  }, [pet]);
+
+  const saveName = useCallback(() => {
+    if (!pet) return;
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== pet.name) {
+      setPet({ ...pet, name: trimmed });
+    }
+    setEditingName(false);
+  }, [pet, nameDraft]);
+
+  const deletePet = useCallback(() => {
+    if (!pet) return;
+    Alert.alert('Eliminar mascota', `¿Seguro que quieres eliminar a ${pet.name}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => setPet(null) },
+    ]);
+  }, [pet]);
+
   return (
     <View className="flex-1 bg-neutral-950">
       <View className="flex-row items-center px-5 pb-3 pt-16">
@@ -92,23 +117,57 @@ export default function ProjectDetailScreen() {
             <ActivityIndicator color="#10b981" />
           ) : pet ? (
             <>
-              <Text className="text-xl font-bold text-white">{pet.name}</Text>
-              <Text className="text-sm text-neutral-400">Especie: {pet.species}</Text>
-              <View className="mt-3 gap-1.5">
-                <StatBar label="Salud" value={pet.health} />
-                <StatBar label="Hambre" value={pet.hunger} />
-                <StatBar label="XP" value={pet.xp} />
-              </View>
-              <Text className="mt-2 text-sm text-neutral-400">Nivel {pet.level}</Text>
-              <View className="mt-4 flex-row gap-3">
-                <Button title="Alimentar" onPress={() => void feedPet()} style={{ flex: 1 }} />
-                <Button
-                  title="Entrenar"
-                  onPress={() => void trainPet()}
-                  variant="secondary"
-                  style={{ flex: 1 }}
-                />
-              </View>
+              {editingName ? (
+                <View>
+                  <TextInput
+                    value={nameDraft}
+                    onChangeText={setNameDraft}
+                    autoFocus
+                    placeholder="Nuevo nombre"
+                    placeholderTextColor="#737373"
+                    className="rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white"
+                    onSubmitEditing={saveName}
+                  />
+                  <View className="mt-3 flex-row gap-3">
+                    <Button title="Guardar" onPress={saveName} style={{ flex: 1 }} />
+                    <Button
+                      title="Cancelar"
+                      onPress={() => setEditingName(false)}
+                      variant="secondary"
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <>
+                  <Text className="text-xl font-bold text-white">{pet.name}</Text>
+                  <Text className="text-sm text-neutral-400">Especie: {pet.species}</Text>
+                  <View className="mt-3 gap-1.5">
+                    <StatBar label="Salud" value={pet.health} />
+                    <StatBar label="Hambre" value={pet.hunger} />
+                    <StatBar label="XP" value={pet.xp} />
+                  </View>
+                  <Text className="mt-2 text-sm text-neutral-400">Nivel {pet.level}</Text>
+                  <View className="mt-4 flex-row gap-3">
+                    <Button title="Alimentar" onPress={() => void feedPet()} style={{ flex: 1 }} />
+                    <Button
+                      title="Entrenar"
+                      onPress={() => void trainPet()}
+                      variant="secondary"
+                      style={{ flex: 1 }}
+                    />
+                  </View>
+                  <View className="mt-3 flex-row gap-3">
+                    <Button
+                      title="Cambiar nombre"
+                      onPress={startRename}
+                      variant="secondary"
+                      style={{ flex: 1 }}
+                    />
+                    <Button title="Eliminar" onPress={deletePet} variant="ghost" style={{ flex: 1 }} />
+                  </View>
+                </>
+              )}
             </>
           ) : (
             <View className="items-center gap-3 py-2">

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text } from 'react-native';
+import { Animated, Text } from 'react-native';
 
 export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
   const opacity = useRef(new Animated.Value(1)).current;
@@ -17,25 +17,33 @@ export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
   }, []);
 
   return (
-    <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
-      <Animated.Text style={[styles.logo, { transform: [{ scale }] }]}>
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#0f0f0f',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 999,
+        },
+        { opacity },
+      ]}
+      pointerEvents="none">
+      <Animated.Text
+        style={[
+          {
+            color: '#fff',
+            fontSize: 28,
+            fontFamily: 'PressStart2P_400Regular',
+          },
+          { transform: [{ scale }] },
+        ]}>
         Tamagit
       </Animated.Text>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#0f0f0f',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999,
-  },
-  logo: {
-    color: '#fff',
-    fontSize: 28,
-    fontFamily: 'PressStart2P_400Regular',
-  },
-});
