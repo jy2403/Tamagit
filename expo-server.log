@@ -1,0 +1,31 @@
+
+> Tamagit@1.0.0 start
+> expo start
+
+Starting project at C:\Users\juanm\Documents\Tamagit
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+TypeScript: The tsconfig.json#include property has been updated
+C:\Users\juanm\Documents\Tamagit\node_modules\@expo\cli\build\src\utils\errors.js:130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch 'C:\Users\juanm\Documents\Tamagit\node_modules\.expo-file-system-jWxGEklt\android\src\main\java\expo\modules\filesystem\legacy'
+    at FSWatcher.<computed> (node:internal/fs/watchers:321:19)
+    at Object.watch (node:fs:2548:36)
+    at #watchdir (C:\Users\juanm\Documents\Tamagit\node_modules\@expo\metro-file-map\build\watchers\FallbackWatcher.js:164:38)
+    at C:\Users\juanm\Documents\Tamagit\node_modules\@expo\metro-file-map\build\watchers\FallbackWatcher.js:268:39
+    at Walker.<anonymous> (C:\Users\juanm\Documents\Tamagit\node_modules\@expo\metro-file-map\build\watchers\FallbackWatcher.js:410:33)
+    at Walker.emit (node:events:509:28)
+    at C:\Users\juanm\Documents\Tamagit\node_modules\walker\lib\walker.js:69:16
+    at FSReqCallback.oncomplete (node:fs:185:23) {
+  errno: -4058,
+  syscall: 'watch',
+  code: 'ENOENT',
+  path: 'C:\\Users\\juanm\\Documents\\Tamagit\\node_modules\\.expo-file-system-jWxGEklt\\android\\src\\main\\java\\expo\\modules\\filesystem\\legacy',
+  filename: 'C:\\Users\\juanm\\Documents\\Tamagit\\node_modules\\.expo-file-system-jWxGEklt\\android\\src\\main\\java\\expo\\modules\\filesystem\\legacy'
+}
+
+Node.js v24.16.0

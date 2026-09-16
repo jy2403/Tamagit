@@ -9,6 +9,7 @@ export type CrudField = {
   label: string;
   placeholder?: string;
   isNumber?: boolean;
+  maxLength?: number;
 };
 
 export type CrudRow = {
@@ -27,6 +28,20 @@ type AdminCrudListProps = {
   onDelete: (id: string) => Promise<void>;
 };
 
+function validateField(field: CrudField, value: string): string | null {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) {
+    return `${field.label} es obligatorio`;
+  }
+  if (field.isNumber && !Number.isFinite(Number(trimmed))) {
+    return `${field.label} debe ser un número`;
+  }
+  if (field.maxLength != null && trimmed.length > field.maxLength) {
+    return `${field.label} no puede superar ${field.maxLength} caracteres`;
+  }
+  return null;
+}
+
 export function AdminCrudList({
   title,
   singular,
@@ -40,6 +55,7 @@ export function AdminCrudList({
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [form, setForm] = useState<CrudRow | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   const iconKey = fields.find((f) => f.key === 'icon')?.key;
@@ -56,24 +72,63 @@ export function AdminCrudList({
 
   const editing = form ? rows.some((r) => r.id === form.id) : false;
 
-  const isFormValid = useMemo(() => {
-    if (!form) return false;
-    return fields.every((f) => {
-      const value = (form[f.key] ?? '').trim();
-      if (!value) return false;
-      return !f.isNumber || Number.isFinite(Number(value));
-    });
-  }, [form, fields]);
-
   const openCreate = () => {
     setForm({ ...Object.fromEntries(fields.map((f) => [f.key, ''])), id: 'new' });
+    setErrors({});
   };
 
-  const openEdit = (row: CrudRow) => setForm({ ...row });
+  const openEdit = (row: CrudRow) => {
+    setForm({ ...row });
+    setErrors({});
+  };
+
+  const updateField = (key: string, text: string) => {
+    if (!form) return;
+    setForm({ ...form, [key]: text });
+    const field = fields.find((f) => f.key === key);
+    if (!field) return;
+    const error = validateField(field, text);
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (error) {
+        next[key] = error;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+  };
 
   const save = async () => {
-    if (!form || !isFormValid || saving) return;
-    const data = Object.fromEntries(fields.map((f) => [f.key, (form[f.key] ?? '').trim()]));
+    if (!form || saving) return;
+
+    const nextErrors: Record<string, string> = {};
+    for (const f of fields) {
+      const error = validateField(f, form[f.key] ?? '');
+      if (error) nextErrors[f.key] = error;
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    let data: Record<string, string>;
+    if (editing) {
+      const original = rows.find((r) => r.id === form.id);
+      data = {};
+      for (const f of fields) {
+        const newValue = (form[f.key] ?? '').trim();
+        const oldValue = (original?.[f.key] ?? '').trim();
+        if (newValue !== oldValue) {
+          data[f.key] = newValue;
+        }
+      }
+      if (Object.keys(data).length === 0) {
+        setForm(null);
+        return;
+      }
+    } else {
+      data = Object.fromEntries(fields.map((f) => [f.key, (form[f.key] ?? '').trim()]));
+    }
+
     setSaving(true);
     try {
       if (editing) {
@@ -119,16 +174,19 @@ export function AdminCrudList({
               key={f.key}
               label={f.label}
               placeholder={f.placeholder}
+              required
+              maxLength={f.maxLength}
               value={form[f.key]}
-              onChangeText={(text) => setForm({ ...form, [f.key]: text })}
+              onChangeText={(text) => updateField(f.key, text)}
               keyboardType={f.isNumber ? 'number-pad' : 'default'}
+              error={errors[f.key]}
             />
           ))}
           <View className="flex-row gap-3">
             <Button
               title={saving ? 'Guardando...' : 'Guardar'}
               onPress={() => void save()}
-              disabled={!isFormValid || saving}
+              disabled={saving}
               style={{ flex: 1 }}
             />
             <Button

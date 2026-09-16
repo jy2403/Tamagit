@@ -20,7 +20,8 @@
         }
       ],
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-asset"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
