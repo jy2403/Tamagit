@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/layout/Button';
 
 export default function LoginScreen() {
-  const { token, isLoading, signIn } = useAuth();
+  const { token, isLoading, signIn, authError } = useAuth();
 
   if (token) {
     return <Redirect href="/projects" />;
@@ -31,6 +31,11 @@ export default function LoginScreen() {
           ) : (
             <Button title="Conectar con GitHub" onPress={() => void signIn()} />
           )}
+          {authError ? (
+            <Text className="rounded-xl bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
+              {authError}
+            </Text>
+          ) : null}
           <Text className="text-center text-xs text-neutral-500">
             Se abre una ventana de GitHub para autorizar tu cuenta.
           </Text>

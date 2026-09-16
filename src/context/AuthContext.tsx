@@ -17,8 +17,10 @@ type AuthContextValue = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  authError: string | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  clearAuthError: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const applyToken = useCallback(async (newToken: string) => {
     await setToken(newToken);
@@ -35,8 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await apiFetch<User>('/users/me', { token: newToken });
       await setUser(profile);
       setUserState(profile);
-    } catch {
-      // If the profile fetch fails we still keep the session with partial data.
+      setAuthError(null);
+    } catch (e) {
+      await clearSession();
+      setTokenState(null);
+      setUserState(null);
+      setAuthError(e instanceof Error ? e.message : 'No se pudo validar la sesión');
     }
   }, []);
 
@@ -91,16 +98,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [handleUrl]);
 
   const signIn = useCallback(async () => {
+    setAuthError(null);
     const redirectUri = Linking.createURL('auth');
-    const result = await WebBrowser.openAuthSessionAsync(buildLoginUrl(redirectUri), redirectUri);
-    if (result.type === 'success') {
-      handleUrl(result.url);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(buildLoginUrl(redirectUri), redirectUri);
+      if (result.type === 'success') {
+        handleUrl(result.url);
+      } else if (result.type === 'locked') {
+        setAuthError('No se pudo completar el inicio de sesión con GitHub');
+      }
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'No se pudo abrir la ventana de GitHub');
     }
   }, [handleUrl]);
 
+  const clearAuthError = useCallback(() => setAuthError(null), []);
+
   const value = useMemo(
-    () => ({ user, token, isLoading, signIn, signOut }),
-    [user, token, isLoading, signIn, signOut]
+    () => ({ user, token, isLoading, authError, signIn, signOut, clearAuthError }),
+    [user, token, isLoading, authError, signIn, signOut, clearAuthError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
