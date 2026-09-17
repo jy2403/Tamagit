@@ -66,11 +66,18 @@ app/                   Pantallas (expo-router)
   profile.tsx          Mi perfil
   admin/               Panel admin: items, comidas, usuarios y mascotas
 src/
-  components/          Button/Field derivados de ESTILOS.md y componentes reutilizables
+  components/
+    Field.tsx          Campo de formulario con etiqueta, contador y error (ESTILOS.md)
+    FeedbackBanner.tsx Toast animado de exito/error (ESTILOS.md)
+    ConfirmModal.tsx   Modal de confirmacion para eliminar
+    AdminCrudList.tsx  CRUD generico del panel admin (items y comidas)
+    Pet3DView.tsx      Mascota 3D low-poly con giro y zoom
+    IntroAnimation.tsx Animacion de bienvenida
+    ReasonPrompt.tsx   Modal para pedir un motivo (p. ej. al suspender una cuenta)
+  layout/Button.tsx    Boton (variantes primary/secondary/ghost, ESTILOS.md)
   estilos/index.ts     Sistema de clases de Tailwind documentado en ESTILOS.md
   context/             AuthContext (sesion, token, errores en pantalla)
   lib/                 api.ts, types.ts, storage.ts, notifications.ts
-  layout/Button.tsx    Boton
 ESTILOS.md             Sistema de estilos (paleta, contenedores, formularios...)
 global.css             Directivas de Tailwind / NativeWind
 ```
