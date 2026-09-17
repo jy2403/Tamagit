@@ -1,4 +1,5 @@
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { formulario } from '@/estilos';
 
 type FieldProps = TextInputProps & {
   label: string;
@@ -10,25 +11,25 @@ type FieldProps = TextInputProps & {
 export function Field({ label, error, required, maxLength, value, ...rest }: FieldProps) {
   return (
     <View className="gap-1.5">
-      <View className="flex-row items-center justify-between">
-        <Text className="text-sm font-medium text-neutral-400">
+      <View className={formulario.filaEtiqueta}>
+        <Text className={formulario.etiqueta}>
           {label}
-          {required ? <Text className="text-red-400"> *</Text> : null}
+          {required ? <Text className={formulario.requerido}> *</Text> : null}
         </Text>
         {maxLength != null ? (
-          <Text className="text-xs text-neutral-500">
+          <Text className={formulario.contador}>
             {value?.length ?? 0}/{maxLength}
           </Text>
         ) : null}
       </View>
       <TextInput
-        className="rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white"
+        className={formulario.input}
         placeholderTextColor="#737373"
         maxLength={maxLength}
         value={value}
         {...rest}
       />
-      {error ? <Text className="text-xs text-red-400">{error}</Text> : null}
+      {error ? <Text className={formulario.error}>{error}</Text> : null}
     </View>
   );
 }

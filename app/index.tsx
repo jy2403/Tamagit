@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { pantalla } from '@/estilos';
 
 export default function LandingScreen() {
   const router = useRouter();
@@ -11,17 +12,19 @@ export default function LandingScreen() {
   };
 
   return (
-    <View className="flex-1 items-center justify-center bg-neutral-950 px-8">
+    <View className={`${pantalla.rootCentered} px-8`}>
       <Text
         className="text-center text-3xl text-white"
         style={{ fontFamily: 'PressStart2P_400Regular' }}>
         TAMAGIT
       </Text>
-
       <View className="my-12 items-center">
-        <Text className="text-7xl">🐙</Text>
+        <Image
+          source={require('../assets/github-icon.webp')}
+          className="h-28 w-28"
+          resizeMode="contain"
+        />
       </View>
-
       <Pressable
         onPress={() => void start()}
         className="rounded-xl border border-neutral-700 bg-neutral-800 px-12 py-4 active:bg-neutral-700">

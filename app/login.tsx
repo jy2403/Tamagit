@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/layout/Button';
+import { mensajesError } from '@/estilos';
 
 export default function LoginScreen() {
   const { token, isLoading, signIn, authError } = useAuth();
@@ -31,11 +32,7 @@ export default function LoginScreen() {
           ) : (
             <Button title="Conectar con GitHub" onPress={() => void signIn()} />
           )}
-          {authError ? (
-            <Text className="rounded-xl bg-red-500/10 px-4 py-3 text-center text-sm text-red-400">
-              {authError}
-            </Text>
-          ) : null}
+          {authError ? <Text className={mensajesError.bloque}>{authError}</Text> : null}
           <Text className="text-center text-xs text-neutral-500">
             Se abre una ventana de GitHub para autorizar tu cuenta.
           </Text>

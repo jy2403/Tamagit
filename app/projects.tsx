@@ -1,5 +1,5 @@
-import { Redirect, useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Redirect, useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,12 +7,16 @@ import {
   Pressable,
   RefreshControl,
   Text,
+  TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
-import type { Notification, Project } from '@/lib/types';
+import type { Project } from '@/lib/types';
 import { Button } from '@/layout/Button';
+import { Pet3DView } from '@/components/Pet3DView';
+import { boton, formulario, lista, mascota, pantalla, tarjeta, tipografia } from '@/estilos';
 import { showNotificationsOnce } from '@/lib/notifications';
 
 export default function ProjectsScreen() {
@@ -22,7 +26,21 @@ export default function ProjectsScreen() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { width } = useWindowDimensions();
+  const anchoTarjeta = Math.min(Math.round(width * 0.42), 190);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.fullName ?? '').toLowerCase().includes(q) ||
+        p.tools.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [projects, query]);
 
   const fetchProjects = useCallback(async () => {
     if (!token) return [] as Project[];
@@ -35,16 +53,18 @@ export default function ProjectsScreen() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!token) return;
-    fetchProjects()
-      .then(applyProjects)
-      .catch((e) => {
-        setError(e instanceof Error ? e.message : 'No se pudieron cargar los proyectos');
-        setLoading(false);
-      });
-    void showNotificationsOnce(token);
-  }, [token, fetchProjects, applyProjects]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      fetchProjects()
+        .then(applyProjects)
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : 'No se pudieron cargar los proyectos');
+          setLoading(false);
+        });
+      void showNotificationsOnce(token);
+    }, [token, fetchProjects, applyProjects])
+  );
 
   const sync = useCallback(async () => {
     if (!token) return;
@@ -73,7 +93,7 @@ export default function ProjectsScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
@@ -83,55 +103,94 @@ export default function ProjectsScreen() {
     return <Redirect href="/login" />;
   }
 
-  const firstPet = projects.find((p) => p.pet)?.pet;
+  const pets = projects
+    .filter((p) => p.pet)
+    .map((p) => ({ id: p.id, fullName: p.fullName ?? '', pet: p.pet! }));
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-row items-center justify-between px-5 pb-3 pt-16">
-        <View>
-          <Text className="text-2xl font-bold text-white">Mis proyectos</Text>
-          <Text className="text-sm text-emerald-400">
-            {user?.githubUsername ? `@${user.githubUsername}` : 'Conectado con GitHub'}
-          </Text>
+    <View className={pantalla.root}>
+      <View className={pantalla.header}>
+        <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-2">
+          {user?.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} className="h-11 w-11 rounded-full" />
+          ) : null}
+          <View className="min-w-0 flex-1">
+            <Text className={tipografia.titulo} numberOfLines={1}>
+              {user?.name || user?.githubUsername || 'TamaGit'}
+            </Text>
+            {user?.githubUsername ? (
+              <Text className="text-xs text-emerald-400" numberOfLines={1}>
+                @{user.githubUsername}
+              </Text>
+            ) : null}
+          </View>
         </View>
-        <View className="flex-row items-center">
+        <View className="shrink-0 flex-row items-center">
           {user?.isAdmin ? (
-            <Pressable
-              onPress={() => router.push('/admin' as Href)}
-              className="rounded-lg px-3 py-2">
-              <Text className="font-medium text-emerald-400">Admin</Text>
+            <Pressable onPress={() => router.push('/admin' as Href)} className={boton.enlace}>
+              <Text className={tipografia.enlace}>Admin</Text>
             </Pressable>
           ) : null}
-          <Pressable
-            onPress={() => router.push('/profile' as Href)}
-            className="rounded-lg px-3 py-2">
-            <Text className="font-medium text-emerald-400">Perfil</Text>
+          <Pressable onPress={() => router.push('/profile' as Href)} className={boton.enlace}>
+            <Text className={tipografia.enlace}>Perfil</Text>
           </Pressable>
-          <Pressable onPress={() => void signOut()} className="rounded-lg px-3 py-2">
-            <Text className="font-medium text-neutral-400">Salir</Text>
+          <Pressable onPress={() => void signOut()} className={boton.enlace}>
+            <Text className={tipografia.muted}>Salir</Text>
           </Pressable>
         </View>
       </View>
 
-      {firstPet ? (
-        <View className="mx-5 mb-3 items-center rounded-2xl border-2 border-emerald-800 bg-emerald-950/40 py-4">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-white/10">
-            {firstPet.imageUrl ? (
-              <Image
-                source={{ uri: firstPet.imageUrl }}
-                className="h-full w-full"
-                resizeMode="contain"
-              />
-            ) : (
-              <Text className="text-3xl">🥚</Text>
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Buscar proyecto por nombre o herramienta..."
+        placeholderTextColor="#737373"
+        className={`mx-5 ${formulario.busqueda}`}
+      />
+
+      {pets.length > 0 ? (
+        <View className="mt-4 mb-2">
+          <Text className="mb-2 px-5 text-base font-bold text-white">Mis mascotas</Text>
+          <FlatList
+            horizontal
+            data={pets}
+            keyExtractor={(item) => String(item.id)}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+            renderItem={({ item }) => (
+              <Pressable
+                className={mascota.tarjeta}
+                style={{ width: anchoTarjeta }}
+                onPress={() =>
+                  router.push({
+                    pathname: '/project/[id]',
+                    params: {
+                      id: String(item.id),
+                      fullName: item.fullName,
+                      name: item.pet.name,
+                    },
+                  })
+                }>
+                <View className={mascota.escena} style={{ aspectRatio: 3 / 2 }}>
+                  <Pet3DView simple species={item.pet.species} style={{ flex: 1 }} />
+                </View>
+                <View className={mascota.rotulo}>
+                  <Text className={mascota.nombre} numberOfLines={1}>
+                    {item.pet.name}
+                  </Text>
+                  <Text className={tipografia.hint} numberOfLines={1}>
+                    {item.pet.species} · Nivel {item.pet.level}
+                  </Text>
+                </View>
+              </Pressable>
             )}
-          </View>
-          <Text className="mt-2 font-semibold text-white">{firstPet.name}</Text>
-          <Text className="text-xs text-emerald-300">
-            {firstPet.species} · nivel {firstPet.level}
-          </Text>
+          />
         </View>
       ) : null}
+
+      <View className="mt-3 px-5 pt-1 pb-2">
+        <Text className="text-base font-bold text-white">Mis proyectos</Text>
+      </View>
 
       <View className="px-5 pb-3">
         <Button
@@ -141,7 +200,7 @@ export default function ProjectsScreen() {
         />
       </View>
 
-      {error ? <Text className="px-5 pb-2 text-sm text-red-400">{error}</Text> : null}
+      {error ? <Text className={`px-5 pb-2 ${tipografia.error}`}>{error}</Text> : null}
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
@@ -149,7 +208,7 @@ export default function ProjectsScreen() {
         </View>
       ) : (
         <FlatList
-          data={projects}
+          data={filtered}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ padding: 16, gap: 12 }}
           refreshControl={
@@ -158,13 +217,15 @@ export default function ProjectsScreen() {
           ListEmptyComponent={
             <View className="items-center justify-center px-6 py-16">
               <Text className="text-center text-base text-neutral-400">
-                Aún no hay proyectos. Presiona el botón Sincronizar con GitHub para empezar.
+                {projects.length === 0
+                  ? 'Aún no hay proyectos. Presiona el botón Sincronizar con GitHub para empezar.'
+                  : `Sin resultados para "${query}".`}
               </Text>
             </View>
           }
           renderItem={({ item }) => (
             <Pressable
-              className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 active:bg-neutral-800"
+              className={tarjeta.presionable}
               onPress={() =>
                 router.push({
                   pathname: '/project/[id]',
@@ -173,31 +234,29 @@ export default function ProjectsScreen() {
               }>
               <Text className="text-base font-semibold text-white">{item.name}</Text>
               {item.fullName ? (
-                <Text className="text-sm text-neutral-400">{item.fullName}</Text>
+                <Text className={tipografia.subtitulo}>{item.fullName}</Text>
               ) : null}
               <View className="mt-2 flex-row flex-wrap gap-1.5">
                 {item.mainLanguage ? (
-                  <View className="rounded-full bg-emerald-900/60 px-2.5 py-1">
-                    <Text className="text-xs font-medium text-emerald-300">
-                      {item.mainLanguage}
-                    </Text>
+                  <View className={lista.pillAcento}>
+                    <Text className={lista.pillAcentoTexto}>{item.mainLanguage}</Text>
                   </View>
                 ) : null}
                 {item.tools.slice(0, 4).map((tool) => (
-                  <View key={tool} className="rounded-full bg-neutral-800 px-2.5 py-1">
-                    <Text className="text-xs text-neutral-300">{tool}</Text>
+                  <View key={tool} className={lista.pill}>
+                    <Text className={lista.pillTexto}>{tool}</Text>
                   </View>
                 ))}
               </View>
               <View className="mt-3 flex-row items-center justify-between">
                 {item.pet ? (
-                  <Text className="text-sm text-neutral-300">
+                  <Text className={tipografia.cuerpo}>
                     {item.pet.name} · {item.pet.species} · nivel {item.pet.level}
                   </Text>
                 ) : (
-                  <Text className="text-sm text-neutral-500">Sin mascota aún</Text>
+                  <Text className={tipografia.muted}>Sin mascota aún</Text>
                 )}
-                <Text className="text-xs text-emerald-400">Ver más</Text>
+                <Text className={tipografia.enlace}>Ver más</Text>
               </View>
             </Pressable>
           )}

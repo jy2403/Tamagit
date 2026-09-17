@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { pantalla } from '@/estilos';
 
 export default function OAuthRedirectScreen() {
   const { token, authError } = useAuth();
@@ -10,7 +11,7 @@ export default function OAuthRedirectScreen() {
   }
 
   if (!token) {
-    return <View className="flex-1 bg-neutral-950" />;
+    return <View className={pantalla.root} />;
   }
 
   return <Redirect href="/projects" />;
