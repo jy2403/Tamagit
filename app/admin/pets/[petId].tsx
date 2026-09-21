@@ -24,7 +24,11 @@ export default function AdminPetDetailScreen() {
   const [pet, setPet] = useState<PetDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState<null | { kind: 'removeItem' | 'deletePet'; itemId?: number; itemName?: string }>(null);
+  const [prompt, setPrompt] = useState<null | {
+    kind: 'removeItem' | 'deletePet';
+    itemId?: number;
+    itemName?: string;
+  }>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -66,7 +70,11 @@ export default function AdminPetDetailScreen() {
     async (item: Item) => {
       if (!token || !petId) return;
       try {
-        await apiFetch(`/pets/${petId}/items`, { token, method: 'POST', body: { itemId: item.id } });
+        await apiFetch(`/pets/${petId}/items`, {
+          token,
+          method: 'POST',
+          body: { itemId: item.id },
+        });
         setPickerOpen(false);
         await load();
       } catch (e) {
@@ -149,10 +157,10 @@ export default function AdminPetDetailScreen() {
             <Text className="mt-1 text-sm text-neutral-400">Especie: {pet.species}</Text>
             <Text className="text-sm text-neutral-400">Proyecto: {pet.project.name}</Text>
             <View className="mt-3 flex-row flex-wrap gap-1.5">
-              <Pill label={`nivel ${pet.level}`} />
               <Pill label={`${pet.health} salud`} />
               <Pill label={`${pet.hunger} hambre`} />
-              <Pill label={`${pet.xp} XP`} />
+              <Pill label={`felicidad ${pet.happiness}`} />
+              <Pill label={`rama ${pet.lifeBranch}`} />
             </View>
             <Button
               title="Eliminar mascota"
@@ -164,9 +172,7 @@ export default function AdminPetDetailScreen() {
 
           <View>
             <View className="mb-2 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-white">
-                Items ({pet.items.length})
-              </Text>
+              <Text className="text-lg font-semibold text-white">Items ({pet.items.length})</Text>
               <Pressable
                 className="rounded-lg bg-emerald-600 px-3 py-2"
                 onPress={() => void openPicker()}>
@@ -221,7 +227,11 @@ export default function AdminPetDetailScreen() {
         onCancel={() => setPrompt(null)}
       />
 
-      <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
+      <Modal
+        visible={pickerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPickerOpen(false)}>
         <View className={modal.overlayInferior}>
           <View className={modal.fondoInferior}>
             <View className="mb-3 flex-row items-center justify-between">
@@ -255,9 +265,7 @@ export default function AdminPetDetailScreen() {
                   </Pressable>
                 )}
                 ListEmptyComponent={
-                  <Text className={lista.vacio}>
-                    No hay items en el catálogo.
-                  </Text>
+                  <Text className={lista.vacio}>No hay items en el catálogo.</Text>
                 }
               />
             )}

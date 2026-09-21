@@ -149,7 +149,7 @@ export default function ProjectsScreen() {
       />
 
       {pets.length > 0 ? (
-        <View className="mt-4 mb-2">
+        <View className="mb-2 mt-4">
           <Text className="mb-2 px-5 text-base font-bold text-white">Mis mascotas</Text>
           <FlatList
             horizontal
@@ -179,7 +179,7 @@ export default function ProjectsScreen() {
                     {item.pet.name}
                   </Text>
                   <Text className={tipografia.hint} numberOfLines={1}>
-                    {item.pet.species} · Nivel {item.pet.level}
+                    {item.pet.species} · Felicidad {item.pet.happiness}
                   </Text>
                 </View>
               </Pressable>
@@ -188,7 +188,7 @@ export default function ProjectsScreen() {
         </View>
       ) : null}
 
-      <View className="mt-3 px-5 pt-1 pb-2">
+      <View className="mt-3 px-5 pb-2 pt-1">
         <Text className="text-base font-bold text-white">Mis proyectos</Text>
       </View>
 
@@ -233,9 +233,7 @@ export default function ProjectsScreen() {
                 })
               }>
               <Text className="text-base font-semibold text-white">{item.name}</Text>
-              {item.fullName ? (
-                <Text className={tipografia.subtitulo}>{item.fullName}</Text>
-              ) : null}
+              {item.fullName ? <Text className={tipografia.subtitulo}>{item.fullName}</Text> : null}
               <View className="mt-2 flex-row flex-wrap gap-1.5">
                 {item.mainLanguage ? (
                   <View className={lista.pillAcento}>
@@ -251,7 +249,7 @@ export default function ProjectsScreen() {
               <View className="mt-3 flex-row items-center justify-between">
                 {item.pet ? (
                   <Text className={tipografia.cuerpo}>
-                    {item.pet.name} · {item.pet.species} · nivel {item.pet.level}
+                    {item.pet.name} · {item.pet.species} · felicidad {item.pet.happiness}
                   </Text>
                 ) : (
                   <Text className={tipografia.muted}>Sin mascota aún</Text>

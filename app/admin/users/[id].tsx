@@ -34,11 +34,19 @@ export default function AdminUserPetsScreen() {
   );
 
   if (isLoading || loading) {
-    return (<View className={pantalla.rootCentered}><ActivityIndicator size="large" color="#10b981" /></View>);
+    return (
+      <View className={pantalla.rootCentered}>
+        <ActivityIndicator size="large" color="#10b981" />
+      </View>
+    );
   }
   if (!token) return <Redirect href="/login" />;
   if (!currentUser?.isAdmin) {
-    return (<View className={pantalla.rootCentered}><Text className="text-neutral-400">Sin permisos de administrador.</Text></View>);
+    return (
+      <View className={pantalla.rootCentered}>
+        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
+      </View>
+    );
   }
 
   const userName = data?.user.githubUsername ?? data?.user.name ?? 'Usuario';
@@ -51,7 +59,9 @@ export default function AdminUserPetsScreen() {
         </Pressable>
         <View className="flex-1">
           <Text className={tipografia.titulo}>Mascotas de {userName}</Text>
-          <Text className={tipografia.subtitulo} numberOfLines={1}>Gestiona sus mascotas desde aquí</Text>
+          <Text className={tipografia.subtitulo} numberOfLines={1}>
+            Gestiona sus mascotas desde aquí
+          </Text>
         </View>
       </View>
 
@@ -63,25 +73,42 @@ export default function AdminUserPetsScreen() {
           </Pressable>
         </View>
       ) : (
-        <FlatList data={data?.pets ?? []} keyExtractor={(item) => String(item.pet.id)} contentContainerStyle={{ padding: 16, gap: 12 }}
-          ListEmptyComponent={<View className="items-center justify-center px-6 py-16"><Text className="text-center text-base text-neutral-400">Este usuario no tiene mascotas todavía.</Text></View>}
+        <FlatList
+          data={data?.pets ?? []}
+          keyExtractor={(item) => String(item.pet.id)}
+          contentContainerStyle={{ padding: 16, gap: 12 }}
+          ListEmptyComponent={
+            <View className="items-center justify-center px-6 py-16">
+              <Text className="text-center text-base text-neutral-400">
+                Este usuario no tiene mascotas todavía.
+              </Text>
+            </View>
+          }
           renderItem={({ item }) => (
-            <Pressable className={tarjeta.presionable}
-              onPress={() => router.push({ pathname: '/admin/pets/[petId]', params: { petId: String(item.pet.id) } })}>
+            <Pressable
+              className={tarjeta.presionable}
+              onPress={() =>
+                router.push({
+                  pathname: '/admin/pets/[petId]',
+                  params: { petId: String(item.pet.id) },
+                })
+              }>
               <View className="flex-row items-center">
                 <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
                   <Text className="text-xl">{item.pet.imageUrl ? '🐾' : '🥚'}</Text>
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-semibold text-white">{item.pet.name}</Text>
-                  <Text className={tipografia.subtitulo} numberOfLines={1}>{item.pet.projectName}</Text>
+                  <Text className={tipografia.subtitulo} numberOfLines={1}>
+                    {item.pet.projectName}
+                  </Text>
                 </View>
                 <Text className={tipografia.enlace}>Gestionar</Text>
               </View>
               <View className="mt-3 flex-row flex-wrap gap-1.5">
                 <Pill label={`${item.pet.species}`} />
-                <Pill label={`nivel ${item.pet.level}`} />
                 <Pill label={`${item.pet.health} salud`} />
+                <Pill label={`felicidad ${item.pet.happiness}`} />
                 <Pill label={`${item.pet.itemCount} items`} />
               </View>
             </Pressable>
@@ -93,5 +120,9 @@ export default function AdminUserPetsScreen() {
 }
 
 function Pill({ label }: { label: string }) {
-  return (<View className={lista.pill}><Text className={lista.pillTexto}>{label}</Text></View>);
+  return (
+    <View className={lista.pill}>
+      <Text className={lista.pillTexto}>{label}</Text>
+    </View>
+  );
 }

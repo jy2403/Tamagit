@@ -16,11 +16,12 @@ export type Pet = {
   species: string;
   health: number;
   hunger: number;
-  xp: number;
-  level: number;
+  happiness: number;
+  lifeBranch: string;
   imageUrl: string | null;
   projectId: number;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type PetDetail = Pet & {
@@ -28,9 +29,22 @@ export type PetDetail = Pet & {
     id: number;
     name: string;
     fullName: string | null;
+    defaultBranch: string | null;
     ownerId: number;
   };
   items: PetItem[];
+};
+
+export type ProjectPet = {
+  pet: Pet | null;
+  project: {
+    id: number;
+    name: string;
+    fullName: string | null;
+    defaultBranch: string | null;
+    ownerId: number;
+  };
+  hiddenByUser: boolean;
 };
 
 export type PetItem = {
@@ -69,10 +83,37 @@ export type Project = {
   githubRepoId: number;
   name: string;
   fullName: string | null;
+  defaultBranch: string | null;
   mainLanguage: string | null;
   tools: string[];
   lastSyncedAt: string | null;
   pet: Pet | null;
+};
+
+export type Branch = {
+  name: string;
+  default?: boolean;
+};
+
+export type CommitAnalysis = {
+  id: number;
+  sha: string;
+  message: string;
+  author: string | null;
+  date: string | null;
+  commitUrl: string | null;
+  branch: string | null;
+  score: number;
+  findings: string[];
+  summary: string | null;
+};
+
+export type AnalyzeResult = {
+  analyzed: number;
+  applied: number;
+  lifeBranch: string;
+  pet: Pet | null;
+  commits: { sha: string; status: 'nuevo' | 'existe'; branch?: string }[];
 };
 
 export type Commit = {
