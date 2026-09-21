@@ -248,8 +248,10 @@ export default function ProjectDetailScreen() {
   }, [pet, token, nameDraft]);
 
   const openFeed = useCallback(() => {
-    setFeedOpen(true);
-    void loadDishes();
+    setFeedOpen((open) => {
+      if (!open) void loadDishes();
+      return !open;
+    });
   }, [loadDishes]);
 
   const handleFeed = useCallback(
@@ -259,10 +261,36 @@ export default function ProjectDetailScreen() {
     [feedPet]
   );
 
-  const closeFeed = useCallback(async () => {
-    setFeedOpen(false);
-    await loadDishes();
-  }, [loadDishes]);
+  const [dragging, setDragging] = useState<Dish | null>(null);
+  const [dragAnim] = useState(() => new Animated.ValueXY());
+
+  const startDrag = useCallback(
+    (dish: Dish, g: { moveX: number; moveY: number }) => {
+      setDragging(dish);
+      dragAnim.setValue({ x: g.moveX, y: g.moveY });
+    },
+    [dragAnim]
+  );
+
+  const moveDrag = useCallback(
+    (g: { moveX: number; moveY: number }) => {
+      dragAnim.setValue({ x: g.moveX, y: g.moveY });
+    },
+    [dragAnim]
+  );
+
+  const endDrag = useCallback(
+    (dish: Dish, g: { moveX: number; moveY: number }) => {
+      setDragging(null);
+      petAreaRef.current?.measureInWindow((x, y, w, h) => {
+        const inside = g.moveX >= x && g.moveX <= x + w && g.moveY >= y && g.moveY <= y + h;
+        if (inside) {
+          handleFeed(dish);
+        }
+      });
+    },
+    [handleFeed, petAreaRef]
+  );
 
   const pendingDishes = dishes.filter((d) => !d.fed);
   const bubbleText =
@@ -349,7 +377,11 @@ export default function ProjectDetailScreen() {
                   </View>
 
                   <View className="mt-4 flex-row gap-3">
-                    <Button title="Alimentar" onPress={openFeed} style={{ flex: 1 }} />
+                    <Button
+                      title={feedOpen ? 'Cerrar platillos' : 'Alimentar'}
+                      onPress={openFeed}
+                      style={{ flex: 1 }}
+                    />
                     <Button
                       title="Cambiar nombre"
                       onPress={startRename}
@@ -357,6 +389,19 @@ export default function ProjectDetailScreen() {
                       style={{ flex: 1 }}
                     />
                   </View>
+
+                  {feedOpen ? (
+                    <View className="mt-4">
+                      <DishCarousel
+                        dishes={pendingDishes}
+                        loading={dishesLoading}
+                        onStart={startDrag}
+                        onMove={moveDrag}
+                        onEnd={endDrag}
+                      />
+                    </View>
+                  ) : null}
+
                   <View className="mt-3 flex-row gap-3">
                     {isRepoOwner ? (
                       <Button
@@ -438,15 +483,21 @@ export default function ProjectDetailScreen() {
         </View>
       </ScrollView>
 
-      {feedOpen && pet?.pet ? (
-        <FeedOverlay
-          dishes={pendingDishes}
-          loading={dishesLoading}
-          petName={pet.pet.name}
-          petAreaRef={petAreaRef}
-          onFeed={handleFeed}
-          onClose={() => void closeFeed()}
-        />
+      {dragging ? (
+        <Animated.View
+          className="pointer-events-none absolute left-0 top-0 z-50"
+          style={{
+            transform: [
+              { translateX: Animated.subtract(dragAnim.x, 70) },
+              { translateY: Animated.subtract(dragAnim.y, 70) },
+            ],
+          }}>
+          <View className="h-[140px] w-[140px] items-center justify-center rounded-2xl border border-emerald-400 bg-emerald-500/30">
+            <Text className="text-6xl">
+              {dragging.food?.imageUrl ?? TIER_META[dragging.tier].emoji}
+            </Text>
+          </View>
+        </Animated.View>
       ) : null}
 
       <FeedbackBanner feedback={feedback} onDone={onFeedbackDone} />
@@ -466,150 +517,80 @@ export default function ProjectDetailScreen() {
 
 function SpeechBubble({ text, loading }: { text: string; loading?: boolean }) {
   return (
-    <View className="pointer-events-none absolute right-2 top-2 max-w-[70%]">
-      <View className="rounded-2xl rounded-br-md border-2 border-neutral-900 bg-white px-3 py-2 shadow-sm">
+    <View className="pointer-events-none absolute bottom-2 left-2 max-w-[70%]">
+      <View className="rounded-2xl rounded-bl-md border-2 border-neutral-900 bg-white px-3 py-2 shadow-sm">
         <Text className="text-xs font-medium leading-snug text-neutral-800" numberOfLines={4}>
           {loading ? 'Pensando...' : text}
         </Text>
       </View>
-      <View className="ml-3 h-0 w-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-neutral-900" />
-      <View className="border-l-6 border-r-6 border-t-6 -mt-2 ml-4 h-0 w-0 border-l-transparent border-r-transparent border-t-white" />
+      <View className="ml-5 h-0 w-0 border-b-8 border-l-8 border-r-8 border-b-neutral-900 border-l-transparent border-r-transparent" />
+      <View className="border-l-6 border-r-6 border-b-6 -mt-2 ml-6 h-0 w-0 border-b-white border-l-transparent border-r-transparent" />
     </View>
   );
 }
 
-function FeedOverlay({
+function DishCarousel({
   dishes,
   loading,
-  petName,
-  petAreaRef,
-  onFeed,
-  onClose,
+  onStart,
+  onMove,
+  onEnd,
 }: {
   dishes: Dish[];
   loading: boolean;
-  petName: string;
-  petAreaRef: React.RefObject<View | null>;
-  onFeed: (dish: Dish) => void;
-  onClose: () => void;
+  onStart: (dish: Dish, g: { moveX: number; moveY: number }) => void;
+  onMove: (g: { moveX: number; moveY: number }) => void;
+  onEnd: (dish: Dish, g: { moveX: number; moveY: number }) => void;
 }) {
-  const [dragging, setDragging] = useState<Dish | null>(null);
-  const [dragAnim] = useState(() => new Animated.ValueXY());
-
-  const startDrag = useCallback(
-    (dish: Dish, g: { moveX: number; moveY: number }) => {
-      setDragging(dish);
-      dragAnim.setValue({ x: g.moveX, y: g.moveY });
-    },
-    [dragAnim]
-  );
-
-  const moveDrag = useCallback(
-    (g: { moveX: number; moveY: number }) => {
-      dragAnim.setValue({ x: g.moveX, y: g.moveY });
-    },
-    [dragAnim]
-  );
-
-  const endDrag = useCallback(
-    (dish: Dish, g: { moveX: number; moveY: number }) => {
-      setDragging(null);
-      petAreaRef.current?.measureInWindow((x, y, w, h) => {
-        const inside = g.moveX >= x && g.moveX <= x + w && g.moveY >= y && g.moveY <= y + h;
-        if (inside) {
-          onFeed(dish);
-        }
-      });
-    },
-    [onFeed, petAreaRef]
-  );
-
   return (
-    <View className="absolute inset-0 z-50 bg-black/70">
-      <View className="flex-1 px-4 pt-14">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-lg font-bold text-white">Alimentar a {petName}</Text>
-            <Text className="text-sm text-neutral-400">
-              Elige un platillo (un commit) y arrástralo a la mascota.
+    <View>
+      <Text className="text-sm font-semibold text-white">Platillos del repo 🍽️</Text>
+      <Text className="mt-0.5 text-xs text-neutral-500">
+        Elige un platillo (un commit) y arrástralo al muñeco para alimentarlo.
+      </Text>
+
+      <View className="mt-3">
+        {loading ? (
+          <ActivityIndicator color="#10b981" />
+        ) : dishes.length === 0 ? (
+          <View className="items-center gap-2 rounded-2xl border border-dashed border-neutral-700 py-8">
+            <Text className="text-4xl">🍽️</Text>
+            <Text className="text-center text-sm text-neutral-300">
+              No hay platillos por ahora.
+            </Text>
+            <Text className="text-center text-xs text-neutral-500">
+              Los platillos aparecen con cada commit nuevo que hagas en tu repo desde que creaste la
+              mascota.
             </Text>
           </View>
-          <Pressable
-            onPress={onClose}
-            className="ml-3 rounded-lg bg-neutral-800 px-3 py-2"
-            hitSlop={8}>
-            <Text className="text-sm font-medium text-white">Cerrar</Text>
-          </Pressable>
-        </View>
-
-        <View className="mt-6">
-          {loading ? (
-            <ActivityIndicator color="#10b981" />
-          ) : dishes.length === 0 ? (
-            <View className="items-center gap-2 rounded-2xl border border-dashed border-neutral-700 py-10">
-              <Text className="text-4xl">🍽️</Text>
-              <Text className="text-center text-sm text-neutral-300">
-                No hay platillos por ahora.
-              </Text>
-              <Text className="text-center text-xs text-neutral-500">
-                Los platillos aparecen con cada commit nuevo que hagas en tu repo desde que creaste
-                la mascota.
-              </Text>
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12, paddingVertical: 8 }}>
-              {dishes.map((dish) => (
-                <DraggableDish
-                  key={dish.commitId}
-                  dish={dish}
-                  isDragging={dragging?.commitId === dish.commitId}
-                  onStart={startDrag}
-                  onMove={moveDrag}
-                  onEnd={endDrag}
-                />
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        <Text className="mt-4 text-center text-xs text-neutral-500">
-          💡 Cada platillo es un commit nuevo. Arrastra la comida hasta el muñeco (o tócala) para
-          alimentarlo.
-        </Text>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingVertical: 8 }}>
+            {dishes.map((dish) => (
+              <DraggableDish
+                key={dish.commitId}
+                dish={dish}
+                onStart={onStart}
+                onMove={onMove}
+                onEnd={onEnd}
+              />
+            ))}
+          </ScrollView>
+        )}
       </View>
-
-      {dragging ? (
-        <Animated.View
-          className="pointer-events-none absolute left-0 top-0 z-50"
-          style={{
-            transform: [
-              { translateX: Animated.subtract(dragAnim.x, 70) },
-              { translateY: Animated.subtract(dragAnim.y, 70) },
-            ],
-          }}>
-          <View className="h-[140px] w-[140px] items-center justify-center rounded-2xl border border-emerald-400 bg-emerald-500/30">
-            <Text className="text-6xl">
-              {dragging.food?.imageUrl ?? TIER_META[dragging.tier].emoji}
-            </Text>
-          </View>
-        </Animated.View>
-      ) : null}
     </View>
   );
 }
 
 function DraggableDish({
   dish,
-  isDragging,
   onStart,
   onMove,
   onEnd,
 }: {
   dish: Dish;
-  isDragging: boolean;
   onStart: (dish: Dish, g: { moveX: number; moveY: number }) => void;
   onMove: (g: { moveX: number; moveY: number }) => void;
   onEnd: (dish: Dish, g: { moveX: number; moveY: number }) => void;
@@ -640,9 +621,7 @@ function DraggableDish({
   return (
     <View
       {...panResponder.panHandlers}
-      className={`w-[200px] rounded-2xl border bg-neutral-900 p-3 ${
-        isDragging ? 'border-emerald-400' : 'border-neutral-700'
-      }`}>
+      className="w-[200px] rounded-2xl border border-neutral-700 bg-neutral-900 p-3">
       <View className="items-center py-2">
         <Text className="text-5xl">{dish.food?.imageUrl ?? meta.emoji}</Text>
       </View>
