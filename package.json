@@ -33,12 +33,12 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-worklets": "0.10.1",
-    "three": "^0.166.0"
+    "three": "0.162.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~19.2.4",
-    "@types/three": "^0.162.0",
+    "@types/three": "0.162.0",
     "eslint": "^9.25.1",
     "eslint-config-expo": "~57.0.2",
     "eslint-config-prettier": "^10.1.2",
@@ -48,6 +48,8 @@
     "typescript": "~6.0.3"
   },
   "overrides": {
+    "three": "0.162.0",
+    "@types/three": "0.162.0",
     "@expo/browser-polyfill": {
       "react": "19.2.3"
     }
