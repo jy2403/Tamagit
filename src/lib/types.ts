@@ -106,14 +106,48 @@ export type CommitAnalysis = {
   score: number;
   findings: string[];
   summary: string | null;
+  fedAt: string | null;
 };
 
 export type AnalyzeResult = {
   analyzed: number;
-  applied: number;
-  lifeBranch: string;
-  pet: Pet | null;
-  commits: { sha: string; status: 'nuevo' | 'existe'; branch?: string }[];
+  newCommits: number;
+  latest: {
+    sha: string;
+    branch: string;
+    score: number;
+    message: string;
+    date: string | null;
+    summary?: string | null;
+  } | null;
+};
+
+export type Dish = {
+  commitId: number;
+  sha: string;
+  message: string;
+  summary: string | null;
+  date: string | null;
+  branch: string | null;
+  score: number;
+  tier: 'small' | 'medium' | 'large';
+  fed: boolean;
+  food: {
+    id: number;
+    name: string;
+    imageUrl: string | null;
+    size: string;
+    hungerRestore: number;
+  } | null;
+};
+
+export type FeedResult = {
+  pet: Pet;
+  dish: {
+    commitId: number;
+    tier: 'small' | 'medium' | 'large';
+    healed: { hungerRestore: number; health: number };
+  };
 };
 
 export type Commit = {
@@ -150,6 +184,7 @@ export type Food = {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  size: string;
   hungerRestore: number;
   price: number;
   createdAt: string;
