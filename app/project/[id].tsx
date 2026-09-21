@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Modal,
   PanResponder,
   Pressable,
   ScrollView,
@@ -515,17 +516,110 @@ export default function ProjectDetailScreen() {
   );
 }
 
-function SpeechBubble({ text, loading }: { text: string; loading?: boolean }) {
+function FormattedText({
+  text,
+  className,
+  numberOfLines,
+}: {
+  text: string;
+  className?: string;
+  numberOfLines?: number;
+}) {
+  const parts = useMemo(() => {
+    // Soporta **negrita**, *cursiva*, `codigo` y saltos de línea.
+    const regex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+    return text.split(regex).map((token, i) => {
+      if (/^\*\*.+\*\*$/.test(token)) {
+        return (
+          <Text key={i} className="font-bold">
+            {token.slice(2, -2)}
+          </Text>
+        );
+      }
+      if (/^`.+`$/.test(token)) {
+        return (
+          <Text key={i} className="font-mono">
+            {token.slice(1, -1)}
+          </Text>
+        );
+      }
+      if (/^\*.+\*$/.test(token)) {
+        return (
+          <Text key={i} className="italic">
+            {token.slice(1, -1)}
+          </Text>
+        );
+      }
+      return token;
+    });
+  }, [text]);
+
   return (
-    <View className="pointer-events-none absolute bottom-2 left-2 max-w-[70%]">
-      <View className="rounded-2xl rounded-bl-md border-2 border-neutral-900 bg-white px-3 py-2 shadow-sm">
-        <Text className="text-xs font-medium leading-snug text-neutral-800" numberOfLines={4}>
-          {loading ? 'Pensando...' : text}
-        </Text>
+    <Text className={className} numberOfLines={numberOfLines}>
+      {parts}
+    </Text>
+  );
+}
+
+function SpeechBubble({ text, loading }: { text: string; loading?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const content = loading ? 'Pensando...' : text || '';
+
+  return (
+    <>
+      <View pointerEvents="box-none" className="absolute bottom-2 left-2 max-w-[70%]">
+        <Pressable
+          onPress={() => !loading && setExpanded(true)}
+          disabled={loading}
+          className="w-fit">
+          <View className="rounded-2xl rounded-bl-md border-2 border-neutral-900 bg-white px-3 py-2 shadow-sm">
+            {loading ? (
+              <Text className="text-xs font-medium leading-snug text-neutral-800">
+                Pensando...
+              </Text>
+            ) : (
+              <>
+                <FormattedText
+                  text={content}
+                  className="text-xs font-medium leading-snug text-neutral-800"
+                  numberOfLines={4}
+                />
+                {content.length > 90 ? (
+                  <Text className="mt-0.5 text-[10px] font-semibold text-neutral-500">
+                    Toca para ver completo ▼
+                  </Text>
+                ) : null}
+              </>
+            )}
+          </View>
+          <View className="ml-5 h-0 w-0 border-b-8 border-l-8 border-r-8 border-b-neutral-900 border-l-transparent border-r-transparent" />
+          <View className="border-l-6 border-r-6 border-b-6 -mt-2 ml-6 h-0 w-0 border-b-white border-l-transparent border-r-transparent" />
+        </Pressable>
       </View>
-      <View className="ml-5 h-0 w-0 border-b-8 border-l-8 border-r-8 border-b-neutral-900 border-l-transparent border-r-transparent" />
-      <View className="border-l-6 border-r-6 border-b-6 -mt-2 ml-6 h-0 w-0 border-b-white border-l-transparent border-r-transparent" />
-    </View>
+
+      <Modal
+        visible={expanded}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setExpanded(false)}>
+        <View className="flex-1 items-center justify-center bg-black/70 px-6">
+          <View className="w-full max-w-[90%] rounded-2xl border border-neutral-700 bg-neutral-900 p-4">
+            <Text className="text-sm font-bold text-white">La mascota dijo...</Text>
+            <ScrollView className="mt-2 max-h-[50%]" showsVerticalScrollIndicator>
+              <FormattedText
+                text={content}
+                className="text-base leading-relaxed text-neutral-100"
+              />
+            </ScrollView>
+            <Pressable
+              onPress={() => setExpanded(false)}
+              className="mt-4 self-end rounded-lg bg-emerald-500 px-4 py-2">
+              <Text className="text-sm font-bold text-neutral-900">Cerrar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
