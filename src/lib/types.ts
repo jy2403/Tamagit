@@ -16,11 +16,12 @@ export type Pet = {
   species: string;
   health: number;
   hunger: number;
-  xp: number;
-  level: number;
+  happiness: number;
+  lifeBranch: string;
   imageUrl: string | null;
   projectId: number;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type PetDetail = Pet & {
@@ -28,9 +29,22 @@ export type PetDetail = Pet & {
     id: number;
     name: string;
     fullName: string | null;
+    defaultBranch: string | null;
     ownerId: number;
   };
   items: PetItem[];
+};
+
+export type ProjectPet = {
+  pet: Pet | null;
+  project: {
+    id: number;
+    name: string;
+    fullName: string | null;
+    defaultBranch: string | null;
+    ownerId: number;
+  };
+  hiddenByUser: boolean;
 };
 
 export type PetItem = {
@@ -69,10 +83,71 @@ export type Project = {
   githubRepoId: number;
   name: string;
   fullName: string | null;
+  defaultBranch: string | null;
   mainLanguage: string | null;
   tools: string[];
   lastSyncedAt: string | null;
   pet: Pet | null;
+};
+
+export type Branch = {
+  name: string;
+  default?: boolean;
+};
+
+export type CommitAnalysis = {
+  id: number;
+  sha: string;
+  message: string;
+  author: string | null;
+  date: string | null;
+  commitUrl: string | null;
+  branch: string | null;
+  score: number;
+  findings: string[];
+  summary: string | null;
+  fedAt: string | null;
+};
+
+export type AnalyzeResult = {
+  analyzed: number;
+  newCommits: number;
+  latest: {
+    sha: string;
+    branch: string;
+    score: number;
+    message: string;
+    date: string | null;
+    summary?: string | null;
+  } | null;
+};
+
+export type Dish = {
+  commitId: number;
+  sha: string;
+  message: string;
+  summary: string | null;
+  date: string | null;
+  branch: string | null;
+  score: number;
+  tier: 'small' | 'medium' | 'large';
+  fed: boolean;
+  food: {
+    id: number;
+    name: string;
+    imageUrl: string | null;
+    size: string;
+    hungerRestore: number;
+  } | null;
+};
+
+export type FeedResult = {
+  pet: Pet;
+  dish: {
+    commitId: number;
+    tier: 'small' | 'medium' | 'large';
+    healed: { hungerRestore: number; health: number };
+  };
 };
 
 export type Commit = {
@@ -109,6 +184,7 @@ export type Food = {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  size: string;
   hungerRestore: number;
   price: number;
   createdAt: string;

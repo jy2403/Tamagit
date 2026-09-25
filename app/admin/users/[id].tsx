@@ -1,9 +1,10 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { UserPets } from '@/lib/types';
+import { lista, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function AdminUserPetsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,25 +27,23 @@ export default function AdminUserPetsScreen() {
     }
   }, [token, id]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   if (isLoading || loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
-
-  if (!token) {
-    return <Redirect href="/login" />;
-  }
-
+  if (!token) return <Redirect href="/login" />;
   if (!currentUser?.isAdmin) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <Text className="text-neutral-400">Sin permisos de administrador.</Text>
       </View>
     );
@@ -53,14 +52,14 @@ export default function AdminUserPetsScreen() {
   const userName = data?.user.githubUsername ?? data?.user.name ?? 'Usuario';
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-row items-center px-5 pb-3 pt-16">
+    <View className={pantalla.root}>
+      <View className={pantalla.header}>
         <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className="text-emerald-400">Atras</Text>
+          <Text className={tipografia.enlace}>Atras</Text>
         </Pressable>
         <View className="flex-1">
-          <Text className="text-2xl font-bold text-white">Mascotas de {userName}</Text>
-          <Text className="text-sm text-neutral-400" numberOfLines={1}>
+          <Text className={tipografia.titulo}>Mascotas de {userName}</Text>
+          <Text className={tipografia.subtitulo} numberOfLines={1}>
             Gestiona sus mascotas desde aquí
           </Text>
         </View>
@@ -70,7 +69,7 @@ export default function AdminUserPetsScreen() {
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-center text-sm text-red-400">{error}</Text>
           <Pressable onPress={() => void load()} className="mt-4 rounded-lg bg-white/10 px-4 py-2">
-            <Text className="text-sm text-emerald-400">Reintentar</Text>
+            <Text className={tipografia.enlace}>Reintentar</Text>
           </Pressable>
         </View>
       ) : (
@@ -87,9 +86,12 @@ export default function AdminUserPetsScreen() {
           }
           renderItem={({ item }) => (
             <Pressable
-              className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 active:bg-neutral-800"
+              className={tarjeta.presionable}
               onPress={() =>
-                router.push({ pathname: '/admin/pets/[petId]', params: { petId: String(item.pet.id) } })
+                router.push({
+                  pathname: '/admin/pets/[petId]',
+                  params: { petId: String(item.pet.id) },
+                })
               }>
               <View className="flex-row items-center">
                 <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
@@ -97,16 +99,16 @@ export default function AdminUserPetsScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-semibold text-white">{item.pet.name}</Text>
-                  <Text className="text-sm text-neutral-400" numberOfLines={1}>
+                  <Text className={tipografia.subtitulo} numberOfLines={1}>
                     {item.pet.projectName}
                   </Text>
                 </View>
-                <Text className="text-sm text-emerald-400">Gestionar</Text>
+                <Text className={tipografia.enlace}>Gestionar</Text>
               </View>
               <View className="mt-3 flex-row flex-wrap gap-1.5">
                 <Pill label={`${item.pet.species}`} />
-                <Pill label={`nivel ${item.pet.level}`} />
                 <Pill label={`${item.pet.health} salud`} />
+                <Pill label={`felicidad ${item.pet.happiness}`} />
                 <Pill label={`${item.pet.itemCount} items`} />
               </View>
             </Pressable>
@@ -119,8 +121,8 @@ export default function AdminUserPetsScreen() {
 
 function Pill({ label }: { label: string }) {
   return (
-    <View className="rounded-full bg-neutral-800 px-2.5 py-1">
-      <Text className="text-xs text-neutral-300">{label}</Text>
+    <View className={lista.pill}>
+      <Text className={lista.pillTexto}>{label}</Text>
     </View>
   );
 }

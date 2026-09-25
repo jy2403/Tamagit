@@ -5,9 +5,16 @@ import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminC
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Food } from '@/lib/types';
+import { pantalla } from '@/estilos';
 
 const fields: CrudField[] = [
   { key: 'name', label: 'Nombre', placeholder: 'Ej: Manzana' },
+  {
+    key: 'size',
+    label: 'Tamaño',
+    placeholder: 'small | medium | large',
+    maxLength: 10,
+  },
   { key: 'hungerRestore', label: 'Hambre restaurada', placeholder: 'Ej: 30', isNumber: true },
   { key: 'price', label: 'Precio', placeholder: 'Ej: 50', isNumber: true },
 ];
@@ -16,6 +23,7 @@ function toRow(food: Food): CrudRow {
   return {
     id: String(food.id),
     name: food.name,
+    size: food.size ?? 'medium',
     hungerRestore: String(food.hungerRestore),
     price: String(food.price),
   };
@@ -50,6 +58,7 @@ export default function AdminFoodsScreen() {
         method: 'POST',
         body: {
           name: data.name,
+          size: data.size || 'medium',
           hungerRestore: Number(data.hungerRestore) || 30,
           price: Number(data.price) || 0,
         },
@@ -67,6 +76,7 @@ export default function AdminFoodsScreen() {
         method: 'PATCH',
         body: {
           name: data.name,
+          size: data.size || 'medium',
           hungerRestore: Number(data.hungerRestore) || 30,
           price: Number(data.price) || 0,
         },
@@ -87,7 +97,7 @@ export default function AdminFoodsScreen() {
 
   if (isLoading || loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );

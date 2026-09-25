@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { User } from '@/lib/types';
 import { Button } from '@/layout/Button';
+import { pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function ProfileScreen() {
   const { token, user, signOut, isLoading } = useAuth();
@@ -28,14 +29,12 @@ export default function ProfileScreen() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [token]);
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
@@ -46,33 +45,33 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-row items-center px-5 pb-3 pt-16">
+    <View className={pantalla.root}>
+      <View className={pantalla.header}>
         <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className="text-emerald-400">Atras</Text>
+          <Text className={tipografia.enlace}>Atras</Text>
         </Pressable>
-        <Text className="flex-1 text-2xl font-bold text-white">Mi perfil</Text>
+        <Text className={tipografia.titulo}>Mi perfil</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 20 }}>
+      <ScrollView contentContainerStyle={pantalla.contenido}>
         {loading ? (
           <View className="items-center py-4">
             <ActivityIndicator color="#10b981" />
           </View>
         ) : null}
 
-        {error ? <Text className="text-sm text-red-400">{error}</Text> : null}
+        {error ? <Text className={tipografia.error}>{error}</Text> : null}
 
         <View className="items-center rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
           <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white/10">
             {profile?.avatarUrl ? (
-              <Image
-                source={{ uri: profile.avatarUrl }}
-                className="h-full w-full"
-                resizeMode="cover"
-              />
+              <Image source={{ uri: profile.avatarUrl }} className="h-full w-full" resizeMode="cover" />
             ) : (
-              <Text className="text-5xl">🐙</Text>
+              <Image
+                source={require('../assets/github-icon.webp')}
+                className="h-16 w-16"
+                resizeMode="contain"
+              />
             )}
           </View>
           <Text className="mt-4 text-xl font-bold text-white">
@@ -83,14 +82,11 @@ export default function ProfileScreen() {
           ) : null}
         </View>
 
-        <View className="gap-2 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
+        <View className={`gap-2 ${tarjeta.grande}`}>
           <Row label="Email" value={profile?.email ?? '—'} />
           <Row label="Usuario GitHub" value={profile?.githubUsername ?? '—'} />
           <Row label="Nombre" value={profile?.name ?? '—'} />
-          <Row
-            label="ID de GitHub"
-            value={profile?.githubId != null ? String(profile.githubId) : '—'}
-          />
+          <Row label="ID de GitHub" value={profile?.githubId != null ? String(profile.githubId) : '—'} />
           <Row label="Miembro desde" value={formatDate(profile?.createdAt)} />
         </View>
 
@@ -103,10 +99,8 @@ export default function ProfileScreen() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between border-b border-neutral-800 py-2 last:border-b-0">
-      <Text className="text-sm text-neutral-400">{label}</Text>
-      <Text className="ml-4 text-sm text-white" numberOfLines={1}>
-        {value}
-      </Text>
+      <Text className={tipografia.subtitulo}>{label}</Text>
+      <Text className="ml-4 text-sm text-white" numberOfLines={1}>{value}</Text>
     </View>
   );
 }

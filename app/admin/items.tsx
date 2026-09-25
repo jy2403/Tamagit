@@ -5,6 +5,7 @@ import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminC
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import type { Item } from '@/lib/types';
+import { pantalla } from '@/estilos';
 
 const fields: CrudField[] = [
   { key: 'name', label: 'Nombre', placeholder: 'Ej: Gorra Neo' },
@@ -79,7 +80,7 @@ export default function AdminItemsScreen() {
 
   if (isLoading || loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-neutral-950">
+      <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Text, TextInput, View } from 'react-native';
 import { Button } from '@/layout/Button';
+import { formulario, modal, tipografia } from '@/estilos';
 
 type ReasonPromptProps = {
   visible: boolean;
@@ -33,16 +34,16 @@ export function ReasonPrompt({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-      <View className="flex-1 items-center justify-center bg-black/70 px-6">
-        <View className="w-full rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
-          <Text className="text-lg font-semibold text-white">{title}</Text>
+      <View className={modal.overlay}>
+        <View className={modal.fondo}>
+          <Text className={tipografia.seccion}>{title}</Text>
           <TextInput
             value={reason}
             onChangeText={setReason}
             placeholder={placeholder}
             placeholderTextColor="#737373"
             multiline
-            className="mt-3 min-h-[80px] rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white"
+            className={formulario.textarea}
           />
           <View className="mt-4 flex-row gap-3">
             <Button title={loading ? 'Enviando...' : 'Confirmar'} onPress={confirm} disabled={loading} style={{ flex: 1 }} />

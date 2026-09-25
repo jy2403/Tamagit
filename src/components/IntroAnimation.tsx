@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Text } from 'react-native';
+import { Animated, Image, Text } from 'react-native';
 
 export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
   const opacity = useRef(new Animated.Value(1)).current;
@@ -33,17 +33,25 @@ export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
         { opacity },
       ]}
       pointerEvents="none">
-      <Animated.Text
-        style={[
-          {
+      <Animated.View
+        style={{
+          alignItems: 'center',
+          gap: 18,
+          transform: [{ scale }],
+        }}>
+        <Image
+          source={require('../../assets/github-icon.webp')}
+          style={{ width: 96, height: 96, resizeMode: 'contain' }}
+        />
+        <Text
+          style={{
             color: '#fff',
             fontSize: 28,
             fontFamily: 'PressStart2P_400Regular',
-          },
-          { transform: [{ scale }] },
-        ]}>
-        Tamagit
-      </Animated.Text>
+          }}>
+          Tamagit
+        </Text>
+      </Animated.View>
     </Animated.View>
   );
 }

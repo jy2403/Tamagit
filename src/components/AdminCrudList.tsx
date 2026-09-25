@@ -1,8 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { Field } from '@/components/Field';
+import { FeedbackBanner, type Feedback } from '@/components/FeedbackBanner';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { Button } from '@/layout/Button';
+import { boton, formulario, lista, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export type CrudField = {
   key: string;
@@ -57,6 +60,10 @@ export function AdminCrudList({
   const [form, setForm] = useState<CrudRow | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const onFeedbackDone = useCallback(() => setFeedback(null), []);
+  const [removing, setRemoving] = useState<CrudRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const iconKey = fields.find((f) => f.key === 'icon')?.key;
   const nameKey = fields.find((f) => f.key === 'name')?.key;
@@ -133,40 +140,44 @@ export function AdminCrudList({
     try {
       if (editing) {
         await onUpdate(form.id, data);
+        setFeedback({ tipo: 'exito', texto: `${singular} actualizado correctamente` });
       } else {
         await onCreate(data);
+        setFeedback({ tipo: 'exito', texto: `${singular} creado correctamente` });
       }
       setForm(null);
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo guardar');
+      setFeedback({ tipo: 'error', texto: e instanceof Error ? e.message : 'No se pudo guardar' });
     } finally {
       setSaving(false);
     }
   };
 
   const remove = (row: CrudRow) => {
-    const label = (nameKey ? row[nameKey] : row[fields[0].key]) ?? singular;
-    Alert.alert('Eliminar', `¿Seguro que quieres eliminar "${label}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await onDelete(row.id);
-          } catch (e) {
-            Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo eliminar');
-          }
-        },
-      },
-    ]);
+    setRemoving(row);
+  };
+
+  const confirmRemove = async () => {
+    if (!removing || deleting) return;
+    setDeleting(true);
+    setFeedback(null);
+    try {
+      await onDelete(removing.id);
+      setFeedback({ tipo: 'exito', texto: `${singular} eliminado correctamente.` });
+      setRemoving(null);
+    } catch (e) {
+      setRemoving(null);
+      setFeedback({ tipo: 'error', texto: e instanceof Error ? e.message : 'No se pudo eliminar' });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const header = (
     <View>
       {form ? (
-        <View className="mb-4 gap-3 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
-          <Text className="text-base font-semibold text-white">
+        <View className={`mb-4 gap-3 ${tarjeta.grande}`}>
+          <Text className={tipografia.seccion}>
             {editing ? 'Editar' : 'Nuevo'} {singular}
           </Text>
           {fields.map((f) => (
@@ -203,18 +214,18 @@ export function AdminCrudList({
         onChangeText={setQuery}
         placeholder={`Buscar ${title.toLowerCase()}...`}
         placeholderTextColor="#737373"
-        className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"
+        className={formulario.busqueda}
       />
     </View>
   );
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <View className="flex-row items-center px-5 pb-3 pt-16">
+    <View className={pantalla.root}>
+      <View className={pantalla.header}>
         <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className="text-emerald-400">Atras</Text>
+          <Text className={tipografia.enlace}>Atras</Text>
         </Pressable>
-        <Text className="flex-1 text-2xl font-bold text-white">{title}</Text>
+        <Text className={tipografia.titulo}>{title}</Text>
         <Button title="Nuevo" onPress={openCreate} variant="secondary" />
       </View>
 
@@ -224,8 +235,8 @@ export function AdminCrudList({
         contentContainerStyle={{ padding: 16 }}
         ListHeaderComponent={header}
         renderItem={({ item }) => (
-          <View className="mb-2 flex-row items-center rounded-xl border border-neutral-800 bg-neutral-900 p-3">
-            <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
+          <View className={lista.fila}>
+            <View className={lista.icono}>
               <Text className="text-xl">{iconKey ? (item[iconKey] ?? '❓') : '•'}</Text>
             </View>
             <View className="flex-1">
@@ -233,7 +244,7 @@ export function AdminCrudList({
                 {nameKey ? item[nameKey] : item[fields[0].key]}
               </Text>
               {extraKeys.length > 0 ? (
-                <Text className="text-xs text-neutral-400" numberOfLines={1}>
+                <Text className={tipografia.subtitulo} numberOfLines={1}>
                   {extraKeys
                     .map((k) => item[k])
                     .filter(Boolean)
@@ -241,21 +252,30 @@ export function AdminCrudList({
                 </Text>
               ) : null}
             </View>
-            <Pressable className="rounded-lg bg-white/10 px-3 py-2" onPress={() => openEdit(item)}>
-              <Text className="text-sm text-emerald-400">Editar</Text>
+            <Pressable className={boton.enlace} onPress={() => openEdit(item)}>
+              <Text className={tipografia.enlace}>Editar</Text>
             </Pressable>
-            <Pressable
-              className="ml-2 rounded-lg bg-white/10 px-3 py-2"
-              onPress={() => remove(item)}>
-              <Text className="text-sm text-red-400">Eliminar</Text>
+            <Pressable className={boton.enlace} onPress={() => remove(item)}>
+              <Text className={tipografia.error}>Eliminar</Text>
             </Pressable>
           </View>
         )}
         ListEmptyComponent={
-          <Text className="py-8 text-center text-sm text-neutral-500">
+          <Text className={lista.vacio}>
             {rows.length === 0 ? emptyMessage : `Sin resultados para "${query}".`}
           </Text>
         }
+      />
+      <FeedbackBanner feedback={feedback} onDone={onFeedbackDone} />
+
+      <ConfirmModal
+        visible={removing !== null}
+        title={`¿Eliminar "${removing ? (nameKey ? removing[nameKey] : removing[fields[0].key]) : ''}"?`}
+        message={`Se eliminará ${singular}. Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        loading={deleting}
+        onConfirm={() => void confirmRemove()}
+        onCancel={() => setRemoving(null)}
       />
     </View>
   );

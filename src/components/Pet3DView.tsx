@@ -16,6 +16,7 @@ type Pet3DViewProps = {
   color?: number | string;
   species?: string;
   style?: StyleProp<ViewStyle>;
+  simple?: boolean;
 };
 
 const BODY = 0x10b981;
@@ -28,10 +29,10 @@ const ACCENT = 0xf9a8d4;
 const MIN_DIST = 2.0;
 const MAX_DIST = 9.0;
 
-export function Pet3DView({ color = BODY, style }: Pet3DViewProps) {
+export function Pet3DView({ color = BODY, style, simple = false }: Pet3DViewProps) {
   const yawRef = useRef(0);
   const lastXRef = useRef(0);
-  const distRef = useRef(4.2);
+  const distRef = useRef(simple ? 1.35 : 4.2);
   const pinchRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
@@ -107,8 +108,14 @@ export function Pet3DView({ color = BODY, style }: Pet3DViewProps) {
       0.1,
       100
     );
-    camera.position.set(0, 0.85, distRef.current);
-    camera.lookAt(0, 0.85, 0);
+    if (simple) {
+      // Zoom moderado y cabeza asentada mas abajo para encuadrar solo el rostro
+      camera.position.set(0, 0.4, 1.35);
+      camera.lookAt(0, 0.18, 0);
+    } else {
+      camera.position.set(0, 0.85, distRef.current);
+      camera.lookAt(0, 0.85, 0);
+    }
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.75));
 
@@ -174,7 +181,9 @@ export function Pet3DView({ color = BODY, style }: Pet3DViewProps) {
       sy = 1,
       sz = 1
     ) => {
-      const geo = new THREE.SphereGeometry(r, 24, 18);
+      const segW = simple ? 12 : 24;
+      const segH = simple ? 10 : 18;
+      const geo = new THREE.SphereGeometry(r, segW, segH);
       geo.scale(sx, sy, sz);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(x, y, z);
@@ -182,66 +191,87 @@ export function Pet3DView({ color = BODY, style }: Pet3DViewProps) {
       return mesh;
     };
 
-    // Feet
-    addBox(group, 0.24, 0.14, 0.34, darkMat, -0.16, 0.07, 0.03);
-    addBox(group, 0.24, 0.14, 0.34, darkMat, 0.16, 0.07, 0.03);
+    if (simple) {
+      // Cabeza identica a la del detalle (mismas coordenadas, sin antenas),
+      // con giro fijo en 3/4 para que se lea como 3D. No se controla ni anima.
+      addSphere(group, 0.32, headMat, 0, 1.58, 0, 1, 1.05, 0.95);
+      addSphere(group, 0.11, whiteMat, -0.12, 1.64, 0.27, 1, 1.25, 0.55);
+      addSphere(group, 0.11, whiteMat, 0.12, 1.64, 0.27, 1, 1.25, 0.55);
+      addSphere(group, 0.055, eyeMat, -0.12, 1.63, 0.36, 1, 1.2, 0.6);
+      addSphere(group, 0.055, eyeMat, 0.12, 1.63, 0.36, 1, 1.2, 0.6);
+      addSphere(group, 0.07, accentMat, -0.23, 1.5, 0.25, 1, 0.7, 0.5);
+      addSphere(group, 0.07, accentMat, 0.23, 1.5, 0.25, 1, 0.7, 0.5);
+      addSphere(group, 0.1, darkMat, 0, 1.96, 0, 0.7, 1, 0.7);
+      group.position.y = -1.74;
+      group.rotation.y = -0.55;
+    } else {
+      // Feet
+      addBox(group, 0.24, 0.14, 0.34, darkMat, -0.16, 0.07, 0.03);
+      addBox(group, 0.24, 0.14, 0.34, darkMat, 0.16, 0.07, 0.03);
 
-    // Legs
-    addBox(group, 0.22, 0.5, 0.24, darkMat, -0.16, 0.38, 0);
-    addBox(group, 0.22, 0.5, 0.24, darkMat, 0.16, 0.38, 0);
+      // Legs
+      addBox(group, 0.22, 0.5, 0.24, darkMat, -0.16, 0.38, 0);
+      addBox(group, 0.22, 0.5, 0.24, darkMat, 0.16, 0.38, 0);
 
-    // Torso
-    addBox(group, 0.56, 0.62, 0.36, bodyMat, 0, 0.94, 0);
+      // Torso
+      addBox(group, 0.56, 0.62, 0.36, bodyMat, 0, 0.94, 0);
 
-    // Belly patch
-    addSphere(group, 0.2, accentMat, 0, 0.94, 0.14, 1, 0.8, 0.6);
+      // Belly patch
+      addSphere(group, 0.2, accentMat, 0, 0.94, 0.14, 1, 0.8, 0.6);
 
-    // Arms (out to the sides so the turn is visible)
-    addBox(group, 0.16, 0.58, 0.16, bodyMat, -0.38, 0.94, 0);
-    addBox(group, 0.16, 0.58, 0.16, bodyMat, 0.38, 0.94, 0);
+      // Arms (out to the sides so the turn is visible)
+      addBox(group, 0.16, 0.58, 0.16, bodyMat, -0.38, 0.94, 0);
+      addBox(group, 0.16, 0.58, 0.16, bodyMat, 0.38, 0.94, 0);
 
-    // Hands
-    addSphere(group, 0.11, headMat, -0.42, 1.18, 0, 1, 1, 0.8);
-    addSphere(group, 0.11, headMat, 0.42, 1.18, 0, 1, 1, 0.8);
+      // Hands
+      addSphere(group, 0.11, headMat, -0.42, 1.18, 0, 1, 1, 0.8);
+      addSphere(group, 0.11, headMat, 0.42, 1.18, 0, 1, 1, 0.8);
 
-    // Head
-    addSphere(group, 0.32, headMat, 0, 1.58, 0, 1, 1.05, 0.95);
+      // Head
+      addSphere(group, 0.32, headMat, 0, 1.58, 0, 1, 1.05, 0.95);
 
-    // Eyes (whites on the front)
-    addSphere(group, 0.11, whiteMat, -0.12, 1.64, 0.27, 1, 1.25, 0.55);
-    addSphere(group, 0.11, whiteMat, 0.12, 1.64, 0.27, 1, 1.25, 0.55);
+      // Eyes (whites on the front)
+      addSphere(group, 0.11, whiteMat, -0.12, 1.64, 0.27, 1, 1.25, 0.55);
+      addSphere(group, 0.11, whiteMat, 0.12, 1.64, 0.27, 1, 1.25, 0.55);
 
-    // Pupils
-    addSphere(group, 0.055, eyeMat, -0.12, 1.63, 0.36, 1, 1.2, 0.6);
-    addSphere(group, 0.055, eyeMat, 0.12, 1.63, 0.36, 1, 1.2, 0.6);
+      // Pupils
+      addSphere(group, 0.055, eyeMat, -0.12, 1.63, 0.36, 1, 1.2, 0.6);
+      addSphere(group, 0.055, eyeMat, 0.12, 1.63, 0.36, 1, 1.2, 0.6);
 
-    // Cheeks
-    addSphere(group, 0.07, accentMat, -0.23, 1.5, 0.25, 1, 0.7, 0.5);
-    addSphere(group, 0.07, accentMat, 0.23, 1.5, 0.25, 1, 0.7, 0.5);
+      // Cheeks
+      addSphere(group, 0.07, accentMat, -0.23, 1.5, 0.25, 1, 0.7, 0.5);
+      addSphere(group, 0.07, accentMat, 0.23, 1.5, 0.25, 1, 0.7, 0.5);
 
-    // Little tuft on top
-    addSphere(group, 0.1, darkMat, 0, 1.96, 0, 0.7, 1, 0.7);
+      // Little tuft on top
+      addSphere(group, 0.1, darkMat, 0, 1.96, 0, 0.7, 1, 0.7);
 
-    // Little wings on the back so you see them travel when spinning
-    addBox(group, 0.08, 0.3, 0.18, accentMat, -0.5, 1.0, -0.05);
-    addBox(group, 0.08, 0.3, 0.18, accentMat, 0.5, 1.0, -0.05);
+      // Little wings on the back so you see them travel when spinning
+      addBox(group, 0.08, 0.3, 0.18, accentMat, -0.5, 1.0, -0.05);
+      addBox(group, 0.08, 0.3, 0.18, accentMat, 0.5, 1.0, -0.05);
+    }
 
-    group.scale.set(1.18, 1.18, 1.18);
+    group.scale.setScalar(1.18);
     scene.add(group);
     meshRef.current = group;
 
-    const loop = () => {
-      yawRef.current += 0.008;
-      if (meshRef.current) {
-        meshRef.current.rotation.y = yawRef.current;
-        meshRef.current.position.y = -0.12;
-      }
-      camera.position.z = distRef.current;
+    if (simple) {
+      // Estatico: una sola pasada de render, la tarjeta no se controla ni anima
       renderer.render(scene, camera);
       gl.endFrameEXP();
+    } else {
+      const loop = () => {
+        yawRef.current += 0.008;
+        if (meshRef.current) {
+          meshRef.current.rotation.y = yawRef.current;
+          meshRef.current.position.y = -0.12;
+        }
+        camera.position.z = distRef.current;
+        renderer.render(scene, camera);
+        gl.endFrameEXP();
+        rafRef.current = requestAnimationFrame(loop);
+      };
       rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
+    }
   };
 
   return (
@@ -250,7 +280,7 @@ export function Pet3DView({ color = BODY, style }: Pet3DViewProps) {
         { overflow: 'hidden', backgroundColor: '#171717' },
         style,
       ]}
-      {...panResponder.panHandlers}>
+      {...(simple ? {} : panResponder.panHandlers)}>
       <GLView style={{ flex: 1 }} onContextCreate={onContextCreate} />
     </View>
   );
