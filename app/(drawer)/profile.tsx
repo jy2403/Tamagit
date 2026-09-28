@@ -68,7 +68,7 @@ export default function ProfileScreen() {
               <Image source={{ uri: profile.avatarUrl }} className="h-full w-full" resizeMode="cover" />
             ) : (
               <Image
-                source={require('../assets/github-icon.webp')}
+                source={require('../../assets/github-icon.webp')}
                 className="h-16 w-16"
                 resizeMode="contain"
               />
