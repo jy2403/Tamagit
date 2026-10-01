@@ -30,13 +30,22 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.juanf24steam.tamagit"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.juanf24steam.tamagit"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "115c76ee-2d9f-404d-aa4c-0f63accac48e"
       }
-    }
+    },
+    "owner": "juanf24s-team"
   }
 }
