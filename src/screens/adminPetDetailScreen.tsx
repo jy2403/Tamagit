@@ -1,8 +1,6 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Pressable,
@@ -11,106 +9,40 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
-import type { Item, PetDetail } from '@/lib/types';
-import { Button } from '@/layout/Button';
 import { ReasonPrompt } from '@/components/ReasonPrompt';
+import { Button } from '@/layout/Button';
+import { useAdminPet, usePetItems } from '@/hooks/useAdminPet';
+import { useReasonedAction } from '@/hooks/useReasonedAction';
+import { apiFetch } from '@/lib/api';
 import { lista, modal, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function AdminPetDetailScreen() {
   const { petId } = useLocalSearchParams<{ petId: string }>();
   const { token, user: currentUser, isLoading } = useAuth();
   const router = useRouter();
-  const [pet, setPet] = useState<PetDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState<null | {
-    kind: 'removeItem' | 'deletePet';
-    itemId?: number;
-    itemName?: string;
-  }>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const { pet, loading, error, load, deletePet } = useAdminPet(petId);
+  const { pickerOpen, catalog, catalogLoading, openPicker, closePicker, addItem } = usePetItems(
+    petId,
+    load
+  );
+  const { prompt, submitting, start, cancel, confirm } = useReasonedAction();
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [catalog, setCatalog] = useState<Item[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!token || !petId) return;
-    try {
-      const data = await apiFetch<PetDetail>(`/pets/${petId}`, { token });
-      setPet(data);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo cargar la mascota');
-    } finally {
-      setLoading(false);
-    }
-  }, [token, petId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const openPicker = useCallback(async () => {
-    if (!token) return;
-    setPickerOpen(true);
-    setCatalogLoading(true);
-    try {
-      const data = await apiFetch<Item[]>('/items', { token });
-      setCatalog(data);
-    } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudieron cargar los items');
-    } finally {
-      setCatalogLoading(false);
-    }
-  }, [token]);
-
-  const addItem = useCallback(
-    async (item: Item) => {
-      if (!token || !petId) return;
-      try {
-        await apiFetch(`/pets/${petId}/items`, {
+  const confirmWithReason = async (reason: string) => {
+    if (!token || !petId || !prompt) return;
+    const r = reason || 'Sin motivo indicado';
+    await confirm(async () => {
+      if (prompt.kind === 'removeItem' && prompt.itemId) {
+        await apiFetch(`/pets/${petId}/items/${prompt.itemId}`, {
           token,
-          method: 'POST',
-          body: { itemId: item.id },
+          method: 'DELETE',
+          body: { reason: r },
         });
-        setPickerOpen(false);
         await load();
-      } catch (e) {
-        Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo añadir el item');
+      } else if (prompt.kind === 'deletePet') {
+        await deletePet(r);
       }
-    },
-    [token, petId, load]
-  );
-
-  const confirmWithReason = useCallback(
-    (reason: string) => {
-      if (!token || !petId || !prompt) return;
-      setSubmitting(true);
-      const r = reason || 'Sin motivo indicado';
-      void (async () => {
-        try {
-          if (prompt.kind === 'removeItem' && prompt.itemId) {
-            await apiFetch(`/pets/${petId}/items/${prompt.itemId}`, {
-              token,
-              method: 'DELETE',
-              body: { reason: r },
-            });
-            await load();
-          } else if (prompt.kind === 'deletePet') {
-            await apiFetch(`/pets/${petId}`, { token, method: 'DELETE', body: { reason: r } });
-            router.back();
-          }
-        } catch (e) {
-          Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo completar la acción');
-        } finally {
-          setSubmitting(false);
-        }
-      })();
-    },
-    [token, petId, prompt, load, router]
-  );
+    });
+  };
 
   if (isLoading || loading) {
     return (
@@ -164,7 +96,7 @@ export default function AdminPetDetailScreen() {
             </View>
             <Button
               title="Eliminar mascota"
-              onPress={() => setPrompt({ kind: 'deletePet' })}
+              onPress={() => start({ kind: 'deletePet' })}
               variant="ghost"
               style={{ marginTop: 12 }}
             />
@@ -199,7 +131,7 @@ export default function AdminPetDetailScreen() {
                   <Pressable
                     className="rounded-lg bg-white/10 px-3 py-2"
                     onPress={() =>
-                      setPrompt({ kind: 'removeItem', itemId: pi.itemId, itemName: pi.item.name })
+                      start({ kind: 'removeItem', itemId: pi.itemId, itemName: pi.item.name })
                     }>
                     <Text className={tipografia.error}>Quitar</Text>
                   </Pressable>
@@ -224,19 +156,15 @@ export default function AdminPetDetailScreen() {
         }
         loading={submitting}
         onConfirm={confirmWithReason}
-        onCancel={() => setPrompt(null)}
+        onCancel={cancel}
       />
 
-      <Modal
-        visible={pickerOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPickerOpen(false)}>
+      <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={closePicker}>
         <View className={modal.overlayInferior}>
           <View className={modal.fondoInferior}>
             <View className="mb-3 flex-row items-center justify-between">
               <Text className="text-lg font-semibold text-white">Elegir item</Text>
-              <Pressable onPress={() => setPickerOpen(false)} className="px-2 py-1">
+              <Pressable onPress={closePicker} className="px-2 py-1">
                 <Text className={tipografia.enlace}>Cerrar</Text>
               </Pressable>
             </View>

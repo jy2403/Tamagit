@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Image, Text } from 'react-native';
 
 export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
-  const opacity = useRef(new Animated.Value(1)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
+  const [opacity] = useState(() => new Animated.Value(1));
+  const [scale] = useState(() => new Animated.Value(0.8));
 
   useEffect(() => {
     Animated.sequence([
@@ -14,7 +14,7 @@ export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
       // se desvanece todo el overlay
       Animated.timing(opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
     ]).start(() => onFinish());
-  }, []);
+  }, [onFinish, opacity, scale]);
 
   return (
     <Animated.View

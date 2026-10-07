@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
+import { useFeedbackAnimation } from '@/hooks/useFeedbackAnimation';
 import { mensajes } from '@/estilos';
 
 export type Feedback = { tipo: 'exito' | 'error'; texto: string } | null;
@@ -10,27 +10,7 @@ type Props = {
 };
 
 export function FeedbackBanner({ feedback, onDone }: Props) {
-  const [anim] = useState(() => new Animated.Value(0));
-
-  useEffect(() => {
-    if (!feedback) return;
-    anim.setValue(0);
-    Animated.sequence([
-      Animated.spring(anim, {
-        toValue: 1,
-        useNativeDriver: true,
-        friction: 8,
-      }),
-      Animated.delay(2200),
-      Animated.timing(anim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) onDone();
-    });
-  }, [feedback, anim, onDone]);
+  const anim = useFeedbackAnimation(feedback, onDone);
 
   if (!feedback) return null;
 

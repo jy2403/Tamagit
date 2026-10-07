@@ -1,9 +1,8 @@
 import { Redirect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { useAdminCrud } from '@/hooks/useAdminCrud';
 import type { Food } from '@/lib/types';
 import { pantalla } from '@/estilos';
 
@@ -29,71 +28,22 @@ function toRow(food: Food): CrudRow {
   };
 }
 
+function fromRow(data: Record<string, string>) {
+  return {
+    name: data.name,
+    size: data.size || 'medium',
+    hungerRestore: Number(data.hungerRestore) || 30,
+    price: Number(data.price) || 0,
+  };
+}
+
 export default function AdminFoodsScreen() {
   const { token, isLoading } = useAuth();
-  const [rows, setRows] = useState<CrudRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await apiFetch<Food[]>('/foods', { token });
-      setRows(data.map(toRow));
-    } catch {
-      Alert.alert('Error', 'No se pudieron cargar las comidas');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const onCreate = useCallback(
-    async (data: Record<string, string>) => {
-      if (!token) return;
-      await apiFetch('/foods', {
-        token,
-        method: 'POST',
-        body: {
-          name: data.name,
-          size: data.size || 'medium',
-          hungerRestore: Number(data.hungerRestore) || 30,
-          price: Number(data.price) || 0,
-        },
-      });
-      await load();
-    },
-    [token, load]
-  );
-
-  const onUpdate = useCallback(
-    async (id: string, data: Record<string, string>) => {
-      if (!token) return;
-      await apiFetch(`/foods/${id}`, {
-        token,
-        method: 'PATCH',
-        body: {
-          name: data.name,
-          size: data.size || 'medium',
-          hungerRestore: Number(data.hungerRestore) || 30,
-          price: Number(data.price) || 0,
-        },
-      });
-      await load();
-    },
-    [token, load]
-  );
-
-  const onDelete = useCallback(
-    async (id: string) => {
-      if (!token) return;
-      await apiFetch(`/foods/${id}`, { token, method: 'DELETE' });
-      await load();
-    },
-    [token, load]
-  );
+  const { rows, loading, onCreate, onUpdate, onDelete } = useAdminCrud<Food>({
+    resourcePath: '/foods',
+    toRow,
+    fromRow,
+  });
 
   if (isLoading || loading) {
     return (

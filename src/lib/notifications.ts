@@ -22,7 +22,9 @@ export async function showNotificationsOnce(token: string | null) {
           text: 'Entendido',
           onPress: () => {
             void notifications.map((n) =>
-              apiFetch(`/notifications/${n.id}/read`, { token, method: 'PATCH', body: {} }).catch(() => {})
+              apiFetch(`/notifications/${n.id}/read`, { token, method: 'PATCH', body: {} }).catch(
+                () => {}
+              )
             );
           },
         },

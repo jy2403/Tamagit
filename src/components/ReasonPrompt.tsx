@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Modal, Text, TextInput, View } from 'react-native';
 import { Button } from '@/layout/Button';
+import { useReasonPrompt } from '@/hooks/useReasonPrompt';
 import { formulario, modal, tipografia } from '@/estilos';
 
 type ReasonPromptProps = {
@@ -20,20 +20,14 @@ export function ReasonPrompt({
   onCancel,
   loading = false,
 }: ReasonPromptProps) {
-  const [reason, setReason] = useState('');
-
-  const close = () => {
-    setReason('');
-    onCancel();
-  };
-
-  const confirm = () => {
-    onConfirm(reason.trim());
-    setReason('');
-  };
+  const { reason, setReason, confirm, cancel } = useReasonPrompt();
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => cancel(onCancel)}>
       <View className={modal.overlay}>
         <View className={modal.fondo}>
           <Text className={tipografia.seccion}>{title}</Text>
@@ -46,8 +40,19 @@ export function ReasonPrompt({
             className={formulario.textarea}
           />
           <View className="mt-4 flex-row gap-3">
-            <Button title={loading ? 'Enviando...' : 'Confirmar'} onPress={confirm} disabled={loading} style={{ flex: 1 }} />
-            <Button title="Cancelar" onPress={close} variant="secondary" disabled={loading} style={{ flex: 1 }} />
+            <Button
+              title={loading ? 'Enviando...' : 'Confirmar'}
+              onPress={() => confirm(onConfirm)}
+              disabled={loading}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="Cancelar"
+              onPress={() => cancel(onCancel)}
+              variant="secondary"
+              disabled={loading}
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </View>

@@ -55,7 +55,8 @@ export const formulario = {
   requerido: 'text-red-400',
   contador: 'text-xs text-neutral-500',
   input: 'rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white',
-  textarea: 'mt-3 min-h-[80px] rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white',
+  textarea:
+    'mt-3 min-h-[80px] rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-white',
   busqueda: 'mb-4 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white',
   error: 'text-xs text-red-400',
 } as const;
@@ -67,12 +68,14 @@ export const mensajesError = {
 
 export const mensajes = {
   exito: {
-    bloque: 'flex-row items-center gap-2.5 rounded-2xl border border-emerald-700 bg-emerald-950/90 px-4 py-3',
+    bloque:
+      'flex-row items-center gap-2.5 rounded-2xl border border-emerald-700 bg-emerald-950/90 px-4 py-3',
     icono: 'text-lg font-bold text-emerald-400',
     texto: 'flex-1 text-sm text-emerald-300',
   },
   error: {
-    bloque: 'flex-row items-center gap-2.5 rounded-2xl border border-red-800 bg-red-950/90 px-4 py-3',
+    bloque:
+      'flex-row items-center gap-2.5 rounded-2xl border border-red-800 bg-red-950/90 px-4 py-3',
     icono: 'text-lg font-bold text-red-400',
     texto: 'flex-1 text-sm text-red-300',
   },

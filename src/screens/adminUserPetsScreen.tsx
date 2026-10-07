@@ -1,37 +1,14 @@
-import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
-import type { UserPets } from '@/lib/types';
+import { useUserPets } from '@/hooks/useUserPets';
 import { lista, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function AdminUserPetsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token, user: currentUser, isLoading } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<UserPets | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!token || !id) return;
-    try {
-      const result = await apiFetch<UserPets>(`/users/${id}/pets`, { token });
-      setData(result);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudieron cargar las mascotas');
-    } finally {
-      setLoading(false);
-    }
-  }, [token, id]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void load();
-    }, [load])
-  );
+  const { data, loading, error, load } = useUserPets(id);
 
   if (isLoading || loading) {
     return (

@@ -76,9 +76,24 @@ export default function AdminScreen() {
         <View>
           <Text className="mb-2 text-lg font-semibold text-white">Gestión de contenido</Text>
           <View className="gap-2">
-            <AdminLink href="/admin/items" icon="🎩" title="Items" description="Cosméticos para las mascotas" />
-            <AdminLink href="/admin/foods" icon="🍎" title="Comidas" description="Alimentos para las mascotas" />
-            <AdminLink href="/admin/users" icon="👤" title="Usuarios" description="Gestionar usuarios y baneos" />
+            <AdminLink
+              href="/admin/items"
+              icon="🎩"
+              title="Items"
+              description="Cosméticos para las mascotas"
+            />
+            <AdminLink
+              href="/admin/foods"
+              icon="🍎"
+              title="Comidas"
+              description="Alimentos para las mascotas"
+            />
+            <AdminLink
+              href="/admin/users"
+              icon="👤"
+              title="Usuarios"
+              description="Gestionar usuarios y baneos"
+            />
           </View>
         </View>
       </ScrollView>

@@ -1,9 +1,8 @@
 import { Redirect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { useAdminCrud } from '@/hooks/useAdminCrud';
 import type { Item } from '@/lib/types';
 import { pantalla } from '@/estilos';
 
@@ -22,61 +21,21 @@ function toRow(item: Item): CrudRow {
   };
 }
 
+function fromRow(data: Record<string, string>) {
+  return {
+    name: data.name,
+    price: Number(data.price) || 0,
+    category: data.category || null,
+  };
+}
+
 export default function AdminItemsScreen() {
   const { token, isLoading } = useAuth();
-  const [rows, setRows] = useState<CrudRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await apiFetch<Item[]>('/items', { token });
-      setRows(data.map(toRow));
-    } catch {
-      Alert.alert('Error', 'No se pudieron cargar los items');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const onCreate = useCallback(
-    async (data: Record<string, string>) => {
-      if (!token) return;
-      await apiFetch('/items', {
-        token,
-        method: 'POST',
-        body: { name: data.name, price: Number(data.price) || 0, category: data.category || null },
-      });
-      await load();
-    },
-    [token, load]
-  );
-
-  const onUpdate = useCallback(
-    async (id: string, data: Record<string, string>) => {
-      if (!token) return;
-      await apiFetch(`/items/${id}`, {
-        token,
-        method: 'PATCH',
-        body: { name: data.name, price: Number(data.price) || 0, category: data.category || null },
-      });
-      await load();
-    },
-    [token, load]
-  );
-
-  const onDelete = useCallback(
-    async (id: string) => {
-      if (!token) return;
-      await apiFetch(`/items/${id}`, { token, method: 'DELETE' });
-      await load();
-    },
-    [token, load]
-  );
+  const { rows, loading, onCreate, onUpdate, onDelete } = useAdminCrud<Item>({
+    resourcePath: '/items',
+    toRow,
+    fromRow,
+  });
 
   if (isLoading || loading) {
     return (
