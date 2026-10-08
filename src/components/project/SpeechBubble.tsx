@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
-import { Modal, PanResponder, Pressable, ScrollView, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useBubbleScrollbar } from '@/hooks/useBubbleScrollbar';
 import { FormattedText } from './FormattedText';
-
-const TRACK_H = 120;
 
 type SpeechBubbleProps = {
   text: string;
@@ -11,48 +10,19 @@ type SpeechBubbleProps = {
 
 export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
   const [expanded, setExpanded] = useState(false);
-  const [scrollPos, setScrollPos] = useState(0);
-  const [vpH, setVpH] = useState(0);
-  const [cH, setCH] = useState(0);
   const content = loading ? 'Pensando...' : text || '';
-  const scrollViewRef = useRef<ScrollView>(null);
-
-  const isScrollable = cH > vpH + 1;
-  const thumbH = isScrollable && cH > 0 ? Math.max(18, TRACK_H * (vpH / cH)) : TRACK_H;
-  const thumbPos = isScrollable && cH - vpH > 0 ? scrollPos * ((TRACK_H - thumbH) / (cH - vpH)) : 0;
-  const thumbPosAtGrant = useRef(0);
-
-  const scrollTo = (target: number) => {
-    scrollViewRef.current?.scrollTo({ y: target, animated: false });
-  };
-
-  const startDrag = () => {
-    thumbPosAtGrant.current = thumbPos;
-  };
-
-  const moveDrag = (dy: number) => {
-    const maxTrack = TRACK_H - thumbH;
-    const clamped = Math.max(0, Math.min(maxTrack, thumbPosAtGrant.current + dy));
-    scrollTo((clamped / maxTrack) * (cH - vpH));
-  };
-
-  const tapTrack = (yWithinTrack: number) => {
-    const ratio = Math.max(0, Math.min(1, yWithinTrack / TRACK_H));
-    scrollTo(ratio * (cH - vpH));
-  };
-
-  const thumbDrag = useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => isScrollable,
-        onMoveShouldSetPanResponder: () => isScrollable,
-        onPanResponderGrant: startDrag,
-        onPanResponderMove: (_, g) => moveDrag(g.dy),
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isScrollable]
-  );
+  const {
+    scrollViewRef,
+    isScrollable,
+    thumbH,
+    thumbPos,
+    panHandlers,
+    tapTrack,
+    onLayout,
+    onContentSizeChange,
+    onScroll,
+    reset,
+  } = useBubbleScrollbar();
 
   return (
     <>
@@ -89,11 +59,7 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
         transparent
         animationType="fade"
         onRequestClose={() => setExpanded(false)}
-        onShow={() => {
-          setScrollPos(0);
-          setVpH(0);
-          setCH(0);
-        }}>
+        onShow={reset}>
         <Pressable
           className="flex-1 items-center justify-center bg-black/70 px-6"
           onPress={() => setExpanded(false)}>
@@ -114,9 +80,9 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
                 className="mt-2 flex-1"
                 style={{ maxHeight: 260 }}
                 showsVerticalScrollIndicator={false}
-                onLayout={(e) => setVpH(e.nativeEvent.layout.height)}
-                onContentSizeChange={(_w, h) => setCH(h)}
-                onScroll={(e) => setScrollPos(e.nativeEvent.contentOffset.y)}
+                onLayout={onLayout}
+                onContentSizeChange={onContentSizeChange}
+                onScroll={onScroll}
                 scrollEventThrottle={16}>
                 <FormattedText
                   text={content}
@@ -134,7 +100,7 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
                   hitSlop={4}>
                   <View className="h-full w-full rounded-full bg-neutral-800/70">
                     <Pressable
-                      {...thumbDrag.panHandlers}
+                      {...panHandlers}
                       className="w-full rounded-full bg-emerald-400/90"
                       style={{ height: thumbH, transform: [{ translateY: thumbPos }] }}
                       hitSlop={8}

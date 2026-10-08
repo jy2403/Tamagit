@@ -4,6 +4,9 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { showNotificationsOnce } from '@/lib/notifications';
 import type { Project } from '@/lib/types';
+import { useDebouncedValue } from './useDebouncedValue';
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 export function useProjects() {
   const { token } = useAuth();
@@ -64,8 +67,10 @@ export function useProjects() {
       .finally(() => setRefreshing(false));
   }, [fetchProjects, applyProjects]);
 
+  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     if (!q) return projects;
     return projects.filter(
       (p) =>
@@ -73,7 +78,7 @@ export function useProjects() {
         (p.fullName ?? '').toLowerCase().includes(q) ||
         p.tools.some((t) => t.toLowerCase().includes(q))
     );
-  }, [projects, query]);
+  }, [projects, debouncedQuery]);
 
   const pets = useMemo(
     () =>

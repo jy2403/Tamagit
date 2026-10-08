@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { PanResponder, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { useDishDrag } from '@/hooks/useDishDrag';
 import type { Dish } from '@/lib/types';
 
 const TIER_META = {
@@ -16,32 +16,13 @@ type DraggableDishProps = {
 };
 
 export function DraggableDish({ dish, onStart, onMove, onEnd }: DraggableDishProps) {
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (_, g) => {
-          onStart(dish, { moveX: g.moveX, moveY: g.moveY });
-        },
-        onPanResponderMove: (_, g) => {
-          onMove({ moveX: g.moveX, moveY: g.moveY });
-        },
-        onPanResponderRelease: (_, g) => {
-          onEnd(dish, { moveX: g.moveX, moveY: g.moveY });
-        },
-        onPanResponderTerminate: () => {
-          onEnd(dish, { moveX: -9999, moveY: -9999 });
-        },
-      }),
-    [dish, onStart, onMove, onEnd]
-  );
+  const { panHandlers } = useDishDrag(dish, { onStart, onMove, onEnd });
 
   const meta = TIER_META[dish.tier];
 
   return (
     <View
-      {...panResponder.panHandlers}
+      {...panHandlers}
       className="w-[200px] rounded-2xl border border-neutral-700 bg-neutral-900 p-3">
       <View className="items-center py-2">
         <Text className="text-5xl">{dish.food?.imageUrl ?? meta.emoji}</Text>
