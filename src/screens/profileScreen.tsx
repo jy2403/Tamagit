@@ -2,15 +2,17 @@ import { Redirect, useRouter } from 'expo-router';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/layout/Button';
 import { pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function ProfileScreen() {
-  const { token, signOut, isLoading } = useAuth();
+  const { signOut } = useAuth();
   const router = useRouter();
+  const authStatus = useRequireAuth();
   const { profile, loading, error } = useProfile();
 
-  if (isLoading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -18,7 +20,7 @@ export default function ProfileScreen() {
     );
   }
 
-  if (!token) {
+  if (authStatus === 'anonymous') {
     return <Redirect href="/login" />;
   }
 

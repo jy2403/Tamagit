@@ -13,12 +13,13 @@ import { ReasonPrompt } from '@/components/ReasonPrompt';
 import { Button } from '@/layout/Button';
 import { useAdminPet, usePetItems } from '@/hooks/useAdminPet';
 import { useReasonedAction } from '@/hooks/useReasonedAction';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { apiFetch } from '@/lib/api';
 import { lista, modal, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function AdminPetDetailScreen() {
   const { petId } = useLocalSearchParams<{ petId: string }>();
-  const { token, user: currentUser, isLoading } = useAuth();
+  const { token } = useAuth();
   const router = useRouter();
   const { pet, loading, error, load, deletePet } = useAdminPet(petId);
   const { pickerOpen, catalog, catalogLoading, openPicker, closePicker, addItem } = usePetItems(
@@ -26,6 +27,7 @@ export default function AdminPetDetailScreen() {
     load
   );
   const { prompt, submitting, start, cancel, confirm } = useReasonedAction();
+  const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
   const confirmWithReason = async (reason: string) => {
     if (!token || !petId || !prompt) return;
@@ -44,7 +46,7 @@ export default function AdminPetDetailScreen() {
     });
   };
 
-  if (isLoading || loading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -52,11 +54,11 @@ export default function AdminPetDetailScreen() {
     );
   }
 
-  if (!token) {
+  if (authStatus === 'anonymous') {
     return <Redirect href="/login" />;
   }
 
-  if (!currentUser?.isAdmin) {
+  if (authStatus === 'forbidden') {
     return (
       <View className={pantalla.rootCentered}>
         <Text className="text-neutral-400">Sin permisos de administrador.</Text>

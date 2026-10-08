@@ -13,12 +13,14 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { Pet3DView } from '@/components/Pet3DView';
 import { useProjects } from '@/hooks/useProjects';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/layout/Button';
 import { boton, formulario, lista, mascota, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function ProjectsScreen() {
-  const { token, user, signOut, isLoading } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
+  const authStatus = useRequireAuth();
   const {
     projects,
     filtered,
@@ -35,7 +37,7 @@ export default function ProjectsScreen() {
   const { width } = useWindowDimensions();
   const anchoTarjeta = Math.min(Math.round(width * 0.42), 190);
 
-  if (isLoading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -43,7 +45,7 @@ export default function ProjectsScreen() {
     );
   }
 
-  if (!token) {
+  if (authStatus === 'anonymous') {
     return <Redirect href="/login" />;
   }
 

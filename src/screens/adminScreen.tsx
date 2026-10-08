@@ -1,6 +1,6 @@
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { pantalla, tarjeta, tipografia } from '@/estilos';
 
 type AdminLinkProps = {
@@ -29,10 +29,10 @@ function AdminLink({ href, icon, title, description }: AdminLinkProps) {
 }
 
 export default function AdminScreen() {
-  const { token, user, isLoading } = useAuth();
   const router = useRouter();
+  const authStatus = useRequireAuth({ admin: true });
 
-  if (isLoading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -40,9 +40,9 @@ export default function AdminScreen() {
     );
   }
 
-  if (!token) return <Redirect href="/login" />;
+  if (authStatus === 'anonymous') return <Redirect href="/login" />;
 
-  if (!user?.isAdmin) {
+  if (authStatus === 'forbidden') {
     return (
       <View className={pantalla.root}>
         <View className={pantalla.header}>

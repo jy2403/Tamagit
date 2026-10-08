@@ -1,24 +1,24 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
 import { useUserPets } from '@/hooks/useUserPets';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { lista, pantalla, tarjeta, tipografia } from '@/estilos';
 
 export default function AdminUserPetsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { token, user: currentUser, isLoading } = useAuth();
   const router = useRouter();
   const { data, loading, error, load } = useUserPets(id);
+  const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
-  if (isLoading || loading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
   }
-  if (!token) return <Redirect href="/login" />;
-  if (!currentUser?.isAdmin) {
+  if (authStatus === 'anonymous') return <Redirect href="/login" />;
+  if (authStatus === 'forbidden') {
     return (
       <View className={pantalla.rootCentered}>
         <Text className="text-neutral-400">Sin permisos de administrador.</Text>

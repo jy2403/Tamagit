@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
-import { useAuth } from '@/context/AuthContext';
 import { useAdminCrud } from '@/hooks/useAdminCrud';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Food } from '@/lib/types';
 import { pantalla } from '@/estilos';
 
@@ -38,14 +38,14 @@ function fromRow(data: Record<string, string>) {
 }
 
 export default function AdminFoodsScreen() {
-  const { token, isLoading } = useAuth();
   const { rows, loading, onCreate, onUpdate, onDelete } = useAdminCrud<Food>({
     resourcePath: '/foods',
     toRow,
     fromRow,
   });
+  const authStatus = useRequireAuth({ extraLoading: loading });
 
-  if (isLoading || loading) {
+  if (authStatus === 'loading') {
     return (
       <View className={pantalla.rootCentered}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -53,7 +53,7 @@ export default function AdminFoodsScreen() {
     );
   }
 
-  if (!token) {
+  if (authStatus === 'anonymous') {
     return <Redirect href="/login" />;
   }
 
