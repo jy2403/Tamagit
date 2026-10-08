@@ -2,7 +2,10 @@ import { useCallback, useState } from 'react';
 import { Animated, type View } from 'react-native';
 import type { Dish } from '@/lib/types';
 
-export function useDragToFeed(petAreaRef: React.RefObject<View>, onFeed: (dish: Dish) => void) {
+export function useDragToFeed(
+  petAreaRef: React.RefObject<View | null>,
+  onFeed: (dish: Dish) => void
+) {
   const [dragging, setDragging] = useState<Dish | null>(null);
   const [dragAnim] = useState(() => new Animated.ValueXY());
 

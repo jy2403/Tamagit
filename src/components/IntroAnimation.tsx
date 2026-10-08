@@ -1,20 +1,8 @@
-import { useEffect, useState } from 'react';
 import { Animated, Image, Text } from 'react-native';
+import { useIntroAnimation } from '@/hooks/useIntroAnimation';
 
 export function IntroAnimation({ onFinish }: { onFinish: () => void }) {
-  const [opacity] = useState(() => new Animated.Value(1));
-  const [scale] = useState(() => new Animated.Value(0.8));
-
-  useEffect(() => {
-    Animated.sequence([
-      // entra el logo
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 5 }),
-      // espera un toque
-      Animated.delay(600),
-      // se desvanece todo el overlay
-      Animated.timing(opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-    ]).start(() => onFinish());
-  }, [onFinish, opacity, scale]);
+  const { opacity, scale } = useIntroAnimation(onFinish);
 
   return (
     <Animated.View

@@ -1,30 +1,19 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
-  type View as RNView,
 } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { FeedbackBanner } from '@/components/FeedbackBanner';
 import { Pet3DView } from '@/components/Pet3DView';
 import { DishCarousel } from '@/components/project/DishCarousel';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
 import { StatBar } from '@/components/project/StatBar';
-import { useDragToFeed } from '@/hooks/useDragToFeed';
-import { usePetActions } from '@/hooks/usePetActions';
-import type { Dish } from '@/lib/types';
-import { usePetOwnership } from '@/hooks/usePetOwnership';
-import { useProjectBranches } from '@/hooks/useProjectBranches';
-import { useProjectDishes } from '@/hooks/useProjectDishes';
-import { useProjectPet } from '@/hooks/useProjectPet';
-import { useSpeechBubble } from '@/hooks/useSpeechBubble';
+import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
 import { Button } from '@/layout/Button';
 import { formulario, pantalla, tarjeta, tipografia } from '@/estilos';
 
@@ -35,29 +24,20 @@ const TIER_META = {
 } as const;
 
 export default function ProjectDetailScreen() {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const { id, fullName } = useLocalSearchParams<{ id: string; fullName?: string; name?: string }>();
-  const { token, user } = useAuth();
-  const router = useRouter();
-
-  const { pet, setPet, loading: petLoading } = useProjectPet(id);
-  const { branches, lifeBranch, setLifeBranch } = useProjectBranches(
-    fullName,
-    pet?.project.defaultBranch,
-    !!pet?.pet
-  );
+  const viewModel = useProjectDetailScreen();
   const {
+    confirmOpen,
+    setConfirmOpen,
+    fullName,
+    router,
+    pet,
+    petLoading,
+    branches,
+    lifeBranch,
+    setLifeBranch,
     dishes,
-    setDishes,
     dishesLoading,
     syncing,
-    latest,
-    loadDishes,
-    syncNow,
-    feedOpen,
-    openFeed,
-  } = useProjectDishes(id);
-  const {
     feedback,
     setFeedback,
     deleting,
@@ -66,53 +46,23 @@ export default function ProjectDetailScreen() {
     nameDraft,
     setNameDraft,
     createPet,
-    feedPet,
     hidePet,
     unhidePet,
     deletePet,
     startRename,
     saveName,
-  } = usePetActions(id, { pet, setPet });
-
-  const petAreaRef = useRef<RNView>(null);
-
-  const handleFeed = (dish: Dish) => {
-    void feedPet(dish, () => {
-      setDishes((prev) =>
-        prev.map((d) => (d.commitId === dish.commitId ? { ...d, fed: true } : d))
-      );
-    });
-  };
-
-  const { dragging, dragAnim, startDrag, moveDrag, endDrag } = useDragToFeed(
     petAreaRef,
-    handleFeed
-  );
-
-  const bubbleText = useSpeechBubble(latest, dishes, false);
-  const isRepoOwner = usePetOwnership(pet?.project, user);
-
-  useEffect(() => {
-    if (!pet?.pet?.id || !token) return;
-    const timer = setTimeout(() => {
-      void syncNow();
-      void loadDishes();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [pet?.pet?.id, token, syncNow, loadDishes]);
-
-  const onSyncPress = async () => {
-    setFeedback(null);
-    try {
-      await syncNow();
-      await loadDishes();
-    } catch (e) {
-      setFeedback({
-        tipo: 'error',
-        texto: e instanceof Error ? e.message : 'No se pudo sincronizar',
-      });
-    }
-  };
+    dragging,
+    dragAnim,
+    startDrag,
+    moveDrag,
+    endDrag,
+    bubbleText,
+    isRepoOwner,
+    feedOpen,
+    openFeed,
+    onSyncPress,
+  } = viewModel;
 
   return (
     <View className={pantalla.root}>
