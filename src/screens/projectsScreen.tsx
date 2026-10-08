@@ -19,8 +19,19 @@ import { boton, formulario, lista, mascota, pantalla, tarjeta, tipografia } from
 export default function ProjectsScreen() {
   const { token, user, signOut, isLoading } = useAuth();
   const router = useRouter();
-  const { filtered, pets, loading, syncing, refreshing, query, setQuery, error, sync, onRefresh } =
-    useProjects();
+  const {
+    projects,
+    filtered,
+    pets,
+    loading,
+    syncing,
+    refreshing,
+    query,
+    setQuery,
+    error,
+    sync,
+    onRefresh,
+  } = useProjects();
   const { width } = useWindowDimensions();
   const anchoTarjeta = Math.min(Math.round(width * 0.42), 190);
 
