@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Animated,
   ActivityIndicator,
@@ -11,11 +12,13 @@ import { ConfirmModal } from '@/components/ConfirmModal';
 import { FeedbackBanner } from '@/components/FeedbackBanner';
 import { Pet3DView } from '@/components/Pet3DView';
 import { DishCarousel } from '@/components/project/DishCarousel';
+import { EquipMenu } from '@/components/project/EquipMenu';
+import { EquippedStrip } from '@/components/project/EquippedStrip';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
 import { StatBar } from '@/components/project/StatBar';
 import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
 import { Button } from '@/layout/Button';
-import { formulario, pantalla, tarjeta, tipografia } from '@/estilos';
+import { equipar, formulario, pantalla, tarjeta, tipografia } from '@/estilos';
 
 const TIER_META = {
   small: { emoji: '🍇' },
@@ -25,6 +28,7 @@ const TIER_META = {
 
 export default function ProjectDetailScreen() {
   const viewModel = useProjectDetailScreen();
+  const [equipOpen, setEquipOpen] = useState(false);
   const {
     confirmOpen,
     setConfirmOpen,
@@ -132,11 +136,20 @@ export default function ProjectDetailScreen() {
                     Desliza para girar · Pellizca para hacer zoom
                   </Text>
 
+                  <EquippedStrip />
+
                   <View className="mt-3 gap-1.5">
                     <StatBar label="Salud" value={pet.pet.health} />
                     <StatBar label="Hambre" value={pet.pet.hunger} />
                     <StatBar label="Felicidad" value={pet.pet.happiness} />
                   </View>
+
+                  <Button
+                    title="Vestir"
+                    onPress={() => setEquipOpen(true)}
+                    variant="secondary"
+                    style={equipar.botonVestir}
+                  />
 
                   <View className="mt-4 flex-row gap-3">
                     <Button
@@ -263,6 +276,8 @@ export default function ProjectDetailScreen() {
       ) : null}
 
       <FeedbackBanner feedback={feedback} onDone={() => setFeedback(null)} />
+
+      <EquipMenu visible={equipOpen} onClose={() => setEquipOpen(false)} />
 
       <ConfirmModal
         visible={confirmOpen}

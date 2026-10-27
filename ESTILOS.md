@@ -158,6 +158,24 @@ modal.fondoInferior   // max-h-[70%] rounded-t-2xl ...
 
 ---
 
+## Menú de vestimenta
+
+El menú de equipar prendas usa `EquipMenu` y el resumen `EquippedStrip`.
+
+```ts
+equipar.hoja           // bottom sheet al 85% de alto
+equipar.hueco          // tarjeta de slot HEAD / BODY / LEGS
+equipar.huecoActivo    // slot con prenda equipada
+equipar.chip           // filtros y controles de estado (48px de alto)
+equipar.fila           // fila de prenda del inventario
+equipar.filaActiva     // prenda equipada
+equipar.resumenHueco   // resumen compacto bajo la mascota
+```
+
+El acento para indicadores de carga está centralizado en `colores.acento`.
+
+---
+
 ## Reglas de uso
 
 1. Importa desde `@/estilos` (alias de `src/estilos`): `import { tarjeta, tipografia } from '@/estilos';`
