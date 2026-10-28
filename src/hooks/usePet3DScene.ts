@@ -1,180 +1,171 @@
 import { useCallback, useRef } from 'react';
+import { Asset } from 'expo-asset';
+import { File } from 'expo-file-system';
 import { ExpoWebGLRenderingContext } from 'expo-gl';
 import { Renderer, THREE } from 'expo-three';
+import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { applyToonOutline } from '@/lib/toonOutline';
+import MODEL_ASSET from '../../assets/tamagit-mascota-base.glb';
 
 if (!(globalThis as { THREE?: unknown }).THREE) {
   (globalThis as { THREE?: unknown }).THREE = THREE;
 }
 
-const BODY_DARK = 0x0d9a6e;
-const HEAD = 0x45d8a5;
-const EYE_WHITE = 0xffffff;
-const EYE = 0x1f2937;
-const ACCENT = 0xf9a8d4;
+const MODEL_HEIGHT = 1.9;
+const MODEL_FACING = -Math.PI / 2;
+
+// Ajusta aquí el look: [sombra, luz] (0..1), grosor del borde y overrides.
+// El .glb exportado no trae colores (todos los materiales llegan blancos),
+// por eso los ojos se fuerzan a negro aquí hasta corregirlo en Blender.
+const TOON_OPTIONS = {
+  tones: [0.35, 1] as [number, number],
+  thickness: 0.012,
+  outlineColor: 0x000000,
+  materialColors: {
+    'Material.002': 0x000000,
+  },
+  debug: true,
+};
 
 type UsePet3DSceneOptions = {
   simple: boolean;
-  color: number | string;
   yawRef: React.MutableRefObject<number>;
   distRef: React.MutableRefObject<number>;
 };
 
-export function usePet3DScene({ simple, color, yawRef, distRef }: UsePet3DSceneOptions) {
+function disposeObject(object: THREE.Object3D | null) {
+  object?.traverse((child) => {
+    const mesh = child as THREE.Mesh;
+    mesh.geometry?.dispose();
+    const material = mesh.material;
+    if (Array.isArray(material)) {
+      material.forEach((item) => item.dispose());
+    } else {
+      material?.dispose();
+    }
+  });
+}
+
+async function loadModel() {
+  const asset = Asset.fromModule(MODEL_ASSET);
+  await asset.downloadAsync();
+  const uri = asset.localUri ?? asset.uri;
+  const buffer = await new File(uri).arrayBuffer();
+  const gltf = await new Promise<GLTF>((resolve, reject) => {
+    new GLTFLoader().parse(buffer, '', resolve, reject);
+  });
+  return gltf.scene;
+}
+
+function fitToHeight(object: THREE.Object3D, targetHeight: number) {
+  const box = new THREE.Box3().setFromObject(object);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  object.scale.multiplyScalar(targetHeight / (size.y || 1));
+  box.setFromObject(object);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+  object.position.x -= center.x;
+  object.position.z -= center.z;
+  object.position.y -= box.min.y;
+}
+
+export function usePet3DScene({ simple, yawRef, distRef }: UsePet3DSceneOptions) {
   const rafRef = useRef<number | null>(null);
   const rendererRef = useRef<Renderer | null>(null);
   const meshRef = useRef<THREE.Object3D | null>(null);
+  const gradientMapRef = useRef<THREE.Texture | null>(null);
+  const cancelledRef = useRef(false);
 
   const cleanup = useCallback(() => {
+    cancelledRef.current = true;
     if (rafRef.current != null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
+    disposeObject(meshRef.current);
+    meshRef.current = null;
+    gradientMapRef.current?.dispose();
+    gradientMapRef.current = null;
     if (rendererRef.current) {
       rendererRef.current.dispose();
       rendererRef.current = null;
     }
-    meshRef.current = null;
   }, []);
 
   const onContextCreate = useCallback(
-    (gl: ExpoWebGLRenderingContext) => {
+    async (gl: ExpoWebGLRenderingContext) => {
+      cancelledRef.current = false;
+
+      const width = gl.drawingBufferWidth;
+      const height = gl.drawingBufferHeight;
+
       const renderer = new Renderer({ gl });
-      renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+      renderer.setSize(width, height);
       renderer.setClearColor(0x171717, 1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NoToneMapping;
       rendererRef.current = renderer;
 
       const scene = new THREE.Scene();
 
-      const camera = new THREE.PerspectiveCamera(
-        50,
-        gl.drawingBufferWidth / gl.drawingBufferHeight,
-        0.1,
-        100
-      );
-      if (simple) {
-        camera.position.set(0, 0.4, 1.35);
-        camera.lookAt(0, 0.18, 0);
-      } else {
-        camera.position.set(0, 0.85, distRef.current);
-        camera.lookAt(0, 0.85, 0);
-      }
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      // Luz suave para que el toon tenga un tono de sombra legible.
+      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
-      const key = new THREE.DirectionalLight(0xffffff, 1.1);
+      const key = new THREE.DirectionalLight(0xffffff, 2.5);
       key.position.set(2, 3, 4);
       scene.add(key);
 
-      const fill = new THREE.DirectionalLight(0x7dd3fc, 0.45);
-      fill.position.set(-3, 1, -2);
-      scene.add(fill);
-
-      const group = new THREE.Group();
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.45,
-        metalness: 0.08,
-      });
-      const darkMat = new THREE.MeshStandardMaterial({ color: BODY_DARK, roughness: 0.5 });
-      const headMat = new THREE.MeshStandardMaterial({ color: HEAD, roughness: 0.4 });
-      const eyeMat = new THREE.MeshStandardMaterial({ color: EYE, roughness: 0.3 });
-      const whiteMat = new THREE.MeshStandardMaterial({ color: EYE_WHITE, roughness: 0.2 });
-      const accentMat = new THREE.MeshStandardMaterial({ color: ACCENT, roughness: 0.4 });
-
-      const addBox = (
-        parent: THREE.Object3D,
-        w: number,
-        h: number,
-        d: number,
-        mat: THREE.Material,
-        x: number,
-        y: number,
-        z: number
-      ) => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-        mesh.position.set(x, y, z);
-        parent.add(mesh);
-        return mesh;
-      };
-
-      const addSphere = (
-        parent: THREE.Object3D,
-        r: number,
-        mat: THREE.Material,
-        x: number,
-        y: number,
-        z: number,
-        sx = 1,
-        sy = 1,
-        sz = 1
-      ) => {
-        const segW = simple ? 12 : 24;
-        const segH = simple ? 10 : 18;
-        const geo = new THREE.SphereGeometry(r, segW, segH);
-        geo.scale(sx, sy, sz);
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x, y, z);
-        parent.add(mesh);
-        return mesh;
-      };
-
-      if (simple) {
-        addSphere(group, 0.32, headMat, 0, 1.58, 0, 1, 1.05, 0.95);
-        addSphere(group, 0.11, whiteMat, -0.12, 1.64, 0.27, 1, 1.25, 0.55);
-        addSphere(group, 0.11, whiteMat, 0.12, 1.64, 0.27, 1, 1.25, 0.55);
-        addSphere(group, 0.055, eyeMat, -0.12, 1.63, 0.36, 1, 1.2, 0.6);
-        addSphere(group, 0.055, eyeMat, 0.12, 1.63, 0.36, 1, 1.2, 0.6);
-        addSphere(group, 0.07, accentMat, -0.23, 1.5, 0.25, 1, 0.7, 0.5);
-        addSphere(group, 0.07, accentMat, 0.23, 1.5, 0.25, 1, 0.7, 0.5);
-        addSphere(group, 0.1, darkMat, 0, 1.96, 0, 0.7, 1, 0.7);
-        group.position.y = -1.74;
-        group.rotation.y = -0.55;
-      } else {
-        addBox(group, 0.24, 0.14, 0.34, darkMat, -0.16, 0.07, 0.03);
-        addBox(group, 0.24, 0.14, 0.34, darkMat, 0.16, 0.07, 0.03);
-        addBox(group, 0.22, 0.5, 0.24, darkMat, -0.16, 0.38, 0);
-        addBox(group, 0.22, 0.5, 0.24, darkMat, 0.16, 0.38, 0);
-        addBox(group, 0.56, 0.62, 0.36, bodyMat, 0, 0.94, 0);
-        addSphere(group, 0.2, accentMat, 0, 0.94, 0.14, 1, 0.8, 0.6);
-        addBox(group, 0.16, 0.58, 0.16, bodyMat, -0.38, 0.94, 0);
-        addBox(group, 0.16, 0.58, 0.16, bodyMat, 0.38, 0.94, 0);
-        addSphere(group, 0.11, headMat, -0.42, 1.18, 0, 1, 1, 0.8);
-        addSphere(group, 0.11, headMat, 0.42, 1.18, 0, 1, 1, 0.8);
-        addSphere(group, 0.32, headMat, 0, 1.58, 0, 1, 1.05, 0.95);
-        addSphere(group, 0.11, whiteMat, -0.12, 1.64, 0.27, 1, 1.25, 0.55);
-        addSphere(group, 0.11, whiteMat, 0.12, 1.64, 0.27, 1, 1.25, 0.55);
-        addSphere(group, 0.055, eyeMat, -0.12, 1.63, 0.36, 1, 1.2, 0.6);
-        addSphere(group, 0.055, eyeMat, 0.12, 1.63, 0.36, 1, 1.2, 0.6);
-        addSphere(group, 0.07, accentMat, -0.23, 1.5, 0.25, 1, 0.7, 0.5);
-        addSphere(group, 0.07, accentMat, 0.23, 1.5, 0.25, 1, 0.7, 0.5);
-        addSphere(group, 0.1, darkMat, 0, 1.96, 0, 0.7, 1, 0.7);
-        addBox(group, 0.08, 0.3, 0.18, accentMat, -0.5, 1.0, -0.05);
-        addBox(group, 0.08, 0.3, 0.18, accentMat, 0.5, 1.0, -0.05);
+      let model: THREE.Object3D;
+      try {
+        model = await loadModel();
+      } catch {
+        return;
       }
 
-      group.scale.setScalar(1.18);
+      if (cancelledRef.current) {
+        disposeObject(model);
+        return;
+      }
+
+      const group = new THREE.Group();
+      group.add(model);
+      fitToHeight(model, MODEL_HEIGHT);
+      gradientMapRef.current?.dispose();
+      gradientMapRef.current = applyToonOutline(model, TOON_OPTIONS);
+      group.rotation.y = MODEL_FACING + yawRef.current;
       scene.add(group);
       meshRef.current = group;
 
+      const lookAtY = MODEL_HEIGHT * 0.5;
+      const fitDistance = (MODEL_HEIGHT / (2 * Math.tan((camera.fov * Math.PI) / 360))) * 1.18;
+
       if (simple) {
+        camera.position.set(0, lookAtY + 0.15, fitDistance);
+        camera.lookAt(0, lookAtY, 0);
         renderer.render(scene, camera);
         gl.endFrameEXP();
-      } else {
-        const loop = () => {
-          yawRef.current += 0.008;
-          if (meshRef.current) {
-            meshRef.current.rotation.y = yawRef.current;
-            meshRef.current.position.y = -0.12;
-          }
-          camera.position.z = distRef.current;
-          renderer.render(scene, camera);
-          gl.endFrameEXP();
-          rafRef.current = requestAnimationFrame(loop);
-        };
-        rafRef.current = requestAnimationFrame(loop);
+        return;
       }
+
+      camera.position.set(0, lookAtY + 0.2, distRef.current);
+      camera.lookAt(0, lookAtY, 0);
+
+      const loop = () => {
+        if (cancelledRef.current) return;
+        yawRef.current += 0.006;
+        group.rotation.y = MODEL_FACING + yawRef.current;
+        camera.position.z = distRef.current;
+        renderer.render(scene, camera);
+        gl.endFrameEXP();
+        rafRef.current = requestAnimationFrame(loop);
+      };
+
+      rafRef.current = requestAnimationFrame(loop);
     },
-    [simple, color, yawRef, distRef]
+    [simple, yawRef, distRef]
   );
 
   return { onContextCreate, cleanup };
