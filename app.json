@@ -21,12 +21,17 @@
       ],
       "expo-router",
       "expo-status-bar",
-      "expo-asset"
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.juanf24steam.tamagit"
