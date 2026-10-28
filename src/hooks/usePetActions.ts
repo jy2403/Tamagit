@@ -107,6 +107,32 @@ export function usePetActions(projectId: string, deps: PetActionsDependencies) {
     }
   }, [token, pet, setPet, router, setError]);
 
+  const saveColors = useCallback(
+    async (colors: {
+      bodyColor: string;
+      healthColor: string;
+      hungerColor: string;
+      happinessColor: string;
+    }) => {
+      if (!pet?.pet || !token) return false;
+      setFeedback(null);
+      try {
+        const data = await apiFetch<Pet>(`/pets/${pet.pet.id}`, {
+          token,
+          method: 'PATCH',
+          body: colors,
+        });
+        setPet({ ...pet, pet: { ...pet.pet, ...data } });
+        setSuccess('Colores guardados.');
+        return true;
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudieron guardar los colores');
+        return false;
+      }
+    },
+    [pet, token, setPet, setError, setSuccess]
+  );
+
   const startRename = useCallback(() => {
     if (!pet?.pet) return;
     setNameDraft(pet.pet.name);
@@ -148,5 +174,6 @@ export function usePetActions(projectId: string, deps: PetActionsDependencies) {
     deletePet,
     startRename,
     saveName,
+    saveColors,
   };
 }

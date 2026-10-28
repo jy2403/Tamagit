@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useBubbleScrollbar } from '@/hooks/useBubbleScrollbar';
+import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClaySurface } from '@/components/clay/ClaySurface';
+import { clay, fuentes, radios, sombras } from '@/estilos';
 import { FormattedText } from './FormattedText';
 
 type SpeechBubbleProps = {
@@ -26,31 +29,64 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
 
   return (
     <>
-      <View pointerEvents="box-none" className="absolute bottom-2 left-2 max-w-[70%]">
+      <View style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
+        <View
+          style={{
+            marginLeft: 30,
+            width: 0,
+            height: 0,
+            borderLeftWidth: 13,
+            borderRightWidth: 13,
+            borderBottomWidth: 15,
+            borderLeftColor: 'transparent',
+            borderRightColor: 'transparent',
+            borderBottomColor: clay.negro[1],
+          }}
+        />
         <Pressable
-          onPress={() => !loading && setExpanded(true)}
-          disabled={loading}
-          className="w-fit">
-          <View className="rounded-2xl rounded-bl-md border-2 border-neutral-900 bg-white px-3 py-2 shadow-sm">
+          onPress={() => !loading && content.length > 0 && setExpanded(true)}
+          disabled={loading || content.length === 0}
+          accessibilityRole="button"
+          accessibilityLabel={
+            loading ? 'La mascota está pensando' : `La mascota dice: ${content || 'nada'}`
+          }>
+          <ClaySurface
+            colors={clay.negro}
+            radius={radios.tarjeta}
+            style={sombras.suave}
+            contentStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+            <Text
+              style={{
+                fontFamily: fuentes.pixel,
+                fontSize: 6,
+                lineHeight: 11,
+                color: '#B9B9C2',
+                marginBottom: 6,
+              }}>
+              LA MASCOTA DICE
+            </Text>
             {loading ? (
-              <Text className="text-xs font-medium leading-snug text-neutral-800">Pensando...</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>Pensando...</Text>
             ) : (
               <>
-                <FormattedText
-                  text={content}
-                  className="text-xs font-medium leading-snug text-neutral-800"
+                <Text
                   numberOfLines={4}
-                />
+                  style={{
+                    fontFamily: fuentes.pixel,
+                    fontSize: 7,
+                    lineHeight: 13,
+                    color: '#FFFFFF',
+                  }}>
+                  {content || 'Todavía no tengo nada que decir.'}
+                </Text>
                 {content.length > 90 ? (
-                  <Text className="mt-0.5 text-[10px] font-semibold text-neutral-500">
-                    Toca para ver completo ▼
+                  <Text style={{ marginTop: 6, fontSize: 8, fontWeight: '800', color: '#B9B9C2' }}>
+                    Toca para ver completo
                   </Text>
                 ) : null}
               </>
             )}
-          </View>
-          <View className="ml-5 h-0 w-0 border-b-8 border-l-8 border-r-8 border-b-neutral-900 border-l-transparent border-r-transparent" />
-          <View className="border-l-6 border-r-6 border-b-6 -mt-2 ml-6 h-0 w-0 border-b-white border-l-transparent border-r-transparent" />
+          </ClaySurface>
         </Pressable>
       </View>
 
@@ -61,54 +97,87 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
         onRequestClose={() => setExpanded(false)}
         onShow={reset}>
         <Pressable
-          className="flex-1 items-center justify-center bg-black/70 px-6"
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(20,20,22,0.46)',
+            paddingHorizontal: 20,
+          }}
           onPress={() => setExpanded(false)}>
           <Pressable
-            className="w-full max-w-[90%] rounded-2xl border border-neutral-700 bg-neutral-900 p-4 pb-6"
-            onPress={(e) => e.stopPropagation()}>
-            <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-bold text-white">La mascota dijo...</Text>
-              <View className="flex-row items-center gap-1 rounded-full bg-neutral-800 px-2 py-1">
-                <Text className="text-[10px] text-neutral-400">Cerrar</Text>
-                <Text className="text-[10px] text-neutral-500">✕</Text>
-              </View>
-            </View>
-
-            <View className="flex-row">
-              <ScrollView
-                ref={scrollViewRef}
-                className="mt-2 flex-1"
-                style={{ maxHeight: 260 }}
-                showsVerticalScrollIndicator={false}
-                onLayout={onLayout}
-                onContentSizeChange={onContentSizeChange}
-                onScroll={onScroll}
-                scrollEventThrottle={16}>
-                <FormattedText
-                  text={content}
-                  className="text-base leading-relaxed text-neutral-100"
+            style={[{ width: '100%', maxWidth: 420 }, sombras.tarjeta]}
+            onPress={(event) => event.stopPropagation()}>
+            <ClaySurface
+              colors={clay.blanco}
+              radius={radios.tarjetaGrande}
+              border
+              contentStyle={{ padding: 18 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{ fontSize: 15, fontWeight: '900', color: clay.texto }}>
+                  La mascota dijo...
+                </Text>
+                <ClayIconButton
+                  icon="✕"
+                  accessibilityLabel="Cerrar mensaje"
+                  onPress={() => setExpanded(false)}
+                  size={44}
                 />
-              </ScrollView>
+              </View>
 
-              {isScrollable ? (
-                <Pressable
-                  className="ml-3 mt-2 w-3 justify-start"
-                  style={{ height: 260 }}
-                  onPress={(e) => {
-                    e.nativeEvent.locationY !== undefined && tapTrack(e.nativeEvent.locationY);
-                  }}
-                  hitSlop={4}>
-                  <View className="h-full w-full rounded-full bg-neutral-800/70">
-                    <Pressable
-                      {...panHandlers}
-                      className="w-full rounded-full bg-emerald-400/90"
-                      style={{ height: thumbH, transform: [{ translateY: thumbPos }] }}
-                      hitSlop={8}
-                    />
-                  </View>
-                </Pressable>
-              ) : null}
-            </View>
+              <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                <ScrollView
+                  ref={scrollViewRef}
+                  style={{ maxHeight: 260, flex: 1 }}
+                  showsVerticalScrollIndicator={false}
+                  onLayout={onLayout}
+                  onContentSizeChange={onContentSizeChange}
+                  onScroll={onScroll}
+                  scrollEventThrottle={16}>
+                  <FormattedText
+                    text={content}
+                    className="text-base leading-relaxed text-neutral-800"
+                  />
+                </ScrollView>
+
+                {isScrollable ? (
+                  <Pressable
+                    style={{ marginLeft: 12, marginTop: 8, width: 12, height: 260 }}
+                    onPress={(event) => {
+                      if (event.nativeEvent.locationY !== undefined) {
+                        tapTrack(event.nativeEvent.locationY);
+                      }
+                    }}
+                    hitSlop={4}
+                    accessibilityLabel="Barra de desplazamiento del mensaje">
+                    <View
+                      style={{
+                        height: '100%',
+                        width: '100%',
+                        borderRadius: 8,
+                        backgroundColor: '#DDDDE3',
+                      }}>
+                      <Pressable
+                        {...panHandlers}
+                        style={{
+                          width: '100%',
+                          borderRadius: 8,
+                          backgroundColor: clay.violeta[0],
+                          height: thumbH,
+                          transform: [{ translateY: thumbPos }],
+                        }}
+                        hitSlop={8}
+                      />
+                    </View>
+                  </Pressable>
+                ) : null}
+              </View>
+            </ClaySurface>
           </Pressable>
         </Pressable>
       </Modal>

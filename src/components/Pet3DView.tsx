@@ -8,13 +8,36 @@ type Pet3DViewProps = {
   species?: string;
   style?: StyleProp<ViewStyle>;
   simple?: boolean;
+  autoRotate?: boolean;
+  idle?: boolean;
+  backdrop?: 'none' | 'egg';
+  bodyColor?: string | null;
+  background?: string;
 };
 
-export function Pet3DView({ style, simple = false }: Pet3DViewProps) {
+export function Pet3DView({
+  style,
+  simple = false,
+  autoRotate,
+  idle = false,
+  backdrop = 'none',
+  bodyColor,
+  background,
+}: Pet3DViewProps) {
   const yawRef = useRef(0);
-  const distRef = useRef(3.2);
+  const distRef = useRef(backdrop === 'egg' ? 4.3 : 3.2);
+  const backgroundColor = background ?? (simple ? '#EDEDF0' : '#F4F4F6');
 
-  const { onContextCreate, cleanup } = usePet3DScene({ simple, yawRef, distRef });
+  const { onContextCreate, cleanup } = usePet3DScene({
+    simple,
+    yawRef,
+    distRef,
+    autoRotate,
+    idle,
+    backdrop,
+    bodyColor,
+    background: backgroundColor,
+  });
   const panResponder = usePetControls(yawRef, distRef, !simple);
 
   useEffect(() => {
@@ -25,7 +48,7 @@ export function Pet3DView({ style, simple = false }: Pet3DViewProps) {
 
   return (
     <View
-      style={[{ overflow: 'hidden', backgroundColor: '#171717' }, style]}
+      style={[{ overflow: 'hidden', backgroundColor }, style]}
       {...(simple ? {} : panResponder.panHandlers)}>
       <GLView style={{ flex: 1 }} onContextCreate={onContextCreate} />
     </View>

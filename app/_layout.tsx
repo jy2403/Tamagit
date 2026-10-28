@@ -1,13 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
 import '../global.css';
 import { AuthProvider } from '@/context/AuthContext';
-import { IntroAnimation } from '@/components/IntroAnimation';
+import { clay } from '@/estilos';
 
 export default function RootLayout() {
-  const [showIntro, setShowIntro] = useState(true);
   const [fontsLoaded] = useFonts({ PressStart2P_400Regular });
 
   if (!fontsLoaded) {
@@ -16,19 +14,20 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0f0f0f' },
+          contentStyle: { backgroundColor: clay.fondo[0] },
         }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="(drawer)" />
         <Stack.Screen name="project/[id]" />
+        <Stack.Screen name="nuevo" />
+        <Stack.Screen name="editar/[id]" />
       </Stack>
-      {showIntro && <IntroAnimation onFinish={() => setShowIntro(false)} />}
     </AuthProvider>
   );
 }

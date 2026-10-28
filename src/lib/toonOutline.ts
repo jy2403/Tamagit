@@ -11,6 +11,8 @@ export type ToonOutlineOptions = {
   materialColors?: Record<string, THREE.ColorRepresentation>;
   /** Imprime en consola los materiales originales de cada mesh. */
   debug?: boolean;
+  /** Libera los materiales originales al terminar (false si se clona el modelo). */
+  disposeSourceMaterials?: boolean;
 };
 
 const DEFAULTS: Required<ToonOutlineOptions> = {
@@ -19,6 +21,7 @@ const DEFAULTS: Required<ToonOutlineOptions> = {
   outlineColor: 0x000000,
   materialColors: {},
   debug: false,
+  disposeSourceMaterials: true,
 };
 
 type SourceMaterial = THREE.Material & {
@@ -134,7 +137,10 @@ function createOutlineMaterial(color: THREE.ColorRepresentation, thickness: numb
  * @param options Tonos, grosor, color del borde, overrides y debug.
  */
 export function applyToonOutline(root: THREE.Object3D, options: ToonOutlineOptions = {}) {
-  const { tones, thickness, outlineColor, materialColors, debug } = { ...DEFAULTS, ...options };
+  const { tones, thickness, outlineColor, materialColors, debug, disposeSourceMaterials } = {
+    ...DEFAULTS,
+    ...options,
+  };
 
   const gradientMap = createGradientMap(tones);
   const originalMaterials = new Set<THREE.Material>();
@@ -230,7 +236,9 @@ export function applyToonOutline(root: THREE.Object3D, options: ToonOutlineOptio
   }
 
   // Los materiales originales del glb ya no se usan.
-  originalMaterials.forEach((material) => material.dispose());
+  if (disposeSourceMaterials) {
+    originalMaterials.forEach((material) => material.dispose());
+  }
 
   return gradientMap;
 }

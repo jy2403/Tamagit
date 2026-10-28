@@ -1,6 +1,7 @@
 import { Animated, Text, View } from 'react-native';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { useFeedbackAnimation } from '@/hooks/useFeedbackAnimation';
-import { mensajes } from '@/estilos';
+import { clay, radios, sombras } from '@/estilos';
 
 export type Feedback = { tipo: 'exito' | 'error'; texto: string } | null;
 
@@ -15,23 +16,57 @@ export function FeedbackBanner({ feedback, onDone }: Props) {
   if (!feedback) return null;
 
   const esExito = feedback.tipo === 'exito';
+  const textColor = esExito ? clay.oscuro : '#FFFFFF';
 
   return (
-    <View className="absolute inset-x-4 bottom-7 z-50" pointerEvents="none">
+    <View
+      style={{ position: 'absolute', left: 16, right: 16, bottom: 28, zIndex: 50 }}
+      pointerEvents="none">
       <Animated.View
-        className={esExito ? mensajes.exito.bloque : mensajes.error.bloque}
         style={{
           opacity: anim,
           transform: [
             { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
           ],
+          ...sombras.tarjeta,
         }}>
-        <Text className={esExito ? mensajes.exito.icono : mensajes.error.icono}>
-          {esExito ? '\u2713' : '!'}
-        </Text>
-        <Text className={esExito ? mensajes.exito.texto : mensajes.error.texto}>
-          {feedback.texto}
-        </Text>
+        <ClaySurface
+          colors={esExito ? clay.verde : clay.rojo}
+          radius={radios.boton}
+          border
+          contentStyle={{
+            minHeight: 54,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+          <View
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 14,
+              borderWidth: 2,
+              borderColor: textColor,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Text style={{ color: textColor, fontSize: 14, fontWeight: '900' }}>
+              {esExito ? '\u2713' : '!'}
+            </Text>
+          </View>
+          <Text
+            style={{
+              flex: 1,
+              color: textColor,
+              fontSize: 13,
+              fontWeight: '800',
+              lineHeight: 18,
+            }}>
+            {feedback.texto}
+          </Text>
+        </ClaySurface>
       </Animated.View>
     </View>
   );

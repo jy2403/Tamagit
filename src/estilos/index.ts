@@ -164,3 +164,152 @@ export const confirmar = {
   mensaje: 'mt-2 text-center text-sm text-neutral-400',
   acciones: 'mt-6 w-full flex-row gap-3',
 } as const;
+
+export type Gradiente = readonly [string, string];
+
+/**
+ * Tokens del rediseño claymorfista. Todos los colores, gradientes, radios,
+ * sombras y tipografías nuevas viven aquí; las pantallas no deben llevar hex.
+ */
+export const clay = {
+  fondo: ['#F4F4F6', '#B9B9BE'] as Gradiente,
+  fondoClaro: ['#FFFFFF', '#E9E9EE'] as Gradiente,
+  blanco: ['#FFFFFF', '#E4E4E8'] as Gradiente,
+  negro: ['#2A2A2E', '#0B0B0D'] as Gradiente,
+  oscuro: '#1A1A1F',
+  panelOscuro: ['#26262B', '#141418'] as Gradiente,
+  texto: '#242428',
+  textoSuave: '#5E5E67',
+  textoTenue: '#8A8A93',
+  textoClaro: '#FFFFFF',
+  borde: '#D6D6DC',
+  rojo: ['#E8322B', '#B81408'] as Gradiente,
+  naranja: ['#FF7A3D', '#FF4F2E'] as Gradiente,
+  ambar: ['#FFB020', '#FF8A1F'] as Gradiente,
+  verde: ['#A8D83F', '#4DB848'] as Gradiente,
+  violeta: ['#8A4DE8', '#5B2BC9'] as Gradiente,
+  turquesa: ['#3FD1C6', '#12A0A8'] as Gradiente,
+  rosa: ['#FF7AB8', '#E0408F'] as Gradiente,
+  azul: ['#6AA8FF', '#3D6FE8'] as Gradiente,
+  amarillo: ['#FFE06A', '#FFC12E'] as Gradiente,
+  lila: ['#C9A8FF', '#8A4DE8'] as Gradiente,
+  menta: ['#B8F0B0', '#5BCB6B'] as Gradiente,
+  sombra: '#5B5B66',
+} as const;
+
+export const radios = {
+  tarjeta: 28,
+  tarjetaGrande: 32,
+  boton: 22,
+  chip: 18,
+  pastilla: 999,
+  input: 18,
+} as const;
+
+export const sombras = {
+  tarjeta: {
+    shadowColor: clay.sombra,
+    shadowOffset: { width: 6, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  boton: {
+    shadowColor: clay.sombra,
+    shadowOffset: { width: 4, height: 7 },
+    shadowOpacity: 0.3,
+    shadowRadius: 9,
+    elevation: 7,
+  },
+  suave: {
+    shadowColor: clay.sombra,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  hundido: {
+    shadowColor: clay.sombra,
+    shadowOffset: { width: 1, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+} as const;
+
+export const fuentes = {
+  pixel: 'PressStart2P_400Regular',
+  cuerpo: undefined,
+} as const;
+
+export const textoClay = {
+  titulo: 22,
+  subtitulo: 15,
+  cuerpo: 13,
+  etiqueta: 11,
+  micro: 9,
+} as const;
+
+export type DiaSemana = {
+  indice: number;
+  inicial: string;
+  nombre: string;
+  gradiente: Gradiente;
+  textoSobre: string;
+};
+
+/** Orden visual de la semana (lunes a domingo). */
+export const SEMANA: readonly DiaSemana[] = [
+  { indice: 1, inicial: 'L', nombre: 'Lunes', gradiente: clay.rojo, textoSobre: '#FFFFFF' },
+  { indice: 2, inicial: 'M', nombre: 'Martes', gradiente: clay.naranja, textoSobre: '#1A1A1C' },
+  { indice: 3, inicial: 'X', nombre: 'Miércoles', gradiente: clay.ambar, textoSobre: '#1A1A1C' },
+  { indice: 4, inicial: 'J', nombre: 'Jueves', gradiente: clay.verde, textoSobre: '#1A1A1C' },
+  { indice: 5, inicial: 'V', nombre: 'Viernes', gradiente: clay.violeta, textoSobre: '#FFFFFF' },
+  { indice: 6, inicial: 'S', nombre: 'Sábado', gradiente: clay.turquesa, textoSobre: '#1A1A1C' },
+  { indice: 0, inicial: 'D', nombre: 'Domingo', gradiente: clay.rosa, textoSobre: '#1A1A1C' },
+] as const;
+
+export function indiceSemana(fecha: Date): number {
+  return (fecha.getDay() + 6) % 7;
+}
+
+export function diaSemana(fecha: Date): DiaSemana {
+  return SEMANA[indiceSemana(fecha)];
+}
+
+export type ColorMascota = {
+  nombre: string;
+  hex: string;
+  gradiente: Gradiente;
+};
+
+export const COLORES_MASCOTA: readonly ColorMascota[] = [
+  { nombre: 'Verde', hex: '#5BCB6B', gradiente: clay.verde },
+  { nombre: 'Morado', hex: '#8A4DE8', gradiente: clay.violeta },
+  { nombre: 'Naranja', hex: '#FF7A3D', gradiente: clay.naranja },
+  { nombre: 'Turquesa', hex: '#1EB0B5', gradiente: clay.turquesa },
+  { nombre: 'Rosa', hex: '#E0408F', gradiente: clay.rosa },
+  { nombre: 'Amarillo', hex: '#FFC12E', gradiente: clay.amarillo },
+  { nombre: 'Azul', hex: '#4D7CFE', gradiente: clay.azul },
+  { nombre: 'Rojo', hex: '#E8322B', gradiente: clay.rojo },
+  { nombre: 'Menta', hex: '#7BD65C', gradiente: clay.menta },
+  { nombre: 'Lila', hex: '#B98AFF', gradiente: clay.lila },
+  { nombre: 'Negro', hex: '#2A2A2E', gradiente: clay.negro },
+  { nombre: 'Gris', hex: '#8E8E96', gradiente: clay.blanco },
+] as const;
+
+export function colorMascotaPorId(id: number): ColorMascota {
+  return COLORES_MASCOTA[Math.abs(id) % COLORES_MASCOTA.length];
+}
+
+export function tonoPorHex(hex: string | null | undefined): Gradiente {
+  if (!hex) return clay.blanco;
+  const encontrado = COLORES_MASCOTA.find((color) => color.hex.toLowerCase() === hex.toLowerCase());
+  return encontrado?.gradiente ?? ([hex, hex] as Gradiente);
+}
+
+export const colorStats = {
+  health: '#4DB848',
+  hunger: '#FF8A1F',
+  happiness: '#FFB020',
+} as const;

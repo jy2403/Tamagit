@@ -1,9 +1,20 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Modal, Pressable, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { useAppearance, type InventoryStatus } from '@/hooks/useAppearance';
 import { SLOTS, SLOT_LABELS, type PetItem, type Slot } from '@/lib/appearance';
-import { Button } from '@/layout/Button';
-import { colores, equipar, mensajesError, modal } from '@/estilos';
+import { clay, fuentes, radios, sombras, textoClay } from '@/estilos';
 
 type EquipMenuProps = {
   visible: boolean;
@@ -21,190 +32,363 @@ const DEMO_STATES: readonly { status: InventoryStatus; label: string }[] = [
   { status: 'error', label: 'Error' },
 ];
 
-function ItemPreview({ item, variant }: { item: PetItem | null; variant: 'slot' | 'row' }) {
-  const wrapper = variant === 'slot' ? equipar.huecoPreview : equipar.filaImagen;
-  const imageStyle = variant === 'slot' ? equipar.huecoImagen : equipar.filaImagenImg;
-  const emojiStyle = variant === 'slot' ? equipar.huecoEmoji : equipar.filaEmoji;
-
+function ItemPreview({ item, size }: { item: PetItem | null; size: number }) {
   if (!item) {
+    return <Text style={{ fontSize: size * 0.7, color: clay.textoTenue }}>＋</Text>;
+  }
+  if (item.imageUrl) {
     return (
-      <View className={wrapper}>
-        <Text className={equipar.huecoPlaceholder}>＋</Text>
-      </View>
+      <Image
+        source={{ uri: item.imageUrl }}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+      />
     );
   }
+  return <Text style={{ fontSize: size * 0.8 }}>{item.emoji}</Text>;
+}
 
+function Chip({
+  label,
+  selected,
+  onPress,
+  accessibilityLabel,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
   return (
-    <View className={wrapper}>
-      {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} className={imageStyle} resizeMode="contain" />
-      ) : (
-        <Text className={emojiStyle}>{item.emoji}</Text>
-      )}
-    </View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={accessibilityLabel}>
+      <ClaySurface
+        colors={selected ? clay.negro : clay.blanco}
+        radius={radios.pastilla}
+        contentStyle={{
+          paddingHorizontal: 13,
+          paddingVertical: 8,
+          minHeight: 36,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <Text
+          style={{
+            color: selected ? clay.textoClaro : clay.texto,
+            fontSize: 11,
+            fontWeight: '800',
+          }}>
+          {label}
+        </Text>
+      </ClaySurface>
+    </Pressable>
   );
 }
 
 export function EquipMenu({ visible, onClose }: EquipMenuProps) {
   const [filter, setFilter] = useState<SlotFilter>('ALL');
+  const { height } = useWindowDimensions();
   const { items, status, equippedBySlot, equip, unequip, setStatus } = useAppearance();
 
   const filteredItems = filter === 'ALL' ? items : items.filter((item) => item.slot === filter);
   const showEmpty = status === 'empty' || (status === 'ready' && filteredItems.length === 0);
+  const listHeight = Math.max(180, Math.min(340, height * 0.34));
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className={modal.overlayInferior} onPress={onClose}>
-        <Pressable className={equipar.hoja} onPress={(event) => event.stopPropagation()}>
-          <View className={equipar.encabezado}>
-            <Text
-              className={equipar.titulo}
-              style={equipar.tituloFuente}
-              accessibilityRole="header">
-              VESTIR
-            </Text>
-            <Pressable
-              className={equipar.cerrar}
-              onPress={onClose}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Cerrar menú de vestimenta">
-              <Text className={equipar.cerrarTexto}>✕</Text>
-            </Pressable>
-          </View>
-
-          <Text className={equipar.subtitulo}>
-            Toca una prenda para equiparla. Toca un hueco ocupado para quitarla.
-          </Text>
-
-          <View className={equipar.huecos}>
-            {SLOTS.map((slot) => {
-              const item = equippedBySlot[slot];
-              return (
-                <Pressable
-                  key={slot}
-                  className={`${equipar.hueco} ${item ? equipar.huecoActivo : ''}`}
-                  onPress={() => item && unequip(item.id)}
-                  disabled={!item}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: !item }}
-                  accessibilityLabel={
-                    item
-                      ? `Hueco ${SLOT_LABELS[slot]}: ${item.name} equipada. Toca para desequipar`
-                      : `Hueco ${SLOT_LABELS[slot]} vacío`
-                  }>
-                  <Text className={equipar.huecoEtiqueta}>
-                    {slot} · {SLOT_LABELS[slot]}
-                  </Text>
-                  <ItemPreview item={item} variant="slot" />
-                  <Text
-                    className={item ? equipar.huecoNombre : equipar.huecoVacio}
-                    numberOfLines={1}>
-                    {item ? item.name : 'Vacío'}
-                  </Text>
-                  {item ? <Text className={equipar.equipado}>✓ Equipado</Text> : null}
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Text className={equipar.seccion}>Inventario</Text>
-
-          <View className={equipar.filtros}>
-            {FILTERS.map((value) => {
-              const label = value === 'ALL' ? 'Todas' : SLOT_LABELS[value];
-              const selected = filter === value;
-              return (
-                <Pressable
-                  key={value}
-                  className={`${equipar.chip} ${selected ? equipar.chipActivo : ''}`}
-                  onPress={() => setFilter(value)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={
-                    value === 'ALL' ? 'Mostrar todas las prendas' : `Filtrar por ${label}`
-                  }>
-                  <Text className={selected ? equipar.chipTextoActivo : equipar.chipTexto}>
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View className={equipar.demo}>
-            <Text className={equipar.demoEtiqueta}>Demo</Text>
-            {DEMO_STATES.map(({ status: demoStatus, label }) => {
-              const selected = status === demoStatus;
-              return (
-                <Pressable
-                  key={demoStatus}
-                  className={`${equipar.chip} ${selected ? equipar.chipActivo : ''}`}
-                  onPress={() => setStatus(demoStatus)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`Simular estado ${label}`}>
-                  <Text className={selected ? equipar.chipTextoActivo : equipar.chipTexto}>
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View className={equipar.listaContenedor}>
-            {status === 'loading' ? (
-              <View className={equipar.estadoBloque}>
-                <ActivityIndicator color={colores.acento} />
-                <Text className={equipar.estadoTexto}>Cargando prendas...</Text>
-              </View>
-            ) : status === 'error' ? (
-              <View className={equipar.estadoBloque}>
-                <Text className={mensajesError.inline}>No se pudieron cargar las prendas.</Text>
-                <Button title="Reintentar" variant="secondary" onPress={() => setStatus('ready')} />
-              </View>
-            ) : showEmpty ? (
-              <View className={equipar.vacioBloque}>
-                <Text className={equipar.vacioEmoji}>👕</Text>
-                <Text className={equipar.vacioTitulo}>No hay prendas aquí</Text>
-                <Text className={equipar.vacioHint}>
-                  Prueba otro slot o vuelve cuando tengas más inventario.
+      <Pressable
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(26,26,31,0.58)',
+          justifyContent: 'flex-end',
+        }}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Cerrar menú de vestimenta">
+        <Pressable
+          onPress={(event) => event.stopPropagation()}
+          style={{ width: '100%', paddingHorizontal: 12, paddingBottom: 12 }}
+          accessibilityViewIsModal>
+          <ClaySurface
+            colors={clay.fondoClaro}
+            radius={radios.tarjetaGrande}
+            border
+            style={sombras.tarjeta}
+            contentStyle={{ padding: 18 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: fuentes.pixel,
+                    fontSize: 15,
+                    color: clay.texto,
+                    letterSpacing: 1,
+                  }}
+                  accessibilityRole="header">
+                  VESTIR
+                </Text>
+                <Text
+                  style={{ marginTop: 6, color: clay.textoSuave, fontSize: textoClay.etiqueta }}>
+                  Toca una prenda para equiparla. Toca un hueco ocupado para quitarla.
                 </Text>
               </View>
-            ) : (
-              <FlatList
-                data={filteredItems}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={equipar.listaContenido}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <Pressable
-                    className={`${equipar.fila} ${item.equipped ? equipar.filaActiva : ''}`}
-                    onPress={() => equip(item.id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: item.equipped }}
-                    accessibilityLabel={
-                      item.equipped
-                        ? `${item.name} ya equipada en ${SLOT_LABELS[item.slot]}`
-                        : `Equipar ${item.name} en ${SLOT_LABELS[item.slot]}`
-                    }>
-                    <ItemPreview item={item} variant="row" />
-                    <View className={equipar.filaInfo}>
-                      <Text className={equipar.filaNombre}>{item.name}</Text>
-                      <Text className={equipar.filaSlot}>
-                        {item.slot} · {SLOT_LABELS[item.slot]}
-                      </Text>
-                    </View>
-                    <View className={equipar.filaEstado}>
-                      <Text className={item.equipped ? equipar.estado : equipar.accion}>
-                        {item.equipped ? '✓ Equipado' : 'Equipar'}
-                      </Text>
-                    </View>
-                  </Pressable>
-                )}
+              <ClayIconButton
+                icon="✕"
+                iconColor={clay.texto}
+                size={44}
+                onPress={onClose}
+                accessibilityLabel="Cerrar menú de vestimenta"
               />
-            )}
-          </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+              {SLOTS.map((slot) => {
+                const item = equippedBySlot[slot];
+                return (
+                  <Pressable
+                    key={slot}
+                    style={{ flex: 1 }}
+                    onPress={() => item && unequip(item.id)}
+                    disabled={!item}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: !item, selected: Boolean(item) }}
+                    accessibilityLabel={
+                      item
+                        ? `Hueco ${SLOT_LABELS[slot]}: ${item.name} equipada. Toca para desequipar`
+                        : `Hueco ${SLOT_LABELS[slot]} vacío`
+                    }>
+                    <ClaySurface
+                      colors={item ? clay.lila : clay.blanco}
+                      radius={18}
+                      border
+                      shadow="suave"
+                      contentStyle={{
+                        paddingVertical: 10,
+                        paddingHorizontal: 6,
+                        alignItems: 'center',
+                        minHeight: 104,
+                        justifyContent: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: textoClay.micro,
+                          fontWeight: '800',
+                          color: clay.textoSuave,
+                          textTransform: 'uppercase',
+                        }}>
+                        {SLOT_LABELS[slot]}
+                      </Text>
+                      <View style={{ height: 34, justifyContent: 'center' }}>
+                        <ItemPreview item={item} size={30} />
+                      </View>
+                      <Text
+                        numberOfLines={1}
+                        style={{ fontSize: 10, fontWeight: '800', color: clay.texto }}>
+                        {item ? item.name : 'Vacío'}
+                      </Text>
+                    </ClaySurface>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 18,
+                marginBottom: 8,
+              }}>
+              <Text style={{ fontSize: 13, fontWeight: '900', color: clay.texto }}>Inventario</Text>
+              <Text style={{ fontSize: 10, color: clay.textoTenue }}>
+                {filteredItems.length} prendas
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {FILTERS.map((value) => {
+                const label = value === 'ALL' ? 'Todas' : SLOT_LABELS[value];
+                return (
+                  <Chip
+                    key={value}
+                    label={label}
+                    selected={filter === value}
+                    onPress={() => setFilter(value)}
+                    accessibilityLabel={
+                      value === 'ALL' ? 'Mostrar todas las prendas' : `Filtrar por ${label}`
+                    }
+                  />
+                );
+              })}
+            </View>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 8,
+                marginTop: 10,
+                alignItems: 'center',
+              }}>
+              <Text style={{ fontSize: 9, fontWeight: '900', color: clay.textoTenue }}>DEMO</Text>
+              {DEMO_STATES.map(({ status: demoStatus, label }) => (
+                <Chip
+                  key={demoStatus}
+                  label={label}
+                  selected={status === demoStatus}
+                  onPress={() => setStatus(demoStatus)}
+                  accessibilityLabel={`Simular estado ${label}`}
+                />
+              ))}
+            </View>
+
+            <View
+              style={{
+                marginTop: 12,
+                borderRadius: radios.tarjeta,
+                overflow: 'hidden',
+              }}>
+              {status === 'loading' ? (
+                <View
+                  style={{ height: listHeight, alignItems: 'center', justifyContent: 'center' }}>
+                  <ActivityIndicator color={clay.violeta[0]} size="large" />
+                  <Text style={{ marginTop: 10, color: clay.textoSuave, fontSize: 12 }}>
+                    Cargando prendas...
+                  </Text>
+                </View>
+              ) : status === 'error' ? (
+                <View
+                  style={{
+                    height: listHeight,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                  }}>
+                  <Text
+                    style={{
+                      color: clay.texto,
+                      fontSize: 13,
+                      fontWeight: '800',
+                      textAlign: 'center',
+                    }}>
+                    No se pudieron cargar las prendas.
+                  </Text>
+                  <ClayButton
+                    title="Reintentar"
+                    colors={clay.blanco}
+                    textColor={clay.texto}
+                    pixel={false}
+                    size="md"
+                    onPress={() => setStatus('ready')}
+                    style={{ marginTop: 14, alignSelf: 'stretch' }}
+                  />
+                </View>
+              ) : showEmpty ? (
+                <View
+                  style={{
+                    height: listHeight,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 20,
+                  }}>
+                  <Text style={{ fontSize: 42 }}>👕</Text>
+                  <Text
+                    style={{
+                      marginTop: 8,
+                      color: clay.texto,
+                      fontSize: 14,
+                      fontWeight: '900',
+                      textAlign: 'center',
+                    }}>
+                    No hay prendas aquí
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 4,
+                      color: clay.textoSuave,
+                      fontSize: 12,
+                      textAlign: 'center',
+                    }}>
+                    Prueba otro slot o vuelve cuando tengas más inventario.
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={filteredItems}
+                  keyExtractor={(item) => item.id}
+                  style={{ height: listHeight }}
+                  contentContainerStyle={{ paddingVertical: 4, gap: 8 }}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const active = item.equipped;
+                    return (
+                      <Pressable
+                        onPress={() => equip(item.id)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={
+                          active
+                            ? `${item.name} ya equipada en ${SLOT_LABELS[item.slot]}`
+                            : `Equipar ${item.name} en ${SLOT_LABELS[item.slot]}`
+                        }>
+                        <ClaySurface
+                          colors={active ? clay.verde : clay.blanco}
+                          radius={radios.input}
+                          border
+                          shadow="suave"
+                          contentStyle={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            padding: 10,
+                            gap: 12,
+                            minHeight: 64,
+                          }}>
+                          <View
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 14,
+                              backgroundColor: 'rgba(255,255,255,0.55)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                            <ItemPreview item={item} size={30} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              numberOfLines={1}
+                              style={{ fontSize: 13, fontWeight: '900', color: clay.oscuro }}>
+                              {item.name}
+                            </Text>
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                color: active ? clay.oscuro : clay.textoSuave,
+                                marginTop: 2,
+                              }}>
+                              {SLOT_LABELS[item.slot]}
+                            </Text>
+                          </View>
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontWeight: '900',
+                              color: active ? clay.oscuro : clay.textoSuave,
+                            }}>
+                            {active ? '✓ Equipado' : 'Equipar'}
+                          </Text>
+                        </ClaySurface>
+                      </Pressable>
+                    );
+                  }}
+                />
+              )}
+            </View>
+          </ClaySurface>
         </Pressable>
       </Pressable>
     </Modal>

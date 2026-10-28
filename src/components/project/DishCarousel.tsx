@@ -1,5 +1,6 @@
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import type { Dish } from '@/lib/types';
+import { clay } from '@/estilos';
 import { DraggableDish } from './DraggableDish';
 
 type DishCarouselProps = {
@@ -13,23 +14,35 @@ type DishCarouselProps = {
 export function DishCarousel({ dishes, loading, onStart, onMove, onEnd }: DishCarouselProps) {
   return (
     <View>
-      <Text className="text-sm font-semibold text-white">Platillos del repo 🍽️</Text>
-      <Text className="mt-0.5 text-xs text-neutral-500">
-        Elige un platillo (un commit) y arrástralo al muñeco para alimentarlo.
+      <Text style={{ fontSize: 13, fontWeight: '900', color: clay.texto }}>
+        Platillos del repo 🍽️
+      </Text>
+      <Text style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
+        Arrastra un platillo (un commit) a la mascota para alimentarla.
       </Text>
 
-      <View className="mt-3">
+      <View style={{ marginTop: 10 }}>
         {loading ? (
-          <ActivityIndicator color="#10b981" />
+          <ActivityIndicator color={clay.violeta[0]} />
         ) : dishes.length === 0 ? (
-          <View className="items-center gap-2 rounded-2xl border border-dashed border-neutral-700 py-8">
-            <Text className="text-4xl">🍽️</Text>
-            <Text className="text-center text-sm text-neutral-300">
+          <View
+            style={{
+              alignItems: 'center',
+              gap: 6,
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: '#CFCFD6',
+              borderRadius: 22,
+              paddingVertical: 24,
+              paddingHorizontal: 16,
+            }}>
+            <Text style={{ fontSize: 34 }}>🍽️</Text>
+            <Text
+              style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', color: clay.texto }}>
               No hay platillos por ahora.
             </Text>
-            <Text className="text-center text-xs text-neutral-500">
-              Los platillos aparecen con cada commit nuevo que hagas en tu repo desde que creaste la
-              mascota.
+            <Text style={{ textAlign: 'center', fontSize: 9, color: clay.textoSuave }}>
+              Aparecen con cada commit nuevo que hagas en el repo desde que creaste la mascota.
             </Text>
           </View>
         ) : (

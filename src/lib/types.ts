@@ -19,6 +19,10 @@ export type Pet = {
   happiness: number;
   lifeBranch: string;
   imageUrl: string | null;
+  bodyColor?: string | null;
+  healthColor?: string | null;
+  hungerColor?: string | null;
+  happinessColor?: string | null;
   projectId: number;
   createdAt: string;
   updatedAt: string;
