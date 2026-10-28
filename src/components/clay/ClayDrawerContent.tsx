@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { DrawerContentScrollView, type DrawerContentComponentProps } from 'expo-router/drawer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/api';
 import { ClayPill } from '@/components/clay/ClayPill';
 import { ClaySurface } from '@/components/clay/ClaySurface';
-import { clay, radios, sombras } from '@/estilos';
+import { IconoImagen, type NombreIcono } from '@/components/clay/IconoImagen';
+import { clay, paleta, radios, sombras } from '@/estilos';
 
 type ItemProps = {
-  icon: string;
+  icon: NombreIcono;
   label: string;
   active?: boolean;
   onPress: () => void;
@@ -22,30 +22,35 @@ function Item({ icon, label, active = false, onPress }: ItemProps) {
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       style={({ pressed }) => [
-        { borderRadius: radios.chip, marginBottom: 10 },
-        pressed ? { transform: [{ scale: 0.98 }] } : null,
+        { borderRadius: radios.chip, marginBottom: 14 },
+        pressed ? { transform: [{ translateY: 2 }, { scale: 0.98 }] } : null,
       ]}>
       <ClaySurface
-        colors={active ? clay.violeta : clay.fondoClaro}
+        colors={active ? clay.fucsia : clay.fondoClaro}
         radius={radios.chip}
         shadow={active ? 'boton' : 'suave'}
+        border
         contentStyle={{
           minHeight: 52,
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 12,
-          paddingHorizontal: 14,
+          gap: 14,
+          paddingHorizontal: 16,
         }}>
         <View
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
+            width: 34,
+            height: 34,
+            borderRadius: 17,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: active ? 'rgba(255,255,255,0.2)' : '#EFEFF3',
+            backgroundColor: active ? 'rgba(255,255,255,0.22)' : 'rgba(64,32,42,0.06)',
           }}>
-          <Text style={{ fontSize: 17 }}>{icon}</Text>
+          <IconoImagen
+            nombre={icon}
+            size={19}
+            tintColor={active ? '#FFFFFF' : clay.texto}
+          />
         </View>
         <Text
           style={{
@@ -62,9 +67,8 @@ function Item({ icon, label, active = false, onPress }: ItemProps) {
 }
 
 export function ClayDrawerContent(props: DrawerContentComponentProps) {
-  const { user, token, signOut } = useAuth();
-  const [syncing, setSyncing] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
+  const { user, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const activeRoute = props.state.routeNames[props.state.index];
   const role = user?.isAdmin ? 'Administrador' : 'Programador';
@@ -74,40 +78,36 @@ export function ClayDrawerContent(props: DrawerContentComponentProps) {
     props.navigation.closeDrawer();
   };
 
-  const sync = async () => {
-    if (!token || syncing) return;
-    setSyncing(true);
-    setMensaje(null);
-    try {
-      await apiFetch('/projects/sync', { token, method: 'POST', body: {} });
-      setMensaje('Repositorios sincronizados.');
-      go('projects');
-    } catch (error) {
-      setMensaje(error instanceof Error ? error.message : 'No se pudo sincronizar');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   return (
     <DrawerContentScrollView
       {...props}
-      contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 14, paddingTop: 8 }}>
-      <View style={sombras.suave}>
-        <ClaySurface
-          colors={clay.fondoClaro}
-          radius={radios.tarjeta}
-          contentStyle={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingHorizontal: 16,
+        paddingTop: insets.top + 16,
+        paddingBottom: Math.max(insets.bottom + 16, 24),
+      }}>
+      {/* Encabezado de perfil: pulsable para llevar a la pantalla de perfil */}
+      <Pressable
+        onPress={() => go('profile')}
+        accessibilityRole="button"
+        accessibilityLabel="Ver mi perfil"
+        style={({ pressed }) => [
+          sombras.tarjeta,
+          { borderRadius: radios.tarjeta, marginBottom: 22 },
+          pressed ? { opacity: 0.88, transform: [{ scale: 0.98 }] } : null,
+        ]}>
+        <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border contentStyle={{ padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View
               style={{
-                width: 54,
-                height: 54,
-                borderRadius: 27,
+                width: 56,
+                height: 56,
+                borderRadius: 28,
                 overflow: 'hidden',
                 backgroundColor: '#FFFFFF',
                 borderWidth: 2,
-                borderColor: '#FFFFFF',
+                borderColor: paleta.rosa.claro,
               }}>
               {user?.avatarUrl ? (
                 <Image
@@ -132,7 +132,7 @@ export function ClayDrawerContent(props: DrawerContentComponentProps) {
               <View style={{ alignSelf: 'flex-start', marginTop: 5 }}>
                 <ClayPill
                   label={role}
-                  colors={clay.negro}
+                  colors={clay.vino}
                   textColor="#FFFFFF"
                   accessibilityLabel={`Rol: ${role}`}
                 />
@@ -140,112 +140,61 @@ export function ClayDrawerContent(props: DrawerContentComponentProps) {
             </View>
           </View>
         </ClaySurface>
-      </View>
+      </Pressable>
 
-      <View style={{ marginTop: 22, gap: 2 }}>
+      {/* Botones de navegación separados entre sí */}
+      <View style={{ gap: 2 }}>
         <Text
           style={{
-            marginBottom: 8,
+            marginBottom: 10,
             marginLeft: 6,
             fontSize: 10,
             fontWeight: '900',
-            letterSpacing: 1.4,
+            letterSpacing: 1.2,
             color: clay.textoTenue,
             textTransform: 'uppercase',
           }}>
           Navegación
         </Text>
         <Item
-          icon="🏠"
+          icon="home"
           label="Inicio"
           active={activeRoute === 'projects'}
           onPress={() => go('projects')}
         />
         <Item
-          icon="👤"
+          icon="usuario"
           label="Mi perfil"
           active={activeRoute === 'profile'}
           onPress={() => go('profile')}
         />
-        <Pressable
-          onPress={() => void sync()}
-          disabled={syncing}
-          accessibilityRole="button"
-          accessibilityLabel="Sincronizar repositorios de GitHub"
-          accessibilityState={{ disabled: syncing }}
-          style={({ pressed }) => [
-            { borderRadius: radios.chip, marginBottom: 10 },
-            pressed && !syncing ? { transform: [{ scale: 0.98 }] } : null,
-          ]}>
-          <ClaySurface
-            colors={clay.menta}
-            radius={radios.chip}
-            shadow="suave"
-            contentStyle={{
-              minHeight: 52,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              paddingHorizontal: 14,
-            }}>
-            <View
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255,255,255,0.35)',
-              }}>
-              {syncing ? (
-                <ActivityIndicator size="small" color={clay.texto} />
-              ) : (
-                <Text style={{ fontSize: 17 }}>🔄</Text>
-              )}
-            </View>
-            <Text style={{ flex: 1, color: clay.texto, fontSize: 15, fontWeight: '800' }}>
-              {syncing ? 'Sincronizando…' : 'Sincronizar GitHub'}
-            </Text>
-          </ClaySurface>
-        </Pressable>
-        {mensaje ? (
-          <Text
-            style={{
-              marginBottom: 10,
-              marginHorizontal: 6,
-              fontSize: 11,
-              lineHeight: 15,
-              color: clay.textoSuave,
-            }}>
-            {mensaje}
-          </Text>
-        ) : null}
       </View>
 
+      {/* Panel de administrador al final */}
       {user?.isAdmin ? (
-        <View style={{ marginTop: 18 }}>
+        <View style={{ marginTop: 12 }}>
           <View
             style={{
               height: 1,
-              backgroundColor: '#C9C9D0',
+              backgroundColor: 'rgba(64,32,42,0.1)',
               marginHorizontal: 8,
               marginBottom: 16,
             }}
           />
           <Text
             style={{
-              marginBottom: 8,
+              marginBottom: 10,
               marginLeft: 6,
               fontSize: 10,
               fontWeight: '900',
-              letterSpacing: 1.4,
+              letterSpacing: 1.2,
               color: clay.textoTenue,
               textTransform: 'uppercase',
             }}>
             Administración
           </Text>
           <Item
-            icon="🛠️"
+            icon="engranaje"
             label="Panel de administrador"
             active={activeRoute === 'admin'}
             onPress={() => go('admin')}
@@ -255,27 +204,30 @@ export function ClayDrawerContent(props: DrawerContentComponentProps) {
 
       <View style={{ flex: 1 }} />
 
+      {/* Cerrar sesión: texto centrado y botón con ícono de assets */}
       <Pressable
         onPress={() => void signOut()}
         accessibilityRole="button"
         accessibilityLabel="Cerrar sesión"
         style={({ pressed }) => [
-          { borderRadius: radios.chip, marginTop: 16, marginBottom: 8 },
-          pressed ? { transform: [{ scale: 0.98 }] } : null,
+          sombras.suave,
+          { borderRadius: radios.chip, marginTop: 18 },
+          pressed ? { transform: [{ translateY: 2 }, { scale: 0.98 }] } : null,
         ]}>
         <ClaySurface
           colors={clay.fondoClaro}
           radius={radios.chip}
-          shadow="suave"
+          border
           contentStyle={{
             minHeight: 50,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 12,
-            paddingHorizontal: 14,
+            justifyContent: 'center',
+            gap: 10,
+            paddingHorizontal: 16,
           }}>
-          <Text style={{ fontSize: 17 }}>🚪</Text>
-          <Text style={{ flex: 1, color: '#B4221B', fontSize: 14, fontWeight: '800' }}>
+          <IconoImagen nombre="salir" size={19} tintColor={paleta.fucsia.base} />
+          <Text style={{ color: paleta.fucsia.base, fontSize: 14, fontWeight: '800' }}>
             Cerrar sesión
           </Text>
         </ClaySurface>

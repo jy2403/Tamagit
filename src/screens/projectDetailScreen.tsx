@@ -9,10 +9,10 @@ import { ClayButton } from '@/components/clay/ClayButton';
 import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClayPill } from '@/components/clay/ClayPill';
 import { ClaySurface } from '@/components/clay/ClaySurface';
+import { IconoImagen } from '@/components/clay/IconoImagen';
 import { StatDonut } from '@/components/clay/StatDonut';
 import { DishCarousel } from '@/components/project/DishCarousel';
 import { EquipMenu } from '@/components/project/EquipMenu';
-import { EquippedStrip } from '@/components/project/EquippedStrip';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
 import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
 import { clay, colorMascotaPorId, radios, sombras, tonoPorHex } from '@/estilos';
@@ -25,13 +25,13 @@ const TIER_META = {
 
 function StatBig({
   label,
-  icon,
+  iconNombre,
   value,
   color,
   offset = 0,
 }: {
   label: string;
-  icon: string;
+  iconNombre: 'vida' | 'hambre' | 'felicidad';
   value: number;
   color: string;
   offset?: number;
@@ -42,7 +42,7 @@ function StatBig({
       <StatDonut
         value={clamped}
         color={color}
-        icon={icon}
+        icon={<IconoImagen nombre={iconNombre} size={28} tintColor={color} />}
         label={label}
         size={70}
         strokeWidth={7}
@@ -75,7 +75,6 @@ export default function ProjectDetailScreen() {
     setFeedback,
     deleting,
     createPet,
-    hidePet,
     unhidePet,
     deletePet,
     petAreaRef,
@@ -85,10 +84,8 @@ export default function ProjectDetailScreen() {
     moveDrag,
     endDrag,
     bubbleText,
-    isRepoOwner,
     feedOpen,
     openFeed,
-    onSyncPress,
   } = viewModel;
 
   const projectName = pet?.project.name ?? fullName ?? 'Proyecto';
@@ -104,47 +101,56 @@ export default function ProjectDetailScreen() {
   const header = (
     <View
       style={{
-        paddingTop: insets.top + 8,
+        paddingTop: insets.top + 10,
         paddingHorizontal: 16,
-        paddingBottom: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
+        paddingBottom: 6,
       }}>
-      <ClayIconButton
-        icon="←"
-        accessibilityLabel="Volver"
-        onPress={() => router.back()}
-        size={50}
-      />
-      <View style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: 5 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+        <ClayIconButton
+          icon="←"
+          accessibilityLabel="Volver"
+          onPress={() => router.back()}
+          size={48}
+        />
+        <ClayIconButton
+          icon="✎"
+          accessibilityLabel="Editar mascota"
+          onPress={() =>
+            router.push({
+              pathname: '/editar/[id]',
+              params: { id: String(pet?.project.id ?? ''), petName: petData?.name ?? '' },
+            })
+          }
+          size={48}
+          disabled={!petData}
+        />
+      </View>
+
+      {/* Bloque con nombre de proyecto y mascota bajado y con aire */}
+      <View style={{ alignItems: 'center', marginTop: 10, marginBottom: 4, gap: 6 }}>
         <ClayPill
           label={`Proyecto: ${projectName}`}
-          colors={clay.negro}
+          colors={clay.vino}
           textColor="#FFFFFF"
           accessibilityLabel={`Proyecto: ${projectName}`}
         />
         {petData ? (
-          <ClayPill
-            label={petData.name}
-            colors={clay.blanco}
-            textColor={clay.texto}
-            accessibilityLabel={`Mascota: ${petData.name}`}
-          />
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: 19,
+              fontWeight: '900',
+              color: clay.texto,
+            }}>
+            {petData.name}
+          </Text>
         ) : null}
       </View>
-      <ClayIconButton
-        icon="✎"
-        accessibilityLabel="Editar mascota"
-        onPress={() =>
-          router.push({
-            pathname: '/editar/[id]',
-            params: { id: String(pet?.project.id ?? ''), petName: petData?.name ?? '' },
-          })
-        }
-        size={50}
-        disabled={!petData}
-      />
     </View>
   );
 
@@ -193,47 +199,55 @@ export default function ProjectDetailScreen() {
             </Text>
 
             <View style={{ flexDirection: 'row', marginTop: 16, alignItems: 'flex-start' }}>
-              <StatBig label="Hambre" icon="🍎" value={petData.hunger} color={hungerColor} />
+              <StatBig label="Hambre" iconNombre="hambre" value={petData.hunger} color={hungerColor} />
               <StatBig
                 label="Vida"
-                icon="♥"
+                iconNombre="vida"
                 value={petData.health}
                 color={healthColor}
                 offset={18}
               />
               <StatBig
                 label="Felicidad"
-                icon="☺"
+                iconNombre="felicidad"
                 value={petData.happiness}
                 color={happinessColor}
               />
             </View>
 
-            <View style={{ marginTop: 12 }}>
-              <SpeechBubble text={bubbleText} loading={syncing} />
+            <View style={{ marginTop: 14 }}>
+              <SpeechBubble text={bubbleText} loading={syncing} petName={petData.name} />
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-              <ClayButton
-                title={feedOpen ? 'Cerrar' : 'Alimentar'}
-                colors={clay.verde}
-                textColor="#FFFFFF"
-                size="md"
-                onPress={openFeed}
-                accessibilityLabel={feedOpen ? 'Cerrar platillos' : 'Abrir menú para alimentar'}
-                icon={<Text style={{ fontSize: 18 }}>🍎</Text>}
-                style={{ flex: 1 }}
-              />
-              <ClayButton
-                title="Vestir"
-                colors={clay.menta}
-                textColor="#1A1A1C"
-                pixel={false}
-                size="md"
-                onPress={() => setEquipOpen(true)}
-                accessibilityLabel="Abrir menú de vestimenta"
-                style={{ flex: 1 }}
-              />
+            {/* Botones de acción centrados, mismo ancho, sin texto y con imágenes de assets */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 16,
+                marginTop: 18,
+              }}>
+              <View style={{ flex: 1, maxWidth: 140 }}>
+                <ClayButton
+                  title=""
+                  colors={clay.fucsia}
+                  size="md"
+                  onPress={openFeed}
+                  accessibilityLabel={feedOpen ? 'Cerrar platillos' : 'Alimentar'}
+                  icon={<IconoImagen nombre="hambre" size={26} tintColor="#FFFFFF" />}
+                />
+              </View>
+              <View style={{ flex: 1, maxWidth: 140 }}>
+                <ClayButton
+                  title=""
+                  colors={clay.menta}
+                  size="md"
+                  onPress={() => setEquipOpen(true)}
+                  accessibilityLabel="Vestir"
+                  icon={<IconoImagen nombre="perchero" size={26} tintColor={clay.texto} />}
+                />
+              </View>
             </View>
 
             {feedOpen ? (
@@ -247,69 +261,6 @@ export default function ProjectDetailScreen() {
                 />
               </View>
             ) : null}
-
-            <View style={{ marginTop: 18 }}>
-              <EquippedStrip />
-            </View>
-
-            <View style={[sombras.suave, { marginTop: 18 }]}>
-              <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
-                <View style={{ padding: 16, gap: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '900', color: clay.texto }}>
-                        Rama de vida
-                      </Text>
-                      <Text numberOfLines={1} style={{ fontSize: 10, color: clay.textoSuave }}>
-                        {petData.lifeBranch}
-                      </Text>
-                    </View>
-                    <ClayPill
-                      label="Sincronizar"
-                      colors={clay.fondoClaro}
-                      textColor={clay.texto}
-                      accessibilityLabel="Sincronizar commits"
-                    />
-                  </View>
-                  <ClayButton
-                    title={syncing ? 'Sincronizando…' : 'Sincronizar commits'}
-                    colors={clay.violeta}
-                    disabled={syncing}
-                    size="md"
-                    pixel={false}
-                    onPress={() => void onSyncPress()}
-                    accessibilityLabel="Sincronizar commits del repositorio"
-                  />
-                  <Text style={{ textAlign: 'center', fontSize: 9, color: clay.textoTenue }}>
-                    {isRepoOwner
-                      ? 'Eres el dueño del repositorio. Puedes eliminar la mascota para todos.'
-                      : 'Solo el dueño puede eliminar la mascota. Puedes ocultarla de tu cuenta.'}
-                  </Text>
-                </View>
-              </ClaySurface>
-            </View>
-
-            <View style={{ marginTop: 14 }}>
-              {isRepoOwner ? (
-                <ClayButton
-                  title="Eliminar mascota"
-                  colors={clay.rojo}
-                  size="md"
-                  onPress={() => setConfirmOpen(true)}
-                  accessibilityLabel="Eliminar mascota"
-                />
-              ) : (
-                <ClayButton
-                  title="Ocultar para mí"
-                  colors={clay.blanco}
-                  textColor={clay.texto}
-                  pixel={false}
-                  size="md"
-                  onPress={() => void hidePet()}
-                  accessibilityLabel="Ocultar mascota para mi cuenta"
-                />
-              )}
-            </View>
           </>
         ) : pet?.hiddenByUser ? (
           <View style={[sombras.suave, { marginTop: 30 }]}>
@@ -339,7 +290,9 @@ export default function ProjectDetailScreen() {
           <View style={[sombras.tarjeta, { marginTop: 12 }]}>
             <ClaySurface colors={clay.blanco} radius={radios.tarjetaGrande} border>
               <View style={{ padding: 20, gap: 12 }}>
-                <Text style={{ fontSize: 34, textAlign: 'center' }}>🥚</Text>
+                <View style={{ alignItems: 'center' }}>
+                  <IconoImagen nombre="huevo" size={40} tintColor={clay.textoSuave} />
+                </View>
                 <Text
                   style={{
                     textAlign: 'center',

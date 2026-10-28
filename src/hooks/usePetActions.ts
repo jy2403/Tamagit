@@ -108,11 +108,12 @@ export function usePetActions(projectId: string, deps: PetActionsDependencies) {
   }, [token, pet, setPet, router, setError]);
 
   const saveColors = useCallback(
-    async (colors: {
-      bodyColor: string;
-      healthColor: string;
-      hungerColor: string;
-      happinessColor: string;
+    async (payload: {
+      bodyColor?: string;
+      healthColor?: string;
+      hungerColor?: string;
+      happinessColor?: string;
+      lifeBranch?: string;
     }) => {
       if (!pet?.pet || !token) return false;
       setFeedback(null);
@@ -120,13 +121,13 @@ export function usePetActions(projectId: string, deps: PetActionsDependencies) {
         const data = await apiFetch<Pet>(`/pets/${pet.pet.id}`, {
           token,
           method: 'PATCH',
-          body: colors,
+          body: payload,
         });
         setPet({ ...pet, pet: { ...pet.pet, ...data } });
-        setSuccess('Colores guardados.');
+        setSuccess('Cambios guardados.');
         return true;
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'No se pudieron guardar los colores');
+        setError(e instanceof Error ? e.message : 'No se pudieron guardar los cambios');
         return false;
       }
     },

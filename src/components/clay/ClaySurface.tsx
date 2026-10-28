@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { clay, sombras, type Gradiente } from '@/estilos';
+import { clay, paleta, sombras, type Gradiente } from '@/estilos';
 
 type ClaySurfaceProps = {
   colors?: Gradiente;
@@ -40,19 +40,23 @@ export function ClaySurface({
         style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
         <Svg width="100%" height="100%">
           <Defs>
-            <LinearGradient id={`${id}bg`} x1="0" y1="0" x2="1" y2="1">
+            {/* Degradado base vertical estricto (arriba a abajo) */}
+            <LinearGradient id={`${id}bg`} x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={top} />
               <Stop offset="1" stopColor={bottom} />
             </LinearGradient>
-            <LinearGradient id={`${id}shine`} x1="0" y1="0" x2="0.85" y2="1">
-              <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.55" />
-              <Stop offset="0.42" stopColor="#FFFFFF" stopOpacity="0.06" />
-              <Stop offset="0.72" stopColor="#000000" stopOpacity="0.02" />
-              <Stop offset="1" stopColor="#000000" stopOpacity="0.16" />
+
+            {/* Claymorfismo: brillo interior superior blanco y sombra inferior teñida con vino */}
+            <LinearGradient id={`${id}depth`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.65" />
+              <Stop offset="0.18" stopColor="#FFFFFF" stopOpacity="0.15" />
+              <Stop offset="0.55" stopColor="#FFFFFF" stopOpacity="0" />
+              <Stop offset="0.82" stopColor={paleta.vino.base} stopOpacity="0.08" />
+              <Stop offset="1" stopColor={paleta.vino.base} stopOpacity="0.24" />
             </LinearGradient>
           </Defs>
           <Rect width="100%" height="100%" fill={`url(#${id}bg)`} />
-          {shine ? <Rect width="100%" height="100%" fill={`url(#${id}shine)`} /> : null}
+          {shine ? <Rect width="100%" height="100%" fill={`url(#${id}depth)`} /> : null}
         </Svg>
       </View>
       {border ? (
@@ -63,7 +67,7 @@ export function ClaySurface({
             {
               borderRadius: radius,
               borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.35)',
+              borderColor: 'rgba(255,255,255,0.45)',
             },
           ]}
         />

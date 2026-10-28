@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { clay, radios, sombras, type Gradiente } from '@/estilos';
+import { clay, fuentes, radios, sombras, type Gradiente } from '@/estilos';
 import { ClaySurface } from './ClaySurface';
 import { OutlinedText } from './OutlinedText';
 
@@ -17,7 +17,9 @@ type ClayButtonProps = {
   colors?: Gradiente;
   textColor?: string;
   icon?: ReactNode;
+  iconRight?: ReactNode;
   pixel?: boolean;
+  outline?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
@@ -32,7 +34,9 @@ export function ClayButton({
   colors = clay.violeta,
   textColor = '#FFFFFF',
   icon,
+  iconRight,
   pixel = true,
+  outline = true,
   disabled = false,
   style,
   accessibilityLabel,
@@ -41,7 +45,7 @@ export function ClayButton({
   size = 'lg',
 }: ClayButtonProps) {
   const paddingVertical = size === 'lg' ? 16 : 11;
-  const titleSize = pixel ? (size === 'lg' ? 13 : 10) : size === 'lg' ? 16 : 14;
+  const titleSize = pixel ? (size === 'lg' ? 16 : 12) : size === 'lg' ? 17 : 14;
 
   return (
     <Pressable
@@ -54,7 +58,9 @@ export function ClayButton({
       style={({ pressed }) => [
         { alignSelf: 'stretch' },
         sombras.boton,
-        pressed && !disabled ? [{ transform: [{ scale: 0.96 }] }, sombras.hundido] : null,
+        pressed && !disabled
+          ? [{ transform: [{ translateY: 2 }, { scale: 0.97 }] }, sombras.hundido]
+          : null,
         disabled ? { opacity: 0.45 } : null,
         style,
       ]}>
@@ -69,15 +75,28 @@ export function ClayButton({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 10,
+          gap: 12,
         }}>
         {icon ? (
           <View style={{ alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
         ) : null}
         {pixel ? (
-          <OutlinedText size={titleSize} color={textColor} outlineWidth={2}>
-            {title}
-          </OutlinedText>
+          outline ? (
+            <OutlinedText size={titleSize} color={textColor} outlineWidth={2}>
+              {title}
+            </OutlinedText>
+          ) : (
+            <Text
+              style={{
+                fontFamily: fuentes.pixel,
+                fontSize: titleSize,
+                color: textColor,
+                textAlign: 'center',
+                includeFontPadding: false,
+              }}>
+              {title}
+            </Text>
+          )
         ) : (
           <Text
             style={{
@@ -89,6 +108,9 @@ export function ClayButton({
             {title}
           </Text>
         )}
+        {iconRight ? (
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>{iconRight}</View>
+        ) : null}
       </ClaySurface>
     </Pressable>
   );

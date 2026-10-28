@@ -24,8 +24,8 @@ export function ClayBackground({ children }: ClayBackgroundProps) {
             </LinearGradient>
           </Defs>
           <Rect width="100%" height="100%" fill={`url(#${id}fondo)`} />
-          <Circle cx="92%" cy="10%" r="26%" fill="#FFFFFF" fillOpacity={0.18} />
-          <Circle cx="4%" cy="88%" r="30%" fill="#8C8C96" fillOpacity={0.08} />
+          <Circle cx="90%" cy="10%" r="28%" fill="#FFFFFF" fillOpacity={0.22} />
+          <Circle cx="8%" cy="90%" r="32%" fill="#AD849A" fillOpacity={0.09} />
         </Svg>
       </View>
       {children}

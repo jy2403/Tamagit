@@ -9,11 +9,13 @@ import { FormattedText } from './FormattedText';
 type SpeechBubbleProps = {
   text: string;
   loading?: boolean;
+  petName?: string;
 };
 
-export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
+export function SpeechBubble({ text, loading, petName }: SpeechBubbleProps) {
   const [expanded, setExpanded] = useState(false);
   const content = loading ? 'Pensando...' : text || '';
+  const label = petName ? petName.toUpperCase() : 'MASCOTA';
   const {
     scrollViewRef,
     isScrollable,
@@ -29,18 +31,18 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
 
   return (
     <>
-      <View style={{ alignSelf: 'flex-start', maxWidth: '92%' }}>
+      <View style={{ width: '100%', alignItems: 'center' }}>
         <View
           style={{
-            marginLeft: 30,
+            alignSelf: 'center',
             width: 0,
             height: 0,
-            borderLeftWidth: 13,
-            borderRightWidth: 13,
-            borderBottomWidth: 15,
+            borderLeftWidth: 12,
+            borderRightWidth: 12,
+            borderBottomWidth: 13,
             borderLeftColor: 'transparent',
             borderRightColor: 'transparent',
-            borderBottomColor: clay.negro[1],
+            borderBottomColor: clay.vino[0],
           }}
         />
         <Pressable
@@ -48,39 +50,42 @@ export function SpeechBubble({ text, loading }: SpeechBubbleProps) {
           disabled={loading || content.length === 0}
           accessibilityRole="button"
           accessibilityLabel={
-            loading ? 'La mascota está pensando' : `La mascota dice: ${content || 'nada'}`
-          }>
+            loading ? 'La mascota está pensando' : `${label} dice: ${content || 'nada'}`
+          }
+          style={{ width: '100%' }}>
           <ClaySurface
-            colors={clay.negro}
+            colors={clay.vino}
             radius={radios.tarjeta}
-            style={sombras.suave}
-            contentStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+            shadow="suave"
+            border
+            contentStyle={{ paddingHorizontal: 18, paddingVertical: 14 }}>
             <Text
               style={{
                 fontFamily: fuentes.pixel,
-                fontSize: 6,
-                lineHeight: 11,
-                color: '#B9B9C2',
+                fontSize: 8,
+                lineHeight: 13,
+                color: '#F4DDE8',
                 marginBottom: 6,
+                letterSpacing: 0.8,
               }}>
-              LA MASCOTA DICE
+              {label}
             </Text>
             {loading ? (
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF' }}>Pensando...</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>Pensando...</Text>
             ) : (
               <>
                 <Text
                   numberOfLines={4}
                   style={{
                     fontFamily: fuentes.pixel,
-                    fontSize: 7,
-                    lineHeight: 13,
+                    fontSize: 8,
+                    lineHeight: 15,
                     color: '#FFFFFF',
                   }}>
                   {content || 'Todavía no tengo nada que decir.'}
                 </Text>
                 {content.length > 90 ? (
-                  <Text style={{ marginTop: 6, fontSize: 8, fontWeight: '800', color: '#B9B9C2' }}>
+                  <Text style={{ marginTop: 8, fontSize: 8, fontWeight: '800', color: '#E5BFD1' }}>
                     Toca para ver completo
                   </Text>
                 ) : null}

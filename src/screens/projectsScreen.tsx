@@ -21,10 +21,10 @@ import { ClayButton } from '@/components/clay/ClayButton';
 import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClayPill } from '@/components/clay/ClayPill';
 import { ClaySurface } from '@/components/clay/ClaySurface';
+import { IconoImagen } from '@/components/clay/IconoImagen';
 import { LineChart } from '@/components/clay/LineChart';
 import { PetArena } from '@/components/clay/PetArena';
 import { ScatterChart, type PuntoMascota } from '@/components/clay/ScatterChart';
-import { StatDonut } from '@/components/clay/StatDonut';
 import { useDashboard, type DashboardDia } from '@/hooks/useDashboard';
 import { useProjects } from '@/hooks/useProjects';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -71,9 +71,6 @@ function WeeklyHero({
   const averageScore = scoreDays.length
     ? Math.round(scoreDays.reduce((total, item) => total + item.score, 0) / scoreDays.length)
     : 0;
-  const textColor = day.textoSobre;
-  const outlineColor = textColor === '#FFFFFF' ? '#161616' : '#FFFFFF';
-
   return (
     <View
       style={[
@@ -106,42 +103,10 @@ function WeeklyHero({
         />
       </Animated.View>
 
-      <View style={{ padding: 16 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              style={{
-                fontFamily: fuentes.pixel,
-                fontSize: 9,
-                lineHeight: 15,
-                color: textColor,
-                textShadowColor: outlineColor,
-                textShadowOffset: { width: 1, height: 1 },
-                textShadowRadius: 0,
-              }}>
-              ESTA SEMANA
-            </Text>
-            <Text style={{ marginTop: 4, fontSize: 17, fontWeight: '900', color: textColor }}>
-              {day.nombre}
-            </Text>
-          </View>
-          <ClayPill
-            label={`${totalCommits} commits`}
-            colors={clay.negro}
-            textColor="#FFFFFF"
-            accessibilityLabel={`${totalCommits} commits esta semana`}
-          />
-        </View>
-
-        <View style={{ marginTop: 12 }}>
+      <View style={{ padding: 14 }}>
+        <View>
           <ClaySurface
-            colors={clay.negro}
+            colors={clay.panelOscuro}
             radius={radios.chip}
             contentStyle={{ flexDirection: 'row', gap: 4, padding: 7 }}>
             {days.map((item) => {
@@ -237,7 +202,7 @@ function WeeklyHero({
                   justifyContent: 'space-between',
                 }}>
                 <Text style={{ fontSize: 10, fontWeight: '900', color: '#FFFFFF' }}>Mascotas</Text>
-                <Text style={{ fontSize: 8, color: '#B9B9C2' }}>Vida = tamaño</Text>
+                <Text style={{ fontSize: 8, color: '#B9B9C2' }}>Vida = batería</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 3 }}>
                 <Legend color={clay.ambar[0]} label="Hambre" textColor="#D8D8DE" />
@@ -261,20 +226,52 @@ function WeeklyHero({
           </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginTop: 10,
-            gap: 8,
-          }}>
-          <Text style={{ fontSize: 10, fontWeight: '800', color: textColor, opacity: 0.9 }}>
-            Buenas prácticas: {averageScore}%
-          </Text>
-          <Text style={{ fontSize: 9, color: textColor, opacity: 0.82 }}>
-            {totalCommits === 0 ? 'Sin actividad todavía' : 'Sigue así'}
-          </Text>
+        {/* Tarjeta claymorfista pequeña con Buenas Prácticas y Commits */}
+        <View style={{ marginTop: 12 }}>
+          <ClaySurface
+            colors={clay.panelOscuro}
+            radius={radios.chip}
+            shadow="suave"
+            border
+            contentStyle={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+            }}>
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontWeight: '800',
+                  color: '#D8D8DE',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}>
+                Buenas prácticas
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 15, fontWeight: '900', color: '#FFFFFF' }}>
+                {averageScore}%
+              </Text>
+            </View>
+            <View style={{ width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.15)' }} />
+            <View style={{ alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontWeight: '800',
+                  color: '#D8D8DE',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                }}>
+                Commits
+              </Text>
+              <Text style={{ marginTop: 2, fontSize: 15, fontWeight: '900', color: '#FFFFFF' }}>
+                {totalCommits}
+              </Text>
+            </View>
+          </ClaySurface>
         </View>
       </View>
     </View>
@@ -306,9 +303,11 @@ function PetCard({
   const hungerColor = pet.hungerColor ?? tones[1];
   const happinessColor = pet.happinessColor ?? tones[0];
 
+  const CIRCLE_SIZE = 38;
+
   return (
     <View style={sombras.tarjeta}>
-      <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
+      <ClaySurface colors={clay.blanco} radius={radios.pastilla} border>
         <Pressable
           onPress={onOpen}
           accessibilityRole="button"
@@ -317,18 +316,21 @@ function PetCard({
             {
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 10,
-              padding: 12,
-              minHeight: 112,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              gap: 12,
+              minHeight: 64,
             },
-            pressed ? { opacity: 0.86 } : null,
+            pressed ? { opacity: 0.88 } : null,
           ]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* Izquierda: Imagen circular de la mascota y los 3 indicadores con mismo diámetro */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* Preview circular estático sin sombra */}
             <View
               style={{
-                width: 66,
-                height: 78,
-                borderRadius: 18,
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
                 backgroundColor: '#F1F1F5',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -336,79 +338,91 @@ function PetCard({
               }}>
               <Image
                 source={require('../../assets/mascota.png')}
-                style={{ width: 62, height: 70 }}
+                style={{ width: CIRCLE_SIZE - 4, height: CIRCLE_SIZE - 4 }}
                 resizeMode="contain"
               />
             </View>
-            <View style={{ gap: 2 }}>
-              <View style={{ flexDirection: 'row', gap: 3 }}>
-                <StatDonut
-                  value={pet.health}
-                  color={healthColor}
-                  icon="♥"
-                  label="Vida"
-                  size={34}
-                  strokeWidth={4}
-                />
-                <StatDonut
-                  value={pet.hunger}
-                  color={hungerColor}
-                  icon="●"
-                  label="Hambre"
-                  size={34}
-                  strokeWidth={4}
-                />
-                <StatDonut
-                  value={pet.happiness}
-                  color={happinessColor}
-                  icon="☺"
-                  label="Felicidad"
-                  size={34}
-                  strokeWidth={4}
-                />
-              </View>
-              <View style={{ flexDirection: 'row', gap: 3 }}>
-                {['Vida', 'Hambre', 'Feliz'].map((label) => (
-                  <Text
-                    key={label}
-                    style={{ width: 34, textAlign: 'center', fontSize: 7, color: clay.textoTenue }}>
-                    {label}
-                  </Text>
-                ))}
-              </View>
+
+            {/* Indicador de vida con imagen de asset, sin sombra ni etiqueta */}
+            <View
+              style={{
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
+                backgroundColor: '#F7F7F9',
+                borderWidth: 1.5,
+                borderColor: healthColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <IconoImagen nombre="vida" size={18} tintColor={healthColor} />
+            </View>
+
+            {/* Indicador de hambre con imagen de asset, sin sombra ni etiqueta */}
+            <View
+              style={{
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
+                backgroundColor: '#F7F7F9',
+                borderWidth: 1.5,
+                borderColor: hungerColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <IconoImagen nombre="hambre" size={18} tintColor={hungerColor} />
+            </View>
+
+            {/* Indicador de felicidad con imagen de asset, sin sombra ni etiqueta */}
+            <View
+              style={{
+                width: CIRCLE_SIZE,
+                height: CIRCLE_SIZE,
+                borderRadius: CIRCLE_SIZE / 2,
+                backgroundColor: '#F7F7F9',
+                borderWidth: 1.5,
+                borderColor: happinessColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <IconoImagen nombre="felicidad" size={18} tintColor={happinessColor} />
             </View>
           </View>
 
-          <View style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
-              <Text
-                numberOfLines={1}
-                style={{ flex: 1, fontSize: 15, fontWeight: '900', color: clay.texto }}>
-                {pet.name}
-              </Text>
-              <View style={{ marginTop: -4, marginRight: -4 }}>
-                <ClayIconButton
-                  icon="✎"
-                  accessibilityLabel={`Editar ${pet.name}`}
-                  onPress={onEdit}
-                  size={40}
-                  colors={clay.blanco}
-                  iconColor={clay.texto}
-                />
-              </View>
-            </View>
-            <View style={{ alignSelf: 'flex-start', marginTop: 6, maxWidth: '100%' }}>
+          {/* Derecha dentro de la misma tarjeta: Pastilla vino de proyecto y nombre de mascota simple */}
+          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+            <View style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
               <ClayPill
                 label={project.name}
-                colors={clay.negro}
+                colors={clay.vino}
                 textColor="#FFFFFF"
                 accessibilityLabel={`Proyecto: ${project.name}`}
               />
             </View>
-            <Text numberOfLines={1} style={{ marginTop: 6, fontSize: 9, color: clay.textoTenue }}>
-              {project.fullName ?? pet.lifeBranch}
+            <Text
+              numberOfLines={1}
+              style={{
+                marginTop: 3,
+                fontSize: 15,
+                fontWeight: '900',
+                color: clay.texto,
+              }}>
+              {pet.name}
             </Text>
           </View>
+
+          {/* Botón de editar: imagen de editar de assets, sin círculo de fondo, en la esquina superior derecha */}
+          <Pressable
+            hitSlop={8}
+            onPress={onEdit}
+            accessibilityRole="button"
+            accessibilityLabel={`Editar ${pet.name}`}
+            style={({ pressed }) => [
+              { alignSelf: 'flex-start', marginTop: 2 },
+              pressed ? { opacity: 0.6 } : null,
+            ]}>
+            <IconoImagen nombre="editar" size={20} tintColor={clay.texto} />
+          </Pressable>
         </Pressable>
       </ClaySurface>
     </View>
@@ -617,32 +631,22 @@ export default function ProjectsScreen() {
             height: event.nativeEvent.layout.height,
           };
         }}
-        style={[
-          sombras.tarjeta,
-          {
-            height: 214,
-            borderRadius: radios.tarjetaGrande,
-            overflow: 'hidden',
-            backgroundColor: '#E7E7EC',
-          },
-        ]}>
+        style={{
+          height: 214,
+          overflow: 'hidden',
+          marginVertical: 4,
+        }}>
         {arenaPets.length > 0 ? (
           <PetArena pets={arenaPets} paused={!arenaVisible} onSelect={openArenaPet} />
         ) : (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Text style={{ fontSize: 26 }}>🥚</Text>
+            <IconoImagen nombre="huevo" size={36} tintColor={clay.textoSuave} />
             <Text style={{ fontSize: 12, fontWeight: '800', color: clay.textoSuave }}>
               El escenario está esperando mascotas
             </Text>
           </View>
         )}
       </View>
-
-      <Text style={{ marginTop: 6, marginBottom: 10, fontSize: 9, color: clay.textoTenue }}>
-        {arenaPets.length > Math.min(10, arenaPets.length)
-          ? 'Se muestran las primeras 10 mascotas en el escenario.'
-          : `Caminando: ${Math.min(10, arenaPets.length)} de ${arenaPets.length}`}
-      </Text>
     </View>
   );
 
@@ -703,23 +707,13 @@ export default function ProjectsScreen() {
         }}>
         <ClayButton
           title="Nuevo"
-          colors={clay.verde}
+          colors={clay.fucsia}
           textColor="#FFFFFF"
+          pixel
+          outline={false}
           accessibilityLabel="Crear nueva mascota"
           onPress={() => router.push('/nuevo' as Href)}
-          icon={
-            <View
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: 'rgba(255,255,255,0.32)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <Text style={{ fontSize: 20, fontWeight: '900', color: '#FFFFFF' }}>+</Text>
-            </View>
-          }
+          iconRight={<IconoImagen nombre="huevo" size={26} tintColor="#FFFFFF" />}
         />
       </View>
     </ClayBackground>

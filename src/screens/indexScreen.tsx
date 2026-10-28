@@ -2,84 +2,33 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Animated, Image, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, Ellipse, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { useAuth } from '@/context/AuthContext';
 import { ClayBackground } from '@/components/clay/ClayBackground';
 import { ClayButton } from '@/components/clay/ClayButton';
 import { ClaySurface } from '@/components/clay/ClaySurface';
-import { OutlinedText } from '@/components/clay/OutlinedText';
 import { clay, sombras, type Gradiente } from '@/estilos';
 
-type Blob = {
+type BlobLayer = {
   colors: Gradiente;
-  size: number;
-  cx: number;
-  cy: number;
   radius: number;
   lobes: number;
-  phase: number;
-  rotate: number;
-  offsetX: number;
-  offsetY: number;
 };
 
-const BLOBS: readonly Blob[] = [
-  {
-    colors: clay.turquesa,
-    size: 260,
-    cx: 118,
-    cy: 126,
-    radius: 96,
-    lobes: 7,
-    phase: 0.4,
-    rotate: -16,
-    offsetX: -18,
-    offsetY: 14,
-  },
-  {
-    colors: clay.verde,
-    size: 254,
-    cx: 108,
-    cy: 110,
-    radius: 92,
-    lobes: 8,
-    phase: 1.3,
-    rotate: 12,
-    offsetX: -30,
-    offsetY: -8,
-  },
-  {
-    colors: clay.amarillo,
-    size: 242,
-    cx: 116,
-    cy: 100,
-    radius: 82,
-    lobes: 7,
-    phase: 2.4,
-    rotate: -6,
-    offsetX: 10,
-    offsetY: -20,
-  },
-  {
-    colors: clay.naranja,
-    size: 222,
-    cx: 112,
-    cy: 112,
-    radius: 70,
-    lobes: 9,
-    phase: 0.9,
-    rotate: 22,
-    offsetX: 18,
-    offsetY: 6,
-  },
+// Capas de estrellas/ondas perfectamente concéntricas con simetría radial regular
+const BLOB_LAYERS: readonly BlobLayer[] = [
+  { colors: clay.menta, radius: 114, lobes: 8 },
+  { colors: clay.malva, radius: 96, lobes: 8 },
+  { colors: clay.rosa, radius: 78, lobes: 8 },
+  { colors: clay.fucsia, radius: 62, lobes: 8 },
 ];
 
-function blobPath(cx: number, cy: number, radius: number, lobes: number, phase: number) {
+function concentricBlobPath(cx: number, cy: number, radius: number, lobes: number) {
   const total = 48;
   const wobble = 0.09;
   const points = Array.from({ length: total }, (_, index) => {
     const angle = (index / total) * Math.PI * 2;
-    const radio = radius * (1 + wobble * Math.sin(lobes * angle + phase));
+    const radio = radius * (1 + wobble * Math.sin(lobes * angle));
     return {
       x: cx + Math.cos(angle) * radio,
       y: cy + Math.sin(angle) * radio,
@@ -102,15 +51,16 @@ function blobPath(cx: number, cy: number, radius: number, lobes: number, phase: 
   return `${d}Z`;
 }
 
-type Splash = { size: number; left: `${number}%`; top: `${number}%`; z: number };
+// Burbujitas ordenadas y simétricas respecto al letrero (sin tapar el texto)
+type Bubble = { size: number; left?: number; right?: number; top: number; colors: Gradiente };
 
-const SPLASHES: readonly Splash[] = [
-  { size: 54, left: '78%', top: '-4%', z: 0 },
-  { size: 22, left: '10%', top: '2%', z: 0 },
-  { size: 16, left: '72%', top: '36%', z: 2 },
-  { size: 30, left: '-4%', top: '32%', z: 0 },
-  { size: 14, left: '4%', top: '52%', z: 2 },
-  { size: 40, left: '84%', top: '52%', z: 0 },
+const SYMMETRIC_BUBBLES: readonly Bubble[] = [
+  { size: 20, left: -24, top: 10, colors: clay.rosa },
+  { size: 14, left: -16, top: 46, colors: clay.menta },
+  { size: 10, left: -26, top: 68, colors: clay.malva },
+  { size: 20, right: -24, top: 10, colors: clay.rosa },
+  { size: 14, right: -16, top: 46, colors: clay.menta },
+  { size: 10, right: -26, top: 68, colors: clay.malva },
 ];
 
 export default function LandingScreen() {
@@ -120,61 +70,61 @@ export default function LandingScreen() {
   const { width, height } = useWindowDimensions();
   const compact = height < 720;
 
-  const flowerSize = Math.min(compact ? 240 : 290, width * 0.82);
-  const squareSize = Math.round(flowerSize * 0.61);
-  const blobScale = flowerSize / 260;
+  const flowerSize = Math.min(compact ? 240 : 280, width * 0.78);
+  const squareSize = Math.round(flowerSize * 0.52);
 
-  const [titleY] = useState(() => new Animated.Value(-150));
-  const [titleScale] = useState(() => new Animated.Value(0.82));
+  const [titleY] = useState(() => new Animated.Value(-120));
+  const [titleScale] = useState(() => new Animated.Value(0.85));
   const [flowerScale] = useState(() => new Animated.Value(0.4));
   const [flowerRotate] = useState(() => new Animated.Value(0));
   const [squareScale] = useState(() => new Animated.Value(0));
-  const [buttonScale] = useState(() => new Animated.Value(0.6));
+  const [buttonScale] = useState(() => new Animated.Value(0.8));
   const [buttonOpacity] = useState(() => new Animated.Value(0));
   const [buttonPulse] = useState(() => new Animated.Value(1));
-  const [splashScales] = useState(() => SPLASHES.map(() => new Animated.Value(0)));
+  const [bubbleScales] = useState(() => SYMMETRIC_BUBBLES.map(() => new Animated.Value(0)));
 
   const paths = useMemo(
-    () => BLOBS.map((blob) => blobPath(blob.cx, blob.cy, blob.radius, blob.lobes, blob.phase)),
+    () => BLOB_LAYERS.map((layer) => concentricBlobPath(130, 130, layer.radius, layer.lobes)),
     []
   );
 
   useEffect(() => {
     const intro = Animated.parallel([
-      Animated.spring(titleY, { toValue: 0, friction: 5, tension: 70, useNativeDriver: true }),
-      Animated.spring(titleScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+      Animated.spring(titleY, { toValue: 0, friction: 6, tension: 70, useNativeDriver: true }),
+      Animated.spring(titleScale, { toValue: 1, friction: 5, useNativeDriver: true }),
       Animated.stagger(
-        90,
-        splashScales.map((value) =>
-          Animated.spring(value, { toValue: 1, friction: 4, useNativeDriver: true })
+        60,
+        bubbleScales.map((value) =>
+          Animated.spring(value, { toValue: 1, friction: 5, useNativeDriver: true })
         )
       ),
       Animated.sequence([
-        Animated.delay(160),
-        Animated.spring(flowerScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+        Animated.delay(140),
+        Animated.spring(flowerScale, { toValue: 1, friction: 6, useNativeDriver: true }),
       ]),
       Animated.sequence([
-        Animated.delay(500),
-        Animated.spring(squareScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+        Animated.delay(420),
+        Animated.spring(squareScale, { toValue: 1, friction: 5, useNativeDriver: true }),
       ]),
       Animated.sequence([
-        Animated.delay(880),
+        Animated.delay(700),
         Animated.parallel([
-          Animated.spring(buttonScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+          Animated.spring(buttonScale, { toValue: 1, friction: 5, useNativeDriver: true }),
           Animated.timing(buttonOpacity, {
             toValue: 1,
-            duration: 260,
+            duration: 300,
             useNativeDriver: true,
           }),
         ]),
       ]),
     ]);
 
+    // Rotación suave concéntrica sobre su propio centro
     const rotateLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(flowerRotate, {
           toValue: 1,
-          duration: 7000,
+          duration: 9000,
           useNativeDriver: true,
         }),
         Animated.timing(flowerRotate, {
@@ -185,16 +135,17 @@ export default function LandingScreen() {
       ])
     );
 
+    // Latido sutil y lento para el botón START
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(buttonPulse, {
-          toValue: 1.045,
-          duration: 900,
+          toValue: 1.025,
+          duration: 1600,
           useNativeDriver: true,
         }),
         Animated.timing(buttonPulse, {
-          toValue: 0.985,
-          duration: 900,
+          toValue: 1.0,
+          duration: 1600,
           useNativeDriver: true,
         }),
       ])
@@ -210,12 +161,12 @@ export default function LandingScreen() {
       pulseLoop.stop();
     };
   }, [
+    bubbleScales,
     buttonOpacity,
     buttonPulse,
     buttonScale,
     flowerRotate,
     flowerScale,
-    splashScales,
     squareScale,
     titleScale,
     titleY,
@@ -223,78 +174,89 @@ export default function LandingScreen() {
 
   const rotate = flowerRotate.interpolate({
     inputRange: [-1, 1],
-    outputRange: ['-7deg', '8deg'],
+    outputRange: ['-12deg', '12deg'],
   });
 
   const start = () => {
     router.replace(token ? '/projects' : '/login');
   };
 
+  const titleBoxWidth = Math.min(width * 0.72, 280);
+  const titleBoxHeight = compact ? 76 : 88;
+
   return (
     <ClayBackground>
       <View
         style={{
           flex: 1,
-          paddingTop: insets.top + 10,
-          paddingBottom: Math.max(insets.bottom + 18, 28),
+          paddingTop: insets.top + (compact ? 12 : 24),
+          paddingBottom: Math.max(insets.bottom + 32, 44),
           paddingHorizontal: 20,
           justifyContent: 'space-between',
         }}>
-        <View style={{ alignItems: 'center', marginTop: compact ? 8 : 22 }}>
+        {/* Letrero TAMAGIT derecho, perfectamente centrado, con burbujas simétricas */}
+        <View style={{ alignItems: 'center' }}>
           <Animated.View
             style={{
-              transform: [{ translateY: titleY }, { scale: titleScale }, { rotate: '-3deg' }],
+              transform: [{ translateY: titleY }, { scale: titleScale }],
             }}>
-            <View style={{ width: Math.min(width * 0.7, 300), height: compact ? 88 : 104 }}>
-              {SPLASHES.map((splash, index) => (
+            <View style={{ width: titleBoxWidth, height: titleBoxHeight, alignItems: 'center', justifyContent: 'center' }}>
+              {/* Burbujitas simétricas en los laterales */}
+              {SYMMETRIC_BUBBLES.map((bubble, index) => (
                 <Animated.View
-                  key={`${splash.left}-${splash.top}`}
+                  key={`bubble-${index}`}
                   style={{
                     position: 'absolute',
-                    left: splash.left,
-                    top: splash.top,
-                    zIndex: splash.z,
-                    transform: [{ scale: splashScales[index] }],
+                    left: bubble.left,
+                    right: bubble.right,
+                    top: bubble.top,
+                    zIndex: 0,
+                    transform: [{ scale: bubbleScales[index] }],
                   }}>
                   <ClaySurface
-                    colors={clay.rojo}
-                    radius={splash.size}
+                    colors={bubble.colors}
+                    radius={bubble.size}
                     shadow="suave"
-                    style={{ width: splash.size, height: splash.size }}
-                    contentStyle={{ width: splash.size, height: splash.size }}
+                    style={{ width: bubble.size, height: bubble.size }}
+                    contentStyle={{ width: bubble.size, height: bubble.size }}
                   />
                 </Animated.View>
               ))}
+
+              {/* Letrero con degradado vertical claymorfista fucsia -> rosa */}
               <ClaySurface
-                colors={clay.rojo}
+                colors={clay.fucsia}
                 radius={24}
                 shadow="tarjeta"
-                style={{ flex: 1 }}
+                style={{ width: '100%', height: '100%' }}
                 contentStyle={{
                   flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  paddingHorizontal: 14,
+                  paddingHorizontal: 16,
                 }}>
-                <OutlinedText
-                  size={compact ? 22 : 26}
-                  pixel
-                  color="#FFFFFF"
-                  outlineWidth={2.5}
-                  numberOfLines={1}>
+                <Animated.Text
+                  style={{
+                    fontFamily: 'PressStart2P_400Regular',
+                    fontSize: compact ? 22 : 26,
+                    color: '#FFFFFF',
+                    textAlign: 'center',
+                    includeFontPadding: false,
+                  }}>
                   TAMAGIT
-                </OutlinedText>
+                </Animated.Text>
               </ClaySurface>
             </View>
           </Animated.View>
         </View>
 
+        {/* Ícono de GitHub derecho y centrado con formas onduladas concéntricas */}
         <View
           style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            marginVertical: compact ? 10 : 18,
+            marginVertical: compact ? 8 : 16,
           }}>
           <Animated.View
             style={{
@@ -304,70 +266,61 @@ export default function LandingScreen() {
               justifyContent: 'center',
               transform: [{ scale: flowerScale }],
             }}>
+            {/* Formas redondeadas concéntricas que rotan sobre su propio centro */}
             <Animated.View
               style={{
                 position: 'absolute',
                 width: flowerSize,
                 height: flowerSize,
+                alignItems: 'center',
+                justifyContent: 'center',
                 transform: [{ rotate }],
               }}>
-              {BLOBS.map((blob, index) => (
-                <View
-                  key={`blob-${index}`}
-                  style={{
-                    position: 'absolute',
-                    width: blob.size * blobScale,
-                    height: blob.size * blobScale,
-                    left: blob.offsetX * blobScale,
-                    top: blob.offsetY * blobScale,
-                    transform: [{ rotate: `${blob.rotate}deg` }],
-                  }}>
-                  <Svg width="100%" height="100%" viewBox={`0 0 ${blob.size} ${blob.size}`}>
-                    <Defs>
-                      <LinearGradient id={`blob-${index}`} x1="0" y1="0" x2="1" y2="1">
-                        <Stop offset="0" stopColor={blob.colors[0]} />
-                        <Stop offset="1" stopColor={blob.colors[1]} />
-                      </LinearGradient>
-                    </Defs>
-                    <Path d={paths[index]} fill={`url(#blob-${index})`} />
-                    <Ellipse
-                      cx={blob.cx - 28}
-                      cy={blob.cy - 34}
-                      rx={42}
-                      ry={26}
-                      fill="#FFFFFF"
-                      fillOpacity={0.24}
-                      transform={`rotate(-28 ${blob.cx - 28} ${blob.cy - 34})`}
-                    />
-                  </Svg>
-                </View>
-              ))}
+              <Svg width="100%" height="100%" viewBox="0 0 260 260">
+                <Defs>
+                  {BLOB_LAYERS.map((blob, index) => (
+                    <LinearGradient key={`grad-${index}`} id={`blobGrad-${index}`} x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={blob.colors[0]} />
+                      <Stop offset="1" stopColor={blob.colors[1]} />
+                    </LinearGradient>
+                  ))}
+                </Defs>
+                {BLOB_LAYERS.map((_, index) => (
+                  <Path
+                    key={`path-${index}`}
+                    d={paths[index]}
+                    fill={`url(#blobGrad-${index})`}
+                    opacity={0.92}
+                  />
+                ))}
+              </Svg>
             </Animated.View>
 
+            {/* Ícono de GitHub derecho y centrado */}
             <Animated.View
               style={[
                 sombras.tarjeta,
                 {
                   width: squareSize,
                   height: squareSize,
-                  transform: [{ scale: squareScale }, { rotate: '3deg' }],
+                  transform: [{ scale: squareScale }],
                 },
               ]}>
               <ClaySurface
-                colors={clay.naranja}
-                radius={Math.round(squareSize * 0.22)}
+                colors={clay.vino}
+                radius={Math.round(squareSize * 0.28)}
                 style={{ flex: 1 }}
                 contentStyle={{
                   flex: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: squareSize * 0.1,
+                  padding: squareSize * 0.12,
                 }}>
                 <Image
                   source={require('../../assets/github-icon.webp')}
                   style={{
-                    width: squareSize * 0.58,
-                    height: squareSize * 0.58,
+                    width: squareSize * 0.62,
+                    height: squareSize * 0.62,
                     resizeMode: 'contain',
                   }}
                 />
@@ -376,14 +329,25 @@ export default function LandingScreen() {
           </Animated.View>
         </View>
 
+        {/* Botón START: ancho ajustado, texto pixel más grande blanco sin contorno, aire debajo */}
         <Animated.View
           style={{
             alignItems: 'center',
+            marginBottom: compact ? 10 : 20,
             opacity: buttonOpacity,
             transform: [{ scale: buttonScale }, { scale: buttonPulse }],
           }}>
-          <View style={{ width: Math.min(width * 0.72, 280) }}>
-            <ClayButton title="START" onPress={start} accessibilityLabel="Empezar" />
+          <View style={{ minWidth: 170, alignSelf: 'center' }}>
+            <ClayButton
+              title="START"
+              onPress={start}
+              colors={clay.fucsia}
+              textColor="#FFFFFF"
+              pixel
+              outline={false}
+              accessibilityLabel="Empezar"
+              style={{ paddingHorizontal: 12 }}
+            />
           </View>
         </Animated.View>
       </View>

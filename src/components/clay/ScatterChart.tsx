@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, G, Line, Rect, Text as SvgText } from 'react-native-svg';
 
 export type PuntoMascota = {
   id: number;
@@ -18,13 +18,15 @@ type ScatterChartProps = {
 
 export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
   const [width, setWidth] = useState(0);
-  const margin = { top: 10, right: 10, bottom: 20, left: 22 };
+  const margin = { top: 12, right: 12, bottom: 20, left: 24 };
   const plotW = Math.max(0, width - margin.left - margin.right);
   const plotH = Math.max(0, height - margin.top - margin.bottom);
 
   const x = (value: number) => margin.left + (Math.max(0, Math.min(100, value)) / 100) * plotW;
   const y = (value: number) =>
     margin.top + plotH - (Math.max(0, Math.min(100, value)) / 100) * plotH;
+
+  const R = 6.5; // Tamaño constante para todos los puntos
 
   return (
     <View
@@ -36,6 +38,14 @@ export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       {width > 0 ? (
         <Svg width={width} height={height}>
+          <Defs>
+            {data.map((punto) => (
+              <ClipPath key={`clip-${punto.id}`} id={`battery-clip-${punto.id}`}>
+                <Circle cx={x(punto.hambre)} cy={y(punto.felicidad)} r={R} />
+              </ClipPath>
+            ))}
+          </Defs>
+
           {[0, 0.5, 1].map((tick) => (
             <Line
               key={`h-${tick}`}
@@ -59,19 +69,45 @@ export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
             />
           ))}
 
+          {/* Puntos tipo batería de celular: base blanca rellena de abajo a arriba con el color de la mascota */}
           {data.map((punto) => {
-            const radius = 3.5 + (Math.max(0, Math.min(100, punto.vida)) / 100) * 4.5;
+            const px = x(punto.hambre);
+            const py = y(punto.felicidad);
+            const vidaClamped = Math.max(0, Math.min(100, punto.vida)) / 100;
+            const fillHeight = 2 * R * vidaClamped;
+            const fillY = py + R - fillHeight;
+
             return (
-              <Circle
-                key={punto.id}
-                cx={x(punto.hambre)}
-                cy={y(punto.felicidad)}
-                r={radius}
-                fill={punto.color}
-                stroke="#FFFFFF"
-                strokeOpacity={0.55}
-                strokeWidth={1}
-              />
+              <G key={punto.id}>
+                {/* Contenedor recortado en círculo */}
+                <G clipPath={`url(#battery-clip-${punto.id})`}>
+                  {/* Base blanca */}
+                  <Rect
+                    x={px - R}
+                    y={py - R}
+                    width={2 * R}
+                    height={2 * R}
+                    fill="#FFFFFF"
+                  />
+                  {/* Relleno desde abajo hacia arriba con el color de la mascota */}
+                  <Rect
+                    x={px - R}
+                    y={fillY}
+                    width={2 * R}
+                    height={fillHeight}
+                    fill={punto.color}
+                  />
+                </G>
+                {/* Borde exterior sutil para definir el círculo */}
+                <Circle
+                  cx={px}
+                  cy={py}
+                  r={R}
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth={1.2}
+                />
+              </G>
             );
           })}
 

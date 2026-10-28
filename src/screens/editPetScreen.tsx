@@ -11,15 +11,19 @@ import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClayInput } from '@/components/clay/ClayInput';
 import { ClayPill } from '@/components/clay/ClayPill';
 import { ClaySurface } from '@/components/clay/ClaySurface';
+import { IconoImagen } from '@/components/clay/IconoImagen';
 import { EquipMenu } from '@/components/project/EquipMenu';
+import { EquippedStrip } from '@/components/project/EquippedStrip';
 import { useAuth } from '@/context/AuthContext';
 import { usePetActions } from '@/hooks/usePetActions';
 import { usePetOwnership } from '@/hooks/usePetOwnership';
+import { useProjectBranches } from '@/hooks/useProjectBranches';
 import { useProjectPet } from '@/hooks/useProjectPet';
 import {
   clay,
   colorMascotaPorId,
   COLORES_MASCOTA,
+  paleta,
   radios,
   sombras,
   tonoPorHex,
@@ -44,34 +48,34 @@ function ColorOption({
       accessibilityState={{ selected }}
       accessibilityLabel={`${label ?? 'Color'} ${color.nombre}${selected ? ', seleccionado' : ''}`}
       style={({ pressed }) => [
-        { alignItems: 'center', gap: 4, width: 52 },
+        { alignItems: 'center', gap: 4, width: 48 },
         pressed ? { opacity: 0.8 } : null,
       ]}>
-      <View style={[{ width: 44, height: 44 }, sombras.suave]}>
+      <View style={[{ width: 40, height: 40 }, sombras.suave]}>
         <ClaySurface
           colors={color.gradiente}
-          radius={22}
+          radius={20}
           style={{
-            width: 44,
-            height: 44,
-            borderWidth: selected ? 3 : 2,
-            borderColor: selected ? clay.texto : '#FFFFFF',
+            width: 40,
+            height: 40,
+            borderWidth: selected ? 3 : 1.5,
+            borderColor: selected ? paleta.vino.base : '#FFFFFF',
           }}
         />
         {selected ? (
           <View
             style={{
               position: 'absolute',
-              top: -3,
-              right: -3,
-              width: 18,
-              height: 18,
-              borderRadius: 9,
+              top: -2,
+              right: -2,
+              width: 16,
+              height: 16,
+              borderRadius: 8,
               backgroundColor: '#FFFFFF',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-            <Text style={{ fontSize: 11, fontWeight: '900', color: clay.texto }}>✓</Text>
+            <Text style={{ fontSize: 9, fontWeight: '900', color: paleta.vino.base }}>✓</Text>
           </View>
         ) : null}
       </View>
@@ -106,6 +110,13 @@ export default function EditPetScreen() {
   } = usePetActions(id, { pet, setPet });
   const isRepoOwner = usePetOwnership(pet?.project, user);
 
+  const { branches } = useProjectBranches(
+    pet?.project.fullName,
+    pet?.pet?.lifeBranch ?? pet?.project.defaultBranch,
+    true
+  );
+
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [bodyColor, setBodyColor] = useState<string | null>(null);
   const [healthColor, setHealthColor] = useState<string | null>(null);
   const [hungerColor, setHungerColor] = useState<string | null>(null);
@@ -120,6 +131,7 @@ export default function EditPetScreen() {
   const shownHealth = healthColor ?? pet?.pet?.healthColor ?? shownBody;
   const shownHunger = hungerColor ?? pet?.pet?.hungerColor ?? fallbackTones[1];
   const shownHappiness = happinessColor ?? pet?.pet?.happinessColor ?? fallbackTones[0];
+  const currentBranch = selectedBranch ?? pet?.pet?.lifeBranch ?? pet?.project.defaultBranch ?? 'main';
 
   const save = useCallback(async () => {
     setSaving(true);
@@ -128,12 +140,13 @@ export default function EditPetScreen() {
       healthColor: shownHealth,
       hungerColor: shownHunger,
       happinessColor: shownHappiness,
+      lifeBranch: currentBranch,
     });
     setSaving(false);
     if (ok) {
       setTimeout(() => router.back(), 550);
     }
-  }, [router, saveColors, shownBody, shownHappiness, shownHealth, shownHunger]);
+  }, [currentBranch, router, saveColors, shownBody, shownHappiness, shownHealth, shownHunger]);
 
   const header = (
     <View
@@ -149,16 +162,16 @@ export default function EditPetScreen() {
         icon="←"
         accessibilityLabel="Volver"
         onPress={() => router.back()}
-        size={50}
+        size={48}
       />
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontSize: 19, fontWeight: '900', color: clay.texto }}>Editar mascota</Text>
+        <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>Editar mascota</Text>
         <Text numberOfLines={1} style={{ fontSize: 10, color: clay.textoSuave }}>
           {pet?.pet?.name ?? 'Personaliza su estilo'}
         </Text>
       </View>
-      {pet?.pet ? (
-        <ClayPill label={pet.project.name} colors={clay.negro} textColor="#FFFFFF" />
+      {pet?.project ? (
+        <ClayPill label={pet.project.name} colors={clay.vino} textColor="#FFFFFF" />
       ) : null}
     </View>
   );
@@ -168,7 +181,7 @@ export default function EditPetScreen() {
       <ClayBackground>
         {header}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={clay.violeta[0]} />
+          <ActivityIndicator size="large" color={clay.fucsia[0]} />
         </View>
       </ClayBackground>
     );
@@ -184,7 +197,7 @@ export default function EditPetScreen() {
           </Text>
           <ClayButton
             title="Volver"
-            colors={clay.violeta}
+            colors={clay.fucsia}
             onPress={() => router.back()}
             style={{ marginTop: 16, alignSelf: 'stretch' }}
           />
@@ -193,23 +206,22 @@ export default function EditPetScreen() {
     );
   }
 
-  const previewColor = shownBody;
   const statGroups = [
     {
       title: 'Vida',
-      icon: '♥',
+      iconNombre: 'vida' as const,
       value: shownHealth,
       onChange: setHealthColor,
     },
     {
       title: 'Hambre',
-      icon: '●',
+      iconNombre: 'hambre' as const,
       value: shownHunger,
       onChange: setHungerColor,
     },
     {
       title: 'Felicidad',
-      icon: '☺',
+      iconNombre: 'felicidad' as const,
       value: shownHappiness,
       onChange: setHappinessColor,
     },
@@ -219,19 +231,26 @@ export default function EditPetScreen() {
     <ClayBackground>
       {header}
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 30 }}
-        keyboardShouldPersistTaps="handled">
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 4,
+          paddingBottom: Math.max(insets.bottom + 24, 36),
+          gap: 14,
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        {/* Preview proporcionado de la mascota arriba */}
         <View style={[sombras.tarjeta, { borderRadius: radios.tarjetaGrande }]}>
           <View
             style={{
-              height: 240,
+              height: 210,
               borderRadius: radios.tarjetaGrande,
               overflow: 'hidden',
               backgroundColor: '#EFEFF3',
             }}>
             <Pet3DView
-              key={previewColor}
-              bodyColor={previewColor}
+              key={shownBody}
+              bodyColor={shownBody}
               backdrop="egg"
               idle
               autoRotate={false}
@@ -240,147 +259,217 @@ export default function EditPetScreen() {
           </View>
         </View>
 
-        <View style={[sombras.tarjeta, { marginTop: 14 }]}>
+        {/* Nombre y Rama de vida */}
+        <View style={sombras.tarjeta}>
           <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
-            <View style={{ padding: 16 }}>
-              <Text style={{ fontSize: 12, fontWeight: '900', color: clay.texto }}>Nombre</Text>
-              {editingName ? (
-                <View style={{ marginTop: 8, gap: 10 }}>
-                  <ClayInput
-                    value={nameDraft}
-                    onChangeText={setNameDraft}
-                    autoFocus
-                    maxLength={30}
-                    placeholder="Nuevo nombre"
-                    accessibilityLabel="Nuevo nombre de la mascota"
-                  />
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <ClayButton
-                      title="Guardar"
-                      colors={clay.verde}
-                      size="md"
-                      onPress={() => void saveName()}
-                      style={{ flex: 1 }}
+            <View style={{ padding: 14, gap: 10 }}>
+              {/* Nombre */}
+              <View>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave, textTransform: 'uppercase' }}>
+                  Nombre
+                </Text>
+                {editingName ? (
+                  <View style={{ marginTop: 6, gap: 8 }}>
+                    <ClayInput
+                      value={nameDraft}
+                      onChangeText={setNameDraft}
+                      autoFocus
+                      maxLength={30}
+                      placeholder="Nuevo nombre"
+                      accessibilityLabel="Nuevo nombre de la mascota"
                     />
-                    <ClayButton
-                      title="Cancelar"
-                      colors={clay.blanco}
-                      textColor={clay.texto}
-                      pixel={false}
-                      size="md"
-                      onPress={() => setEditingName(false)}
-                      style={{ flex: 1 }}
-                    />
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <ClayButton
+                        title="Guardar"
+                        colors={clay.menta}
+                        size="md"
+                        onPress={() => void saveName()}
+                        style={{ flex: 1 }}
+                      />
+                      <ClayButton
+                        title="Cancelar"
+                        colors={clay.blanco}
+                        textColor={clay.texto}
+                        pixel={false}
+                        size="md"
+                        onPress={() => setEditingName(false)}
+                        style={{ flex: 1 }}
+                      />
+                    </View>
                   </View>
-                </View>
-              ) : (
-                <View
-                  style={{
-                    marginTop: 6,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                  }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{ flex: 1, fontSize: 17, fontWeight: '900', color: clay.texto }}>
-                    {pet.pet.name}
-                  </Text>
-                  <Pressable
-                    onPress={startRename}
-                    disabled={!isRepoOwner}
-                    accessibilityRole="button"
-                    accessibilityLabel="Cambiar nombre"
-                    accessibilityState={{ disabled: !isRepoOwner }}
-                    style={{ minHeight: 48, justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '900', color: clay.violeta[1] }}>
-                      Cambiar
+                ) : (
+                  <View
+                    style={{
+                      marginTop: 4,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                    }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ flex: 1, fontSize: 16, fontWeight: '900', color: clay.texto }}>
+                      {pet.pet.name}
                     </Text>
-                  </Pressable>
+                    <Pressable
+                      onPress={startRename}
+                      disabled={!isRepoOwner}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cambiar nombre"
+                      accessibilityState={{ disabled: !isRepoOwner }}
+                      style={{ minHeight: 36, justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: paleta.rosa.base }}>
+                        Cambiar
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+
+              <View style={{ height: 1, backgroundColor: 'rgba(64,32,42,0.08)' }} />
+
+              {/* Selector de Rama de vida (movido aquí desde detalle) */}
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave, textTransform: 'uppercase' }}>
+                    Rama de vida
+                  </Text>
+                  <ClayPill
+                    label={currentBranch}
+                    colors={clay.vino}
+                    textColor="#FFFFFF"
+                    accessibilityLabel={`Rama actual: ${currentBranch}`}
+                  />
                 </View>
-              )}
+
+                {branches && branches.length > 0 ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                    {branches.map((b) => {
+                      const selected = b === currentBranch;
+                      return (
+                        <Pressable
+                          key={b}
+                          onPress={() => setSelectedBranch(b)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Seleccionar rama ${b}`}
+                          style={({ pressed }) => [pressed ? { opacity: 0.8 } : null]}>
+                          <ClaySurface
+                            colors={selected ? clay.fucsia : clay.fondoClaro}
+                            radius={radios.chip}
+                            border
+                            contentStyle={{ paddingHorizontal: 10, paddingVertical: 5 }}>
+                            <Text
+                              style={{
+                                fontSize: 9,
+                                fontWeight: '800',
+                                color: selected ? '#FFFFFF' : clay.texto,
+                              }}>
+                              {b}
+                            </Text>
+                          </ClaySurface>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Text style={{ marginTop: 4, fontSize: 9, color: clay.textoTenue }}>
+                    {branches === null ? 'Cargando ramas…' : `Rama configurada: ${currentBranch}`}
+                  </Text>
+                )}
+              </View>
             </View>
           </ClaySurface>
         </View>
 
-        {isRepoOwner ? (
-          <>
-            <View style={{ marginTop: 18 }}>
-              <Text style={{ fontSize: 13, fontWeight: '900', color: clay.texto }}>
-                Color de la mascota
-              </Text>
-              <Text style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
-                Se aplica al modelo 3D y a su tarjeta.
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
-                {COLORES_MASCOTA.map((color) => (
-                  <ColorOption
-                    key={color.hex}
-                    color={color}
-                    selected={shownBody.toLowerCase() === color.hex.toLowerCase()}
-                    onPress={() => setBodyColor(color.hex)}
-                    label="Color de mascota"
-                  />
-                ))}
-              </View>
-            </View>
-
-            {statGroups.map((group) => (
-              <View key={group.title} style={{ marginTop: 18 }}>
-                <Text style={{ fontSize: 13, fontWeight: '900', color: clay.texto }}>
-                  {group.icon} Color de {group.title.toLowerCase()}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
-                  {COLORES_MASCOTA.map((color) => (
-                    <ColorOption
-                      key={`${group.title}-${color.hex}`}
-                      color={color}
-                      selected={group.value?.toLowerCase() === color.hex.toLowerCase()}
-                      onPress={() => group.onChange(color.hex)}
-                      label={`Color de ${group.title}`}
-                    />
-                  ))}
-                </View>
-              </View>
-            ))}
-
-            <View style={{ marginTop: 24 }}>
+        {/* Vestimenta actual / "Lleva" (aquí sí se muestra) */}
+        <View style={sombras.tarjeta}>
+          <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
+            <View style={{ padding: 14, gap: 10 }}>
+              <EquippedStrip />
               <ClayButton
-                title={saving ? 'Guardando…' : 'Guardar colores'}
-                colors={clay.violeta}
-                disabled={saving}
-                onPress={() => void save()}
-                accessibilityLabel="Guardar colores de la mascota"
+                title="Vestir"
+                colors={clay.menta}
+                textColor={clay.texto}
+                size="md"
+                onPress={() => setEquipOpen(true)}
+                icon={<IconoImagen nombre="perchero" size={20} tintColor={clay.texto} />}
+                accessibilityLabel="Abrir menú para vestir la mascota"
               />
             </View>
-          </>
-        ) : (
-          <View style={{ marginTop: 18 }}>
-            <ClayPill
-              label="Solo el dueño puede editar colores"
-              colors={clay.ambar}
-              textColor="#1A1A1C"
-              accessibilityLabel="Solo el dueño del repositorio puede editar los colores"
-            />
-          </View>
-        )}
-
-        <View style={{ marginTop: 20 }}>
-          <ClayButton
-            title="Vestir"
-            colors={clay.menta}
-            textColor="#1A1A1C"
-            onPress={() => setEquipOpen(true)}
-            accessibilityLabel="Abrir menú para vestir la mascota"
-          />
+          </ClaySurface>
         </View>
 
-        <View style={{ marginTop: 22, gap: 10 }}>
+        {/* Colores de la mascota y estadísticas */}
+        {isRepoOwner ? (
+          <View style={sombras.tarjeta}>
+            <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
+              <View style={{ padding: 14, gap: 14 }}>
+                <View>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave, textTransform: 'uppercase' }}>
+                    Color de la mascota
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                    {COLORES_MASCOTA.map((color) => (
+                      <ColorOption
+                        key={color.hex}
+                        color={color}
+                        selected={shownBody.toLowerCase() === color.hex.toLowerCase()}
+                        onPress={() => setBodyColor(color.hex)}
+                        label="Color de mascota"
+                      />
+                    ))}
+                  </View>
+                </View>
+
+                {statGroups.map((group) => (
+                  <View key={group.title}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <IconoImagen nombre={group.iconNombre} size={15} tintColor={clay.texto} />
+                      <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave, textTransform: 'uppercase' }}>
+                        Color de {group.title.toLowerCase()}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                      {COLORES_MASCOTA.map((color) => (
+                        <ColorOption
+                          key={`${group.title}-${color.hex}`}
+                          color={color}
+                          selected={group.value?.toLowerCase() === color.hex.toLowerCase()}
+                          onPress={() => group.onChange(color.hex)}
+                          label={`Color de ${group.title}`}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </ClaySurface>
+          </View>
+        ) : (
+          <ClayPill
+            label="Solo el dueño puede editar colores"
+            colors={clay.malva}
+            textColor="#FFFFFF"
+            accessibilityLabel="Solo el dueño del repositorio puede editar los colores"
+          />
+        )}
+
+        {/* Botones de acción finales */}
+        <View style={{ gap: 10, marginTop: 6 }}>
+          <ClayButton
+            title={saving ? 'Guardando…' : 'Guardar cambios'}
+            colors={clay.fucsia}
+            disabled={saving}
+            onPress={() => void save()}
+            accessibilityLabel="Guardar cambios de la mascota"
+          />
+
           {isRepoOwner ? (
             <ClayButton
               title="Eliminar mascota"
-              colors={clay.rojo}
+              colors={clay.vino}
+              textColor="#FFFFFF"
+              size="md"
               onPress={() => setConfirmOpen(true)}
               accessibilityLabel="Eliminar mascota"
             />
@@ -390,15 +479,11 @@ export default function EditPetScreen() {
               colors={clay.blanco}
               textColor={clay.texto}
               pixel={false}
+              size="md"
               onPress={() => void hidePet()}
               accessibilityLabel="Ocultar mascota para mi cuenta"
             />
           )}
-          <Text style={{ textAlign: 'center', fontSize: 9, color: clay.textoTenue }}>
-            {isRepoOwner
-              ? 'Eliminar borra la mascota para todo el equipo.'
-              : 'Puedes ocultarla de tu cuenta sin afectar al equipo.'}
-          </Text>
         </View>
       </ScrollView>
 
