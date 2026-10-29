@@ -1,16 +1,4 @@
-export type Slot = 'HEAD' | 'BODY' | 'LEGS';
-
-export type Item = {
-  id: string;
-  name: string;
-  slot: Slot;
-  imageUrl: string | null;
-  emoji: string;
-};
-
-export type PetItem = Item & {
-  equipped: boolean;
-};
+import type { Item, Slot } from '@/lib/types';
 
 export const SLOTS: readonly Slot[] = ['HEAD', 'BODY', 'LEGS'];
 
@@ -19,3 +7,13 @@ export const SLOT_LABELS: Record<Slot, string> = {
   BODY: 'Cuerpo',
   LEGS: 'Parte baja',
 };
+
+const SLOT_EMOJIS: Record<Slot, string> = {
+  HEAD: '🧢',
+  BODY: '👕',
+  LEGS: '👖',
+};
+
+export function itemEmoji(item: Pick<Item, 'slot'>): string {
+  return item.slot ? SLOT_EMOJIS[item.slot] : '🎁';
+}

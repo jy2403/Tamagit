@@ -14,8 +14,8 @@ import { ClaySurface } from '@/components/clay/ClaySurface';
 import { IconoImagen } from '@/components/clay/IconoImagen';
 import { EquipMenu } from '@/components/project/EquipMenu';
 import { useAuth } from '@/context/AuthContext';
-import { usePetActions } from '@/hooks/usePetActions';
 import { useAppearance } from '@/hooks/useAppearance';
+import { usePetActions } from '@/hooks/usePetActions';
 import { usePetOwnership } from '@/hooks/usePetOwnership';
 import { useProjectBranches } from '@/hooks/useProjectBranches';
 import { useProjectPet } from '@/hooks/useProjectPet';
@@ -55,8 +55,9 @@ export default function EditPetScreen() {
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [equipOpen, setEquipOpen] = useState(false);
+  const appearance = useAppearance(pet?.pet?.id);
 
-  const { equippedBySlot } = useAppearance();
+  const { equippedBySlot } = appearance;
   const fallbackColor = colorMascotaPorId(pet?.pet?.id ?? 0);
   const shownBody = bodyColor ?? pet?.pet?.bodyColor ?? fallbackColor.hex;
   const lookKey = SLOTS.map((slot) => equippedBySlot[slot]?.id ?? '-').join('|');
@@ -365,6 +366,7 @@ export default function EditPetScreen() {
       <EquipMenu
         visible={equipOpen}
         onClose={() => setEquipOpen(false)}
+        appearance={appearance}
         bodyColor={shownBody}
         onBodyColorChange={setBodyColor}
       />

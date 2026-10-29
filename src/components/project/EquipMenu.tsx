@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -13,35 +13,41 @@ import { ClayButton } from '@/components/clay/ClayButton';
 import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClayInput } from '@/components/clay/ClayInput';
 import { ClaySurface } from '@/components/clay/ClaySurface';
+import { FeedbackBanner } from '@/components/FeedbackBanner';
 import { ColorWheel } from '@/components/project/ColorWheel';
-import { useAppearance } from '@/hooks/useAppearance';
-import { SLOTS, SLOT_LABELS, type PetItem, type Slot } from '@/lib/appearance';
+import type { Appearance } from '@/hooks/useAppearance';
+import { SLOTS, SLOT_LABELS, itemEmoji } from '@/lib/appearance';
 import { normalizeHex } from '@/lib/color';
+import type { Item, Slot } from '@/lib/types';
 import { COLORES_MASCOTA, clay, fuentes, paleta, radios, sombras, textoClay } from '@/estilos';
 
 type EquipMenuProps = {
   visible: boolean;
   onClose: () => void;
+  appearance: Appearance;
   bodyColor?: string | null;
   onBodyColorChange?: (hex: string) => void;
 };
 
 type MenuMode = 'home' | 'COLOR' | Slot;
 
-function ItemPreview({ item, size }: { item: PetItem | null; size: number }) {
+function ItemPreview({ item, size }: { item: Item | null; size: number }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   if (!item) {
     return <Text style={{ fontSize: size * 0.7, color: clay.textoTenue }}>＋</Text>;
   }
-  if (item.imageUrl) {
+  if (item.imageUrl && !imageFailed) {
     return (
       <Image
         source={{ uri: item.imageUrl }}
         style={{ width: size, height: size }}
         resizeMode="contain"
+        onError={() => setImageFailed(true)}
       />
     );
   }
-  return <Text style={{ fontSize: size * 0.8 }}>{item.emoji}</Text>;
+  return <Text style={{ fontSize: size * 0.8 }}>{itemEmoji(item)}</Text>;
 }
 
 function PartButton({
@@ -91,10 +97,27 @@ function PartButton({
   );
 }
 
-export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: EquipMenuProps) {
+export function EquipMenu({
+  visible,
+  onClose,
+  appearance,
+  bodyColor,
+  onBodyColorChange,
+}: EquipMenuProps) {
   const [mode, setMode] = useState<MenuMode>('home');
   const { height } = useWindowDimensions();
-  const { items, status, equippedBySlot, equip, unequip } = useAppearance();
+  const {
+    entries,
+    status,
+    busyItemId,
+    feedback,
+    setFeedback,
+    equippedBySlot,
+    equip,
+    unequip,
+    reload,
+  } = appearance;
+  const clearFeedback = useCallback(() => setFeedback(null), [setFeedback]);
 
   const color = normalizeHex(bodyColor ?? '') ?? paleta.menta.base;
   const canChangeColor = Boolean(onBodyColorChange);
@@ -102,8 +125,9 @@ export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: Eq
   const listHeight = Math.max(190, Math.min(340, height * 0.4));
 
   const slotItems = useMemo(
-    () => (mode === 'home' || mode === 'COLOR' ? [] : items.filter((item) => item.slot === mode)),
-    [items, mode]
+    () =>
+      mode === 'home' || mode === 'COLOR' ? [] : entries.filter(({ item }) => item.slot === mode),
+    [entries, mode]
   );
 
   const updateColor = (next: string) => {
@@ -345,16 +369,26 @@ export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: Eq
                     </Text>
                   </View>
                 ) : status === 'error' ? (
-                  <Text
-                    style={{
-                      paddingVertical: 24,
-                      color: clay.texto,
-                      fontSize: 13,
-                      fontWeight: '800',
-                      textAlign: 'center',
-                    }}>
-                    No se pudieron cargar las prendas.
-                  </Text>
+                  <View style={{ paddingVertical: 24 }}>
+                    <Text
+                      style={{
+                        color: clay.texto,
+                        fontSize: 13,
+                        fontWeight: '800',
+                        textAlign: 'center',
+                      }}>
+                      No se pudieron cargar las prendas.
+                    </Text>
+                    <ClayButton
+                      title="Reintentar"
+                      colors={clay.blanco}
+                      textColor={clay.texto}
+                      pixel={false}
+                      size="md"
+                      onPress={() => void reload()}
+                      style={{ marginTop: 14, alignSelf: 'stretch' }}
+                    />
+                  </View>
                 ) : slotItems.length === 0 ? (
                   <View style={{ paddingVertical: 28, alignItems: 'center' }}>
                     <Text style={{ fontSize: 30 }}>👕</Text>
@@ -373,14 +407,14 @@ export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: Eq
                     </Text>
                   </View>
                 ) : (
-                  slotItems.map((item) => {
-                    const active = item.equipped;
+                  slotItems.map(({ item, owned, equipped: active }) => {
                     return (
                       <Pressable
                         key={item.id}
-                        onPress={() => (active ? unequip(item.id) : equip(item.id))}
+                        onPress={() => void (active ? unequip(item) : equip(item))}
+                        disabled={busyItemId !== null}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
+                        accessibilityState={{ selected: active, busy: busyItemId === item.id }}
                         accessibilityLabel={
                           active
                             ? `${item.name} equipada. Toca para quitarla`
@@ -416,17 +450,21 @@ export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: Eq
                               {item.name}
                             </Text>
                             <Text style={{ fontSize: 10, color: clay.textoSuave, marginTop: 2 }}>
-                              {SLOT_LABELS[item.slot]}
+                              {item.slot ? SLOT_LABELS[item.slot] : 'Sin slot'}
                             </Text>
                           </View>
-                          <Text
-                            style={{
-                              fontSize: 10,
-                              fontWeight: '900',
-                              color: clay.oscuro,
-                            }}>
-                            {active ? 'Quitar' : 'Equipar'}
-                          </Text>
+                          {busyItemId === item.id ? (
+                            <ActivityIndicator color={clay.oscuro} size="small" />
+                          ) : (
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontWeight: '900',
+                                color: clay.oscuro,
+                              }}>
+                              {active ? 'Quitar' : owned ? 'Equipar' : 'No la tienes'}
+                            </Text>
+                          )}
                         </ClaySurface>
                       </Pressable>
                     );
@@ -437,6 +475,7 @@ export function EquipMenu({ visible, onClose, bodyColor, onBodyColorChange }: Eq
           </ClaySurface>
         </Pressable>
       </Pressable>
+      <FeedbackBanner feedback={feedback} onDone={clearFeedback} placement="top" />
     </Modal>
   );
 }

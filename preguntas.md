@@ -89,7 +89,8 @@ Postgres con models User, Project, Pet, Item, Food. Pet es 1-1 con Project. Borr
 No: el front solo quiere UX (ocultar admin, confirmaciones). La autoridad está en el back: JWT obligatorio, requireAdmin, checks de ownership (dueño del proyecto/mascota o admin) en cada controlador. Ej.: si intentaras PATCH a una mascota ajena, el back responde 404/403 aunque el front lo permitiera.
 
 ⚠️ **¿Qué partes no están terminadas?** (di "en desarrollo" con confianza)
-- Items por mascota y notificaciones: el front ya consume los endpoints (`/pets/:id/items`, `/notifications`, `/users/:id/pets`, `GET /pets/:id`), pero el backend todavía no los implementa: son features parcialmente integradas.
+- Cosméticos: el front ya consume los endpoints reales del backend (`GET /items`, `GET /pets/:id`, `POST /pets/:petId/items/:itemId/equip|unequip`) y muestra el error que explica la regla de negocio. Aún no se dibujan las prendas sobre el modelo 3D ni hay compra.
+- Notificaciones y `/users/:id/pets`: verificar contra el backend antes de afirmar que están integradas.
 - El resto (auth OAuth, sync, mascotas CRUD, CRUD admin de items/comidas, ban de usuarios) funciona end-to-end.
 
 ## Extras que suelen preguntar

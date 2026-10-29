@@ -107,5 +107,6 @@ src/
 
 ## 8. Features parciales (decirlo con seguridad si preguntan)
 
-- `GET /pets/:id`, `POST/DELETE /pets/:id/items`, `GET /users/:id/pets`, `GET /notifications` → el front ya los consume, el backend aún no los implementa.
+- Cosméticos (`GET /items`, `GET /pets/:id`, `POST /pets/:petId/items/:itemId/equip|unequip`) → integrados front↔back; la regla (una prenda por slot, solo prendas que posee) la valida el backend y el front muestra su mensaje. Faltan dibujar las prendas en el 3D y la compra.
+- `GET /users/:id/pets`, `GET /notifications` → verificar contra el backend antes de afirmar que están integrados.
 - El admin aún no gestiona mascotas de usuarios con datos reales en esas pantallas.

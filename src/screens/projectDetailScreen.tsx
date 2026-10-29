@@ -62,7 +62,6 @@ export default function ProjectDetailScreen() {
   const insets = useSafeAreaInsets();
   const [equipOpen, setEquipOpen] = useState(false);
   const [colorDraft, setColorDraft] = useState<string | null>(null);
-  const { equippedBySlot } = useAppearance();
   const {
     confirmOpen,
     setConfirmOpen,
@@ -96,6 +95,8 @@ export default function ProjectDetailScreen() {
 
   const projectName = pet?.project.name ?? fullName ?? 'Proyecto';
   const petData = pet?.pet ?? null;
+  const appearance = useAppearance(petData?.id);
+  const { equippedBySlot } = appearance;
   const petColor = petData
     ? (petData.bodyColor ?? colorMascotaPorId(petData.id).hex)
     : colorMascotaPorId(0).hex;
@@ -427,6 +428,7 @@ export default function ProjectDetailScreen() {
       <EquipMenu
         visible={equipOpen}
         onClose={() => void closeEquip()}
+        appearance={appearance}
         bodyColor={shownColor}
         onBodyColorChange={setColorDraft}
       />

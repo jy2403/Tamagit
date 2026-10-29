@@ -1,86 +1,120 @@
-import { useSyncExternalStore } from 'react';
-import type { Item, PetItem, Slot } from '@/lib/appearance';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/api';
+import type { Feedback } from '@/components/FeedbackBanner';
+import type { Item, PetDetail, PetItem, Slot } from '@/lib/types';
 
 export type InventoryStatus = 'loading' | 'ready' | 'empty' | 'error';
 
-type AppearanceState = {
-  items: PetItem[];
-  status: InventoryStatus;
+export type AppearanceEntry = {
+  item: Item;
+  owned: boolean;
+  equipped: boolean;
 };
 
-const MOCK_ITEMS: readonly Item[] = [
-  { id: 'head-gorra', name: 'Gorra neón', slot: 'HEAD', imageUrl: null, emoji: '🧢' },
-  { id: 'head-corona', name: 'Corona pixel', slot: 'HEAD', imageUrl: null, emoji: '👑' },
-  { id: 'head-sombrero', name: 'Sombrero Y2K', slot: 'HEAD', imageUrl: null, emoji: '🎩' },
-  { id: 'body-hoodie', name: 'Hoodie cyber', slot: 'BODY', imageUrl: null, emoji: '🧥' },
-  { id: 'body-camiseta', name: 'Camiseta matrix', slot: 'BODY', imageUrl: null, emoji: '👕' },
-  { id: 'body-chaleco', name: 'Chaleco glow', slot: 'BODY', imageUrl: null, emoji: '🦺' },
-  { id: 'legs-cargo', name: 'Pantalón cargo', slot: 'LEGS', imageUrl: null, emoji: '👖' },
-  { id: 'legs-botas', name: 'Botas glow', slot: 'LEGS', imageUrl: null, emoji: '🥾' },
-  { id: 'legs-calcetines', name: 'Calcetines neón', slot: 'LEGS', imageUrl: null, emoji: '🧦' },
-];
+export type Appearance = ReturnType<typeof useAppearance>;
 
-let state: AppearanceState = {
-  items: MOCK_ITEMS.map((item) => ({ ...item, equipped: false })),
-  status: 'ready',
-};
-
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function getSnapshot() {
-  return state;
-}
-
-function update(next: AppearanceState) {
-  state = next;
-  listeners.forEach((listener) => listener());
-}
-
-function equip(id: string) {
-  const target = state.items.find((item) => item.id === id);
-  if (!target) return;
-
-  update({
-    ...state,
-    items: state.items.map((item) =>
-      item.slot === target.slot ? { ...item, equipped: item.id === id } : item
-    ),
+function buildEntries(catalog: Item[], owned: PetItem[]): AppearanceEntry[] {
+  const ownedByItem = new Map(owned.map((petItem) => [petItem.itemId, petItem]));
+  return catalog.map((item) => {
+    const petItem = ownedByItem.get(item.id);
+    return { item, owned: Boolean(petItem), equipped: petItem?.equipped ?? false };
   });
 }
 
-function unequip(id: string) {
-  update({
-    ...state,
-    items: state.items.map((item) => (item.id === id ? { ...item, equipped: false } : item)),
-  });
-}
-
-function setStatus(status: InventoryStatus) {
-  update({ ...state, status });
-}
-
-function buildEquippedBySlot(items: PetItem[]) {
-  const equipped: Record<Slot, PetItem | null> = { HEAD: null, BODY: null, LEGS: null };
-  items.forEach((item) => {
-    if (item.equipped) equipped[item.slot] = item;
+function buildEquippedBySlot(entries: AppearanceEntry[]) {
+  const equipped: Record<Slot, Item | null> = { HEAD: null, BODY: null, LEGS: null };
+  entries.forEach(({ item, equipped: isEquipped }) => {
+    if (isEquipped && item.slot) equipped[item.slot] = item;
   });
   return equipped;
 }
 
-export function useAppearance() {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export function useAppearance(petId: number | null | undefined) {
+  const { token } = useAuth();
+  const [entries, setEntries] = useState<AppearanceEntry[]>([]);
+  const [status, setStatus] = useState<InventoryStatus>('loading');
+  const [busyItemId, setBusyItemId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+
+  const load = useCallback(async () => {
+    if (!token || !petId) return;
+    try {
+      const [catalog, pet] = await Promise.all([
+        apiFetch<Item[]>('/items', { token }),
+        apiFetch<PetDetail>(`/pets/${petId}`, { token }),
+      ]);
+      setEntries(buildEntries(catalog, pet.items));
+      setStatus(catalog.length === 0 ? 'empty' : 'ready');
+    } catch {
+      setStatus('error');
+    }
+  }, [token, petId]);
+
+  const refreshOwned = useCallback(async () => {
+    if (!token || !petId) return;
+    const pet = await apiFetch<PetDetail>(`/pets/${petId}`, { token });
+    setEntries((current) =>
+      buildEntries(
+        current.map((entry) => entry.item),
+        pet.items
+      )
+    );
+  }, [token, petId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
+
+  const reload = useCallback(() => {
+    setStatus('loading');
+    return load();
+  }, [load]);
+
+  // La regla de negocio vive en el backend: el front solo la dispara y muestra su respuesta.
+  const changeEquipment = useCallback(
+    async (item: Item, action: 'equip' | 'unequip') => {
+      if (!token || !petId || busyItemId !== null) return;
+      setFeedback(null);
+      setBusyItemId(item.id);
+      try {
+        await apiFetch(`/pets/${petId}/items/${item.id}/${action}`, {
+          token,
+          method: 'POST',
+          body: {},
+        });
+        await refreshOwned();
+        setFeedback({
+          tipo: 'exito',
+          texto: action === 'equip' ? `${item.name} equipada.` : `${item.name} desequipada.`,
+        });
+      } catch (e) {
+        setFeedback({
+          tipo: 'error',
+          texto: e instanceof Error ? e.message : 'No se pudo actualizar la vestimenta',
+        });
+      } finally {
+        setBusyItemId(null);
+      }
+    },
+    [token, petId, busyItemId, refreshOwned]
+  );
+
+  const equip = useCallback((item: Item) => changeEquipment(item, 'equip'), [changeEquipment]);
+  const unequip = useCallback((item: Item) => changeEquipment(item, 'unequip'), [changeEquipment]);
 
   return {
-    items: snapshot.items,
-    status: snapshot.status,
-    equippedBySlot: buildEquippedBySlot(snapshot.items),
+    entries,
+    status,
+    busyItemId,
+    feedback,
+    setFeedback,
+    equippedBySlot: buildEquippedBySlot(entries),
     equip,
     unequip,
-    setStatus,
+    reload,
   };
 }
