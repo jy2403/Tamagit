@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native';
-import { useAppearance } from '@/hooks/useAppearance';
-import { SLOTS, SLOT_LABELS } from '@/lib/appearance';
+import type { Appearance } from '@/hooks/useAppearance';
+import { SLOTS, SLOT_LABELS, itemEmoji } from '@/lib/appearance';
 import { ClaySurface } from '@/components/clay/ClaySurface';
 import { clay, radios } from '@/estilos';
 
-export function EquippedStrip() {
-  const { equippedBySlot } = useAppearance();
+export function EquippedStrip({ appearance }: { appearance: Appearance }) {
+  const { equippedBySlot } = appearance;
 
   return (
     <View>
@@ -33,7 +33,7 @@ export function EquippedStrip() {
                     fontWeight: '800',
                     color: item ? clay.texto : clay.textoTenue,
                   }}>
-                  {item ? `${item.emoji} ${item.name}` : 'Vacío'}
+                  {item ? `${itemEmoji(item)} ${item.name}` : 'Vacío'}
                 </Text>
               </ClaySurface>
             </View>

@@ -8,9 +8,10 @@ export type Feedback = { tipo: 'exito' | 'error'; texto: string } | null;
 type Props = {
   feedback: Feedback;
   onDone: () => void;
+  placement?: 'bottom' | 'top';
 };
 
-export function FeedbackBanner({ feedback, onDone }: Props) {
+export function FeedbackBanner({ feedback, onDone, placement = 'bottom' }: Props) {
   const anim = useFeedbackAnimation(feedback, onDone);
 
   if (!feedback) return null;
@@ -20,7 +21,13 @@ export function FeedbackBanner({ feedback, onDone }: Props) {
 
   return (
     <View
-      style={{ position: 'absolute', left: 16, right: 16, bottom: 28, zIndex: 50 }}
+      style={{
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        ...(placement === 'top' ? { top: 56 } : { bottom: 28 }),
+        zIndex: 50,
+      }}
       pointerEvents="none">
       <Animated.View
         style={{

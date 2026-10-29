@@ -15,6 +15,7 @@ import { IconoImagen } from '@/components/clay/IconoImagen';
 import { EquipMenu } from '@/components/project/EquipMenu';
 import { EquippedStrip } from '@/components/project/EquippedStrip';
 import { useAuth } from '@/context/AuthContext';
+import { useAppearance } from '@/hooks/useAppearance';
 import { usePetActions } from '@/hooks/usePetActions';
 import { usePetOwnership } from '@/hooks/usePetOwnership';
 import { useProjectBranches } from '@/hooks/useProjectBranches';
@@ -124,6 +125,7 @@ export default function EditPetScreen() {
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [equipOpen, setEquipOpen] = useState(false);
+  const appearance = useAppearance(pet?.pet?.id);
 
   const fallbackColor = pet?.pet ? colorMascotaPorId(pet.pet.id) : COLORES_MASCOTA[0];
   const fallbackTones = tonoPorHex(pet?.pet?.bodyColor ?? fallbackColor.hex);
@@ -385,7 +387,7 @@ export default function EditPetScreen() {
         <View style={sombras.tarjeta}>
           <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border>
             <View style={{ padding: 14, gap: 10 }}>
-              <EquippedStrip />
+              <EquippedStrip appearance={appearance} />
               <ClayButton
                 title="Vestir"
                 colors={clay.menta}
@@ -488,7 +490,11 @@ export default function EditPetScreen() {
       </ScrollView>
 
       <FeedbackBanner feedback={feedback} onDone={() => setFeedback(null)} />
-      <EquipMenu visible={equipOpen} onClose={() => setEquipOpen(false)} />
+      <EquipMenu
+        visible={equipOpen}
+        onClose={() => setEquipOpen(false)}
+        appearance={appearance}
+      />
       <ConfirmModal
         visible={confirmOpen}
         title={`¿Eliminar a ${pet.pet.name}?`}

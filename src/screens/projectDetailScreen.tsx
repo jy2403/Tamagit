@@ -14,6 +14,7 @@ import { StatDonut } from '@/components/clay/StatDonut';
 import { DishCarousel } from '@/components/project/DishCarousel';
 import { EquipMenu } from '@/components/project/EquipMenu';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
+import { useAppearance } from '@/hooks/useAppearance';
 import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
 import { clay, colorMascotaPorId, radios, sombras, tonoPorHex } from '@/estilos';
 
@@ -90,6 +91,7 @@ export default function ProjectDetailScreen() {
 
   const projectName = pet?.project.name ?? fullName ?? 'Proyecto';
   const petData = pet?.pet ?? null;
+  const appearance = useAppearance(petData?.id);
   const petColor = petData
     ? (petData.bodyColor ?? colorMascotaPorId(petData.id).hex)
     : colorMascotaPorId(0).hex;
@@ -390,7 +392,11 @@ export default function ProjectDetailScreen() {
       ) : null}
 
       <FeedbackBanner feedback={feedback} onDone={() => setFeedback(null)} />
-      <EquipMenu visible={equipOpen} onClose={() => setEquipOpen(false)} />
+      <EquipMenu
+        visible={equipOpen}
+        onClose={() => setEquipOpen(false)}
+        appearance={appearance}
+      />
       <ConfirmModal
         visible={confirmOpen}
         title={`¿Eliminar a ${petData?.name ?? 'tu mascota'}?`}

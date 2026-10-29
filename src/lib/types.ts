@@ -51,11 +51,14 @@ export type ProjectPet = {
   hiddenByUser: boolean;
 };
 
+export type Slot = 'HEAD' | 'BODY' | 'LEGS';
+
 export type PetItem = {
   id: number;
   petId: number;
   itemId: number;
   quantity: number;
+  equipped: boolean;
   createdAt: string;
   item: Item;
 };
@@ -179,6 +182,8 @@ export type Item = {
   imageUrl: string | null;
   price: number;
   category: string | null;
+  slot: Slot | null;
+  assetId: number | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -12,40 +12,39 @@ import {
 import { ClayButton } from '@/components/clay/ClayButton';
 import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClaySurface } from '@/components/clay/ClaySurface';
-import { useAppearance, type InventoryStatus } from '@/hooks/useAppearance';
-import { SLOTS, SLOT_LABELS, type PetItem, type Slot } from '@/lib/appearance';
+import { FeedbackBanner } from '@/components/FeedbackBanner';
+import type { Appearance } from '@/hooks/useAppearance';
+import { SLOTS, SLOT_LABELS, itemEmoji } from '@/lib/appearance';
+import type { Item, Slot } from '@/lib/types';
 import { clay, fuentes, radios, sombras, textoClay } from '@/estilos';
 
 type EquipMenuProps = {
   visible: boolean;
   onClose: () => void;
+  appearance: Appearance;
 };
 
 type SlotFilter = 'ALL' | Slot;
 
 const FILTERS: readonly SlotFilter[] = ['ALL', ...SLOTS];
 
-const DEMO_STATES: readonly { status: InventoryStatus; label: string }[] = [
-  { status: 'ready', label: 'Normal' },
-  { status: 'loading', label: 'Cargando' },
-  { status: 'empty', label: 'Vacío' },
-  { status: 'error', label: 'Error' },
-];
+function ItemPreview({ item, size }: { item: Item | null; size: number }) {
+  const [imageFailed, setImageFailed] = useState(false);
 
-function ItemPreview({ item, size }: { item: PetItem | null; size: number }) {
   if (!item) {
     return <Text style={{ fontSize: size * 0.7, color: clay.textoTenue }}>＋</Text>;
   }
-  if (item.imageUrl) {
+  if (item.imageUrl && !imageFailed) {
     return (
       <Image
         source={{ uri: item.imageUrl }}
         style={{ width: size, height: size }}
         resizeMode="contain"
+        onError={() => setImageFailed(true)}
       />
     );
   }
-  return <Text style={{ fontSize: size * 0.8 }}>{item.emoji}</Text>;
+  return <Text style={{ fontSize: size * 0.8 }}>{itemEmoji(item)}</Text>;
 }
 
 function Chip({
@@ -88,12 +87,24 @@ function Chip({
   );
 }
 
-export function EquipMenu({ visible, onClose }: EquipMenuProps) {
+export function EquipMenu({ visible, onClose, appearance }: EquipMenuProps) {
   const [filter, setFilter] = useState<SlotFilter>('ALL');
   const { height } = useWindowDimensions();
-  const { items, status, equippedBySlot, equip, unequip, setStatus } = useAppearance();
+  const {
+    entries,
+    status,
+    busyItemId,
+    feedback,
+    setFeedback,
+    equippedBySlot,
+    equip,
+    unequip,
+    reload,
+  } = appearance;
+  const clearFeedback = useCallback(() => setFeedback(null), [setFeedback]);
 
-  const filteredItems = filter === 'ALL' ? items : items.filter((item) => item.slot === filter);
+  const filteredItems =
+    filter === 'ALL' ? entries : entries.filter(({ item }) => item.slot === filter);
   const showEmpty = status === 'empty' || (status === 'ready' && filteredItems.length === 0);
   const listHeight = Math.max(180, Math.min(340, height * 0.34));
 
@@ -151,8 +162,8 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
                   <Pressable
                     key={slot}
                     style={{ flex: 1 }}
-                    onPress={() => item && unequip(item.id)}
-                    disabled={!item}
+                    onPress={() => item && unequip(item)}
+                    disabled={!item || busyItemId !== null}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: !item, selected: Boolean(item) }}
                     accessibilityLabel={
@@ -228,26 +239,6 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
 
             <View
               style={{
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                gap: 8,
-                marginTop: 10,
-                alignItems: 'center',
-              }}>
-              <Text style={{ fontSize: 9, fontWeight: '900', color: clay.textoTenue }}>DEMO</Text>
-              {DEMO_STATES.map(({ status: demoStatus, label }) => (
-                <Chip
-                  key={demoStatus}
-                  label={label}
-                  selected={status === demoStatus}
-                  onPress={() => setStatus(demoStatus)}
-                  accessibilityLabel={`Simular estado ${label}`}
-                />
-              ))}
-            </View>
-
-            <View
-              style={{
                 marginTop: 12,
                 borderRadius: radios.tarjeta,
                 overflow: 'hidden',
@@ -283,7 +274,7 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
                     textColor={clay.texto}
                     pixel={false}
                     size="md"
-                    onPress={() => setStatus('ready')}
+                    onPress={() => void reload()}
                     style={{ marginTop: 14, alignSelf: 'stretch' }}
                   />
                 </View>
@@ -319,21 +310,23 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
               ) : (
                 <FlatList
                   data={filteredItems}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={({ item }) => String(item.id)}
                   style={{ height: listHeight }}
                   contentContainerStyle={{ paddingVertical: 4, gap: 8 }}
                   showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => {
-                    const active = item.equipped;
+                  renderItem={({ item: entry }) => {
+                    const { item, owned, equipped: active } = entry;
+                    const slotLabel = item.slot ? SLOT_LABELS[item.slot] : 'Sin slot';
                     return (
                       <Pressable
-                        onPress={() => equip(item.id)}
+                        onPress={() => equip(item)}
+                        disabled={busyItemId !== null}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
+                        accessibilityState={{ selected: active, busy: busyItemId === item.id }}
                         accessibilityLabel={
                           active
-                            ? `${item.name} ya equipada en ${SLOT_LABELS[item.slot]}`
-                            : `Equipar ${item.name} en ${SLOT_LABELS[item.slot]}`
+                            ? `${item.name} ya equipada en ${slotLabel}`
+                            : `Equipar ${item.name} en ${slotLabel}`
                         }>
                         <ClaySurface
                           colors={active ? clay.verde : clay.blanco}
@@ -370,7 +363,7 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
                                 color: active ? clay.oscuro : clay.textoSuave,
                                 marginTop: 2,
                               }}>
-                              {SLOT_LABELS[item.slot]}
+                              {slotLabel}
                             </Text>
                           </View>
                           <Text
@@ -379,7 +372,7 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
                               fontWeight: '900',
                               color: active ? clay.oscuro : clay.textoSuave,
                             }}>
-                            {active ? '✓ Equipado' : 'Equipar'}
+                            {active ? '✓ Equipado' : owned ? 'Equipar' : 'No la tienes'}
                           </Text>
                         </ClaySurface>
                       </Pressable>
@@ -391,6 +384,7 @@ export function EquipMenu({ visible, onClose }: EquipMenuProps) {
           </ClaySurface>
         </Pressable>
       </Pressable>
+      <FeedbackBanner feedback={feedback} onDone={clearFeedback} placement="top" />
     </Modal>
   );
 }

@@ -88,6 +88,25 @@ en memoria. El formulario de creacion valida campos (requeridos, numeros y maxim
 de caracteres), confirma al guardar y muestra toasts de exito/error con diseno
 propio (`src/components/FeedbackBanner.tsx`).
 
+## Cosmeticos (menu "Vestir")
+
+`EquipMenu` / `EquippedStrip` consumen el backend a traves de `useAppearance(petId)`
+(`src/hooks/useAppearance.ts`):
+
+| Accion | Endpoint |
+| ------ | -------- |
+| Catalogo de prendas | `GET /items` |
+| Prendas que posee y lleva puestas la mascota | `GET /pets/:id` (`items[].equipped`) |
+| Equipar | `POST /pets/:petId/items/:itemId/equip` |
+| Desequipar | `POST /pets/:petId/items/:itemId/unequip` |
+
+La regla de negocio vive en el backend (una prenda por slot, solo prendas que la
+mascota posee y con slot). El front no la replica: lista todo el catalogo y, si se
+intenta equipar algo invalido, muestra tal cual el motivo que devuelve el backend
+(`La mascota no posee este item`, `Este item no es equipable`,
+`No tienes permiso para equipar items en esta mascota`...) en un `FeedbackBanner`.
+Para que una mascota posea prendas, un admin las asigna desde el panel admin.
+
 ## Estilos con Tailwind
 
 Tailwind/NativeWind esta configurado (preset de NativeWind, `content` apuntando a
