@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Animated, Image, View, useWindowDimensions } from 'react-native';
+import { Animated, Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useAuth } from '@/context/AuthContext';
-import { ClayBackground } from '@/components/clay/ClayBackground';
 import { ClayButton } from '@/components/clay/ClayButton';
 import { ClaySurface } from '@/components/clay/ClaySurface';
-import { clay, sombras, type Gradiente } from '@/estilos';
+import { clay, paleta, sombras, type Gradiente } from '@/estilos';
 
 type BlobLayer = {
   colors: Gradiente;
@@ -15,10 +14,9 @@ type BlobLayer = {
   lobes: number;
 };
 
-// Capas de estrellas/ondas perfectamente concéntricas con simetría radial regular
 const BLOB_LAYERS: readonly BlobLayer[] = [
-  { colors: clay.menta, radius: 114, lobes: 8 },
-  { colors: clay.malva, radius: 96, lobes: 8 },
+  { colors: clay.violeta, radius: 114, lobes: 8 },
+  { colors: clay.menta, radius: 96, lobes: 8 },
   { colors: clay.rosa, radius: 78, lobes: 8 },
   { colors: clay.fucsia, radius: 62, lobes: 8 },
 ];
@@ -51,17 +49,40 @@ function concentricBlobPath(cx: number, cy: number, radius: number, lobes: numbe
   return `${d}Z`;
 }
 
-// Burbujitas ordenadas y simétricas respecto al letrero (sin tapar el texto)
 type Bubble = { size: number; left?: number; right?: number; top: number; colors: Gradiente };
 
 const SYMMETRIC_BUBBLES: readonly Bubble[] = [
-  { size: 20, left: -24, top: 10, colors: clay.rosa },
-  { size: 14, left: -16, top: 46, colors: clay.menta },
-  { size: 10, left: -26, top: 68, colors: clay.malva },
-  { size: 20, right: -24, top: 10, colors: clay.rosa },
-  { size: 14, right: -16, top: 46, colors: clay.menta },
-  { size: 10, right: -26, top: 68, colors: clay.malva },
+  { size: 18, left: -22, top: 8, colors: clay.rosa },
+  { size: 12, left: -14, top: 44, colors: clay.menta },
+  { size: 9, left: -24, top: 66, colors: clay.violeta },
+  { size: 18, right: -22, top: 8, colors: clay.rosa },
+  { size: 12, right: -14, top: 44, colors: clay.menta },
+  { size: 9, right: -24, top: 66, colors: clay.violeta },
 ];
+
+function LandingBackdrop() {
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="landingBg" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#160B36" />
+            <Stop offset="0.5" stopColor={paleta.indigo.base} />
+            <Stop offset="1" stopColor="#3B207F" />
+          </LinearGradient>
+          <LinearGradient id="landingGlow" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={paleta.indigo.brillante} stopOpacity="0.55" />
+            <Stop offset="1" stopColor={paleta.indigo.brillante} stopOpacity="0" />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#landingBg)" />
+        <Circle cx="88%" cy="12%" r="38%" fill="url(#landingGlow)" />
+        <Circle cx="8%" cy="82%" r="32%" fill={paleta.menta.base} fillOpacity="0.16" />
+        <Circle cx="95%" cy="78%" r="18%" fill={paleta.fucsia.base} fillOpacity="0.14" />
+      </Svg>
+    </View>
+  );
+}
 
 export default function LandingScreen() {
   const router = useRouter();
@@ -70,15 +91,18 @@ export default function LandingScreen() {
   const { width, height } = useWindowDimensions();
   const compact = height < 720;
 
-  const flowerSize = Math.min(compact ? 240 : 280, width * 0.78);
-  const squareSize = Math.round(flowerSize * 0.52);
+  const flowerSize = Math.min(width * 0.68, height * 0.36, compact ? 205 : 255);
+  const squareSize = Math.round(flowerSize * 0.5);
+  const buttonWidth = Math.min(width - 80, 205);
+  const titleBoxWidth = Math.min(width * 0.68, 260);
+  const titleBoxHeight = compact ? 70 : 80;
 
-  const [titleY] = useState(() => new Animated.Value(-120));
-  const [titleScale] = useState(() => new Animated.Value(0.85));
-  const [flowerScale] = useState(() => new Animated.Value(0.4));
+  const [titleY] = useState(() => new Animated.Value(-100));
+  const [titleScale] = useState(() => new Animated.Value(0.88));
+  const [flowerScale] = useState(() => new Animated.Value(0.45));
   const [flowerRotate] = useState(() => new Animated.Value(0));
   const [squareScale] = useState(() => new Animated.Value(0));
-  const [buttonScale] = useState(() => new Animated.Value(0.8));
+  const [buttonScale] = useState(() => new Animated.Value(0.9));
   const [buttonOpacity] = useState(() => new Animated.Value(0));
   const [buttonPulse] = useState(() => new Animated.Value(1));
   const [bubbleScales] = useState(() => SYMMETRIC_BUBBLES.map(() => new Animated.Value(0)));
@@ -107,19 +131,18 @@ export default function LandingScreen() {
         Animated.spring(squareScale, { toValue: 1, friction: 5, useNativeDriver: true }),
       ]),
       Animated.sequence([
-        Animated.delay(700),
+        Animated.delay(650),
         Animated.parallel([
           Animated.spring(buttonScale, { toValue: 1, friction: 5, useNativeDriver: true }),
           Animated.timing(buttonOpacity, {
             toValue: 1,
-            duration: 300,
+            duration: 280,
             useNativeDriver: true,
           }),
         ]),
       ]),
     ]);
 
-    // Rotación suave concéntrica sobre su propio centro
     const rotateLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(flowerRotate, {
@@ -135,16 +158,15 @@ export default function LandingScreen() {
       ])
     );
 
-    // Latido sutil y lento para el botón START
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(buttonPulse, {
-          toValue: 1.025,
+          toValue: 1.02,
           duration: 1600,
           useNativeDriver: true,
         }),
         Animated.timing(buttonPulse, {
-          toValue: 1.0,
+          toValue: 1,
           duration: 1600,
           useNativeDriver: true,
         }),
@@ -174,34 +196,36 @@ export default function LandingScreen() {
 
   const rotate = flowerRotate.interpolate({
     inputRange: [-1, 1],
-    outputRange: ['-12deg', '12deg'],
+    outputRange: ['-10deg', '10deg'],
   });
 
   const start = () => {
     router.replace(token ? '/projects' : '/login');
   };
 
-  const titleBoxWidth = Math.min(width * 0.72, 280);
-  const titleBoxHeight = compact ? 76 : 88;
-
   return (
-    <ClayBackground>
+    <View style={{ flex: 1, backgroundColor: paleta.indigo.oscuro }}>
+      <LandingBackdrop />
       <View
         style={{
           flex: 1,
-          paddingTop: insets.top + (compact ? 12 : 24),
-          paddingBottom: Math.max(insets.bottom + 32, 44),
+          paddingTop: insets.top + (compact ? 14 : 26),
+          paddingBottom: Math.max(insets.bottom + 22, 34),
           paddingHorizontal: 20,
           justifyContent: 'space-between',
         }}>
-        {/* Letrero TAMAGIT derecho, perfectamente centrado, con burbujas simétricas */}
         <View style={{ alignItems: 'center' }}>
           <Animated.View
             style={{
               transform: [{ translateY: titleY }, { scale: titleScale }],
             }}>
-            <View style={{ width: titleBoxWidth, height: titleBoxHeight, alignItems: 'center', justifyContent: 'center' }}>
-              {/* Burbujitas simétricas en los laterales */}
+            <View
+              style={{
+                width: titleBoxWidth,
+                height: titleBoxHeight,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               {SYMMETRIC_BUBBLES.map((bubble, index) => (
                 <Animated.View
                   key={`bubble-${index}`}
@@ -223,10 +247,9 @@ export default function LandingScreen() {
                 </Animated.View>
               ))}
 
-              {/* Letrero con degradado vertical claymorfista fucsia -> rosa */}
               <ClaySurface
                 colors={clay.fucsia}
-                radius={24}
+                radius={22}
                 shadow="tarjeta"
                 style={{ width: '100%', height: '100%' }}
                 contentStyle={{
@@ -238,7 +261,7 @@ export default function LandingScreen() {
                 <Animated.Text
                   style={{
                     fontFamily: 'PressStart2P_400Regular',
-                    fontSize: compact ? 22 : 26,
+                    fontSize: compact ? 20 : 24,
                     color: '#FFFFFF',
                     textAlign: 'center',
                     includeFontPadding: false,
@@ -250,13 +273,13 @@ export default function LandingScreen() {
           </Animated.View>
         </View>
 
-        {/* Ícono de GitHub derecho y centrado con formas onduladas concéntricas */}
         <View
           style={{
             flex: 1,
+            minHeight: 0,
             alignItems: 'center',
             justifyContent: 'center',
-            marginVertical: compact ? 8 : 16,
+            marginVertical: 8,
           }}>
           <Animated.View
             style={{
@@ -266,7 +289,6 @@ export default function LandingScreen() {
               justifyContent: 'center',
               transform: [{ scale: flowerScale }],
             }}>
-            {/* Formas redondeadas concéntricas que rotan sobre su propio centro */}
             <Animated.View
               style={{
                 position: 'absolute',
@@ -279,7 +301,13 @@ export default function LandingScreen() {
               <Svg width="100%" height="100%" viewBox="0 0 260 260">
                 <Defs>
                   {BLOB_LAYERS.map((blob, index) => (
-                    <LinearGradient key={`grad-${index}`} id={`blobGrad-${index}`} x1="0" y1="0" x2="0" y2="1">
+                    <LinearGradient
+                      key={`grad-${index}`}
+                      id={`blobGrad-${index}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1">
                       <Stop offset="0" stopColor={blob.colors[0]} />
                       <Stop offset="1" stopColor={blob.colors[1]} />
                     </LinearGradient>
@@ -290,13 +318,12 @@ export default function LandingScreen() {
                     key={`path-${index}`}
                     d={paths[index]}
                     fill={`url(#blobGrad-${index})`}
-                    opacity={0.92}
+                    opacity={0.95}
                   />
                 ))}
               </Svg>
             </Animated.View>
 
-            {/* Ícono de GitHub derecho y centrado */}
             <Animated.View
               style={[
                 sombras.tarjeta,
@@ -309,6 +336,7 @@ export default function LandingScreen() {
               <ClaySurface
                 colors={clay.vino}
                 radius={Math.round(squareSize * 0.28)}
+                border
                 style={{ flex: 1 }}
                 contentStyle={{
                   flex: 1,
@@ -329,28 +357,38 @@ export default function LandingScreen() {
           </Animated.View>
         </View>
 
-        {/* Botón START: ancho ajustado, texto pixel más grande blanco sin contorno, aire debajo */}
-        <Animated.View
-          style={{
-            alignItems: 'center',
-            marginBottom: compact ? 10 : 20,
-            opacity: buttonOpacity,
-            transform: [{ scale: buttonScale }, { scale: buttonPulse }],
-          }}>
-          <View style={{ minWidth: 170, alignSelf: 'center' }}>
+        <View style={{ alignItems: 'center', gap: compact ? 10 : 14 }}>
+          <Text
+            style={{
+              color: '#E9E4FF',
+              fontSize: 13,
+              lineHeight: 19,
+              textAlign: 'center',
+              maxWidth: 280,
+              fontWeight: '600',
+            }}>
+            Tus repositorios cobran vida.{'\n'}Cuida el código, cuida tu mascota.
+          </Text>
+          <Animated.View
+            style={{
+              opacity: buttonOpacity,
+              transform: [{ scale: buttonScale }, { scale: buttonPulse }],
+              width: buttonWidth,
+            }}>
             <ClayButton
               title="START"
               onPress={start}
               colors={clay.fucsia}
               textColor="#FFFFFF"
+              size="md"
               pixel
               outline={false}
               accessibilityLabel="Empezar"
-              style={{ paddingHorizontal: 12 }}
+              style={{ width: buttonWidth }}
             />
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </View>
       </View>
-    </ClayBackground>
+    </View>
   );
 }

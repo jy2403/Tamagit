@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -14,8 +14,11 @@ import { StatDonut } from '@/components/clay/StatDonut';
 import { DishCarousel } from '@/components/project/DishCarousel';
 import { EquipMenu } from '@/components/project/EquipMenu';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
+import { useAppearance } from '@/hooks/useAppearance';
 import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
-import { clay, colorMascotaPorId, radios, sombras, tonoPorHex } from '@/estilos';
+import { SLOTS } from '@/lib/appearance';
+import { readableStatColor } from '@/lib/color';
+import { clay, colorMascotaPorId, radios, sombras } from '@/estilos';
 
 const TIER_META = {
   small: { emoji: '🍇' },
@@ -58,6 +61,8 @@ export default function ProjectDetailScreen() {
   const viewModel = useProjectDetailScreen();
   const insets = useSafeAreaInsets();
   const [equipOpen, setEquipOpen] = useState(false);
+  const [colorDraft, setColorDraft] = useState<string | null>(null);
+  const { equippedBySlot } = useAppearance();
   const {
     confirmOpen,
     setConfirmOpen,
@@ -75,6 +80,7 @@ export default function ProjectDetailScreen() {
     setFeedback,
     deleting,
     createPet,
+    saveColors,
     unhidePet,
     deletePet,
     petAreaRef,
@@ -93,10 +99,32 @@ export default function ProjectDetailScreen() {
   const petColor = petData
     ? (petData.bodyColor ?? colorMascotaPorId(petData.id).hex)
     : colorMascotaPorId(0).hex;
-  const tones = tonoPorHex(petColor);
-  const healthColor = petData?.healthColor ?? petColor;
-  const hungerColor = petData?.hungerColor ?? tones[1];
-  const happinessColor = petData?.happinessColor ?? tones[0];
+  const shownColor = colorDraft ?? petColor;
+  const lookKey = SLOTS.map((slot) => equippedBySlot[slot]?.id ?? '-').join('|');
+  const statColor = readableStatColor(shownColor);
+  const healthColor = statColor;
+  const hungerColor = statColor;
+  const happinessColor = statColor;
+
+  const openEquip = useCallback(() => {
+    setColorDraft(null);
+    setEquipOpen(true);
+  }, []);
+
+  const closeEquip = useCallback(async () => {
+    setEquipOpen(false);
+    if (!colorDraft || colorDraft === petColor) {
+      setColorDraft(null);
+      return;
+    }
+    const ok = await saveColors({
+      bodyColor: colorDraft,
+      healthColor: colorDraft,
+      hungerColor: colorDraft,
+      happinessColor: colorDraft,
+    });
+    if (ok) setColorDraft(null);
+  }, [colorDraft, petColor, saveColors]);
 
   const header = (
     <View
@@ -179,8 +207,9 @@ export default function ProjectDetailScreen() {
                 },
               ]}>
               <Pet3DView
+                key={`${shownColor}-${lookKey}`}
                 species={petData.species}
-                bodyColor={petColor}
+                bodyColor={shownColor}
                 backdrop="egg"
                 idle
                 autoRotate={false}
@@ -199,7 +228,12 @@ export default function ProjectDetailScreen() {
             </Text>
 
             <View style={{ flexDirection: 'row', marginTop: 16, alignItems: 'flex-start' }}>
-              <StatBig label="Hambre" iconNombre="hambre" value={petData.hunger} color={hungerColor} />
+              <StatBig
+                label="Hambre"
+                iconNombre="hambre"
+                value={petData.hunger}
+                color={hungerColor}
+              />
               <StatBig
                 label="Vida"
                 iconNombre="vida"
@@ -243,7 +277,7 @@ export default function ProjectDetailScreen() {
                   title=""
                   colors={clay.menta}
                   size="md"
-                  onPress={() => setEquipOpen(true)}
+                  onPress={openEquip}
                   accessibilityLabel="Vestir"
                   icon={<IconoImagen nombre="perchero" size={26} tintColor={clay.texto} />}
                 />
@@ -390,7 +424,12 @@ export default function ProjectDetailScreen() {
       ) : null}
 
       <FeedbackBanner feedback={feedback} onDone={() => setFeedback(null)} />
-      <EquipMenu visible={equipOpen} onClose={() => setEquipOpen(false)} />
+      <EquipMenu
+        visible={equipOpen}
+        onClose={() => void closeEquip()}
+        bodyColor={shownColor}
+        onBodyColorChange={setColorDraft}
+      />
       <ConfirmModal
         visible={confirmOpen}
         title={`¿Eliminar a ${petData?.name ?? 'tu mascota'}?`}

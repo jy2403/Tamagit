@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { ClayBackground } from '@/components/clay/ClayBackground';
@@ -7,6 +7,12 @@ import { ClayButton } from '@/components/clay/ClayButton';
 import { ClaySurface } from '@/components/clay/ClaySurface';
 import { IconoImagen } from '@/components/clay/IconoImagen';
 import { clay, paleta, radios, sombras } from '@/estilos';
+
+const FEATURES = [
+  'Sincroniza tus repositorios y commits.',
+  'Alimenta, cuida y sube de nivel a tu mascota.',
+  'Personaliza su color y su vestuario.',
+] as const;
 
 export default function LoginScreen() {
   const { token, isLoading, signIn, authError } = useAuth();
@@ -18,73 +24,126 @@ export default function LoginScreen() {
 
   return (
     <ClayBackground>
-      <View
-        style={{
-          flex: 1,
-          paddingTop: insets.top + 32,
-          paddingBottom: Math.max(insets.bottom + 24, 36),
-          paddingHorizontal: 24,
-          justifyContent: 'space-between',
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingTop: insets.top + 24,
+          paddingBottom: Math.max(insets.bottom + 22, 34),
+          paddingHorizontal: 22,
+          justifyContent: 'center',
           alignItems: 'center',
-        }}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: 360 }}>
-          {/* Tarjeta claymorfista con huevo de assets y título */}
+          gap: 20,
+        }}
+        showsVerticalScrollIndicator={false}>
+        <View style={{ width: '100%', maxWidth: 360, alignItems: 'center', gap: 18 }}>
+          <ClaySurface
+            colors={clay.vino}
+            radius={radios.pastilla}
+            shadow="suave"
+            contentStyle={{ paddingHorizontal: 14, paddingVertical: 7 }}>
+            <Text
+              style={{
+                color: '#FFFFFF',
+                fontSize: 9,
+                fontWeight: '900',
+                letterSpacing: 1.6,
+              }}>
+              TAMAGIT · GITHUB
+            </Text>
+          </ClaySurface>
+
           <View style={[sombras.tarjeta, { width: '100%' }]}>
             <ClaySurface
               colors={clay.blanco}
               radius={radios.tarjetaGrande}
               border
               contentStyle={{
-                paddingVertical: 32,
+                paddingVertical: 24,
                 paddingHorizontal: 20,
                 alignItems: 'center',
-                gap: 16,
+                gap: 14,
               }}>
-              {/* Contenedor circular con imagen del huevo de assets */}
-              <View style={[sombras.suave, { width: 96, height: 96 }]}>
+              <View style={[sombras.suave, { width: 90, height: 90 }]}>
                 <ClaySurface
                   colors={clay.fucsia}
-                  radius={48}
-                  style={{ width: 96, height: 96 }}
+                  radius={45}
+                  style={{ width: 90, height: 90 }}
                   contentStyle={{
-                    width: 96,
-                    height: 96,
+                    width: 90,
+                    height: 90,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  <IconoImagen nombre="huevo" size={52} tintColor="#FFFFFF" />
+                  <IconoImagen nombre="huevo" size={48} tintColor="#FFFFFF" />
                 </ClaySurface>
               </View>
 
-              <View style={{ alignItems: 'center' }}>
-                <Text
+              <Text
+                style={{
+                  fontFamily: 'PressStart2P_400Regular',
+                  fontSize: 20,
+                  color: clay.texto,
+                  textAlign: 'center',
+                }}>
+                TAMAGIT
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: '900',
+                  lineHeight: 24,
+                  color: clay.texto,
+                  textAlign: 'center',
+                }}>
+                Tu repo, ahora es una mascota.
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 13,
+                  lineHeight: 20,
+                  color: clay.textoSuave,
+                  textAlign: 'center',
+                }}>
+                Conecta GitHub y transforma cada proyecto en una criatura que crece con tus commits.
+                Si el equipo programa, la mascota vive.
+              </Text>
+            </ClaySurface>
+          </View>
+
+          <View style={{ width: '100%', gap: 9 }}>
+            {FEATURES.map((feature) => (
+              <View key={feature} style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}>
+                <View
                   style={{
-                    fontFamily: 'PressStart2P_400Regular',
-                    fontSize: 22,
-                    color: clay.texto,
-                    textAlign: 'center',
+                    width: 22,
+                    height: 22,
+                    borderRadius: 8,
+                    backgroundColor: paleta.menta.fondoSuave,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}>
-                  TAMAGIT
-                </Text>
-                <Text
-                  style={{
-                    marginTop: 8,
-                    fontSize: 13,
-                    color: clay.textoSuave,
-                    textAlign: 'center',
-                    lineHeight: 18,
-                  }}>
-                  Cría una mascota por cada repositorio de GitHub.
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: paleta.menta.base,
+                    }}
+                  />
+                </View>
+                <Text style={{ flex: 1, fontSize: 11, lineHeight: 16, color: clay.textoSuave }}>
+                  {feature}
                 </Text>
               </View>
-            </ClaySurface>
+            ))}
           </View>
 
           {authError ? (
             <View
               style={{
-                marginTop: 16,
-                backgroundColor: 'rgba(253, 19, 90, 0.1)',
+                backgroundColor: 'rgba(248, 25, 95, 0.1)',
                 borderWidth: 1,
                 borderColor: paleta.fucsia.claro,
                 borderRadius: radios.chip,
@@ -92,17 +151,22 @@ export default function LoginScreen() {
                 paddingVertical: 10,
                 width: '100%',
               }}>
-              <Text style={{ color: paleta.fucsia.base, fontSize: 12, textAlign: 'center', fontWeight: '700' }}>
+              <Text
+                style={{
+                  color: paleta.fucsia.base,
+                  fontSize: 12,
+                  textAlign: 'center',
+                  fontWeight: '700',
+                }}>
                 {authError}
               </Text>
             </View>
           ) : null}
         </View>
 
-        {/* Botón principal grande y claro para conectar la cuenta */}
-        <View style={{ width: '100%', maxWidth: 340, gap: 10, alignItems: 'center' }}>
+        <View style={{ width: '100%', maxWidth: 330, gap: 12, alignItems: 'center' }}>
           {isLoading ? (
-            <View style={{ height: 56, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ height: 48, justifyContent: 'center', alignItems: 'center' }}>
               <ActivityIndicator size="large" color={paleta.fucsia.base} />
             </View>
           ) : (
@@ -112,20 +176,27 @@ export default function LoginScreen() {
               colors={clay.fucsia}
               textColor="#FFFFFF"
               pixel={false}
+              size="md"
               accessibilityLabel="Conectar con GitHub"
+              style={{ width: 240, height: 46, alignSelf: 'center' }}
+              contentStyle={{
+                minHeight: 46,
+                height: 46,
+                paddingHorizontal: 16,
+              }}
               icon={
                 <Image
                   source={require('../../assets/github-icon.webp')}
-                  style={{ width: 22, height: 22, resizeMode: 'contain' }}
+                  style={{ width: 20, height: 20, resizeMode: 'contain' }}
                 />
               }
             />
           )}
-          <Text style={{ fontSize: 11, color: clay.textoTenue, textAlign: 'center' }}>
+          <Text style={{ fontSize: 10, color: clay.textoTenue, textAlign: 'center' }}>
             Autoriza tu cuenta para sincronizar tus proyectos.
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </ClayBackground>
   );
 }

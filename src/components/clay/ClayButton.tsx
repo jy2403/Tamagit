@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   Pressable,
+  StyleSheet,
   Text,
   View,
   type AccessibilityRole,
@@ -22,6 +23,7 @@ type ClayButtonProps = {
   outline?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   testID?: string;
@@ -39,13 +41,21 @@ export function ClayButton({
   outline = true,
   disabled = false,
   style,
+  contentStyle,
   accessibilityLabel,
   accessibilityRole = 'button',
   testID,
   size = 'lg',
 }: ClayButtonProps) {
-  const paddingVertical = size === 'lg' ? 16 : 11;
+  const buttonHeight = size === 'lg' ? 52 : 46;
+  const paddingVertical = size === 'lg' ? 14 : 10;
   const titleSize = pixel ? (size === 'lg' ? 16 : 12) : size === 'lg' ? 17 : 14;
+
+  const flattenedStyle = StyleSheet.flatten(style);
+  const defaultAlignSelf =
+    flattenedStyle && (flattenedStyle.width !== undefined || flattenedStyle.alignSelf !== undefined)
+      ? undefined
+      : 'stretch';
 
   return (
     <Pressable
@@ -56,7 +66,8 @@ export function ClayButton({
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled }}
       style={({ pressed }) => [
-        { alignSelf: 'stretch' },
+        { minHeight: buttonHeight },
+        defaultAlignSelf ? { alignSelf: defaultAlignSelf } : null,
         sombras.boton,
         pressed && !disabled
           ? [{ transform: [{ translateY: 2 }, { scale: 0.97 }] }, sombras.hundido]
@@ -67,16 +78,19 @@ export function ClayButton({
       <ClaySurface
         colors={colors}
         radius={radios.boton}
-        style={{ flexGrow: 1 }}
-        contentStyle={{
-          minHeight: size === 'lg' ? 56 : 46,
-          paddingHorizontal: 20,
-          paddingVertical,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 12,
-        }}>
+        style={{ width: '100%' }}
+        contentStyle={[
+          {
+            minHeight: buttonHeight,
+            paddingHorizontal: 20,
+            paddingVertical,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+          },
+          contentStyle,
+        ]}>
         {icon ? (
           <View style={{ alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
         ) : null}

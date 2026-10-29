@@ -74,16 +74,16 @@ export function SpeechBubble({ text, loading, petName }: SpeechBubbleProps) {
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>Pensando...</Text>
             ) : (
               <>
-                <Text
+                <FormattedText
+                  text={content || 'Todavía no tengo nada que decir.'}
                   numberOfLines={4}
                   style={{
                     fontFamily: fuentes.pixel,
                     fontSize: 8,
                     lineHeight: 15,
                     color: '#FFFFFF',
-                  }}>
-                  {content || 'Todavía no tengo nada que decir.'}
-                </Text>
+                  }}
+                />
                 {content.length > 90 ? (
                   <Text style={{ marginTop: 8, fontSize: 8, fontWeight: '800', color: '#E5BFD1' }}>
                     Toca para ver completo
@@ -146,7 +146,7 @@ export function SpeechBubble({ text, loading, petName }: SpeechBubbleProps) {
                   scrollEventThrottle={16}>
                   <FormattedText
                     text={content}
-                    className="text-base leading-relaxed text-neutral-800"
+                    style={{ fontSize: 15, lineHeight: 23, color: clay.texto }}
                   />
                 </ScrollView>
 

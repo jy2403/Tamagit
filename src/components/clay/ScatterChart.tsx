@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, G, Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
 
 export type PuntoMascota = {
   id: number;
@@ -16,36 +16,51 @@ type ScatterChartProps = {
   height?: number;
 };
 
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
 export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
   const [width, setWidth] = useState(0);
   const margin = { top: 12, right: 12, bottom: 20, left: 24 };
   const plotW = Math.max(0, width - margin.left - margin.right);
   const plotH = Math.max(0, height - margin.top - margin.bottom);
+  const R = 7;
 
-  const x = (value: number) => margin.left + (Math.max(0, Math.min(100, value)) / 100) * plotW;
-  const y = (value: number) =>
-    margin.top + plotH - (Math.max(0, Math.min(100, value)) / 100) * plotH;
+  const points = useMemo(() => {
+    if (width <= 0 || plotW <= 0 || plotH <= 0) return [];
 
-  const R = 6.5; // Tamaño constante para todos los puntos
+    const x = (value: number) => margin.left + (clamp(value, 0, 100) / 100) * plotW;
+    const y = (value: number) => margin.top + plotH - (clamp(value, 0, 100) / 100) * plotH;
+
+    const seen = new Map<string, number>();
+
+    return data.map((punto) => {
+      const baseX = x(punto.hambre);
+      const baseY = y(punto.felicidad);
+      const key = `${Math.round(baseX)}:${Math.round(baseY)}`;
+      const duplicate = seen.get(key) ?? 0;
+      seen.set(key, duplicate + 1);
+
+      const distance = duplicate === 0 ? 0 : 9 + Math.floor(duplicate / 4) * 4;
+      const angle = duplicate * 2.25;
+
+      return {
+        ...punto,
+        px: clamp(baseX + Math.cos(angle) * distance, margin.left + R, width - margin.right - R),
+        py: clamp(baseY + Math.sin(angle) * distance, margin.top + R, margin.top + plotH - R),
+      };
+    });
+  }, [data, margin.left, margin.right, margin.top, plotH, plotW, width]);
 
   return (
     <View
       style={{ height }}
       accessible
       accessibilityLabel={`Dispersión de ${data.length} mascotas. ${data
-        .map((p) => `${p.nombre}: hambre ${p.hambre}, felicidad ${p.felicidad}, vida ${p.vida}`)
+        .map((p) => `${p.nombre}: hambre ${p.hambre}, felicidad ${p.felicidad}`)
         .join('. ')}`}
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       {width > 0 ? (
         <Svg width={width} height={height}>
-          <Defs>
-            {data.map((punto) => (
-              <ClipPath key={`clip-${punto.id}`} id={`battery-clip-${punto.id}`}>
-                <Circle cx={x(punto.hambre)} cy={y(punto.felicidad)} r={R} />
-              </ClipPath>
-            ))}
-          </Defs>
-
           {[0, 0.5, 1].map((tick) => (
             <Line
               key={`h-${tick}`}
@@ -69,47 +84,17 @@ export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
             />
           ))}
 
-          {/* Puntos tipo batería de celular: base blanca rellena de abajo a arriba con el color de la mascota */}
-          {data.map((punto) => {
-            const px = x(punto.hambre);
-            const py = y(punto.felicidad);
-            const vidaClamped = Math.max(0, Math.min(100, punto.vida)) / 100;
-            const fillHeight = 2 * R * vidaClamped;
-            const fillY = py + R - fillHeight;
-
-            return (
-              <G key={punto.id}>
-                {/* Contenedor recortado en círculo */}
-                <G clipPath={`url(#battery-clip-${punto.id})`}>
-                  {/* Base blanca */}
-                  <Rect
-                    x={px - R}
-                    y={py - R}
-                    width={2 * R}
-                    height={2 * R}
-                    fill="#FFFFFF"
-                  />
-                  {/* Relleno desde abajo hacia arriba con el color de la mascota */}
-                  <Rect
-                    x={px - R}
-                    y={fillY}
-                    width={2 * R}
-                    height={fillHeight}
-                    fill={punto.color}
-                  />
-                </G>
-                {/* Borde exterior sutil para definir el círculo */}
-                <Circle
-                  cx={px}
-                  cy={py}
-                  r={R}
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth={1.2}
-                />
-              </G>
-            );
-          })}
+          {points.map((punto) => (
+            <Circle
+              key={punto.id}
+              cx={punto.px}
+              cy={punto.py}
+              r={R}
+              fill={punto.color}
+              stroke="#FFFFFF"
+              strokeWidth={2}
+            />
+          ))}
 
           <SvgText
             x={margin.left + plotW / 2}
@@ -119,13 +104,8 @@ export function ScatterChart({ data, height = 132 }: ScatterChartProps) {
             textAnchor="middle">
             Hambre
           </SvgText>
-          <SvgText
-            x={margin.left - 4}
-            y={margin.top + 2}
-            fontSize={8}
-            fill="#B9B9C2"
-            textAnchor="start">
-            Feliz
+          <SvgText x={0} y={8} fontSize={7} fill="#B9B9C2" textAnchor="start">
+            Felicidad
           </SvgText>
         </Svg>
       ) : null}

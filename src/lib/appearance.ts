@@ -17,5 +17,5 @@ export const SLOTS: readonly Slot[] = ['HEAD', 'BODY', 'LEGS'];
 export const SLOT_LABELS: Record<Slot, string> = {
   HEAD: 'Cabeza',
   BODY: 'Cuerpo',
-  LEGS: 'Patas',
+  LEGS: 'Parte baja',
 };

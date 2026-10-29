@@ -49,6 +49,7 @@ export function useProjectDetailScreen() {
     deletePet,
     startRename,
     saveName,
+    saveColors,
   } = usePetActions(id, { pet, setPet });
 
   const petAreaRef = useRef<RNView>(null);
@@ -120,6 +121,7 @@ export function useProjectDetailScreen() {
     deletePet,
     startRename,
     saveName,
+    saveColors,
     petAreaRef,
     dragging,
     dragAnim,

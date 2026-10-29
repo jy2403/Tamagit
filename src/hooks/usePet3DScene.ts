@@ -30,6 +30,7 @@ type UsePet3DSceneOptions = {
   autoRotate?: boolean;
   idle?: boolean;
   backdrop?: Backdrop;
+  camera?: 'full' | 'portrait';
   bodyColor?: string | null;
   background?: string;
   pausedRef?: React.MutableRefObject<boolean>;
@@ -116,6 +117,7 @@ export function usePet3DScene({
   autoRotate = !simple,
   idle = false,
   backdrop = 'none',
+  camera: cameraMode = 'full',
   bodyColor,
   background = '#EDEDF0',
   pausedRef,
@@ -214,8 +216,16 @@ export function usePet3DScene({
         (backdrop === 'egg' ? 1.82 : 1.18);
 
       if (simple) {
-        camera.position.set(0, lookAtY + 0.15, fitDistance);
-        camera.lookAt(0, lookAtY, 0);
+        if (cameraMode === 'portrait') {
+          const headY = MODEL_HEIGHT * 0.82;
+          camera.fov = 32;
+          camera.updateProjectionMatrix();
+          camera.position.set(0, headY, 2.05);
+          camera.lookAt(0, headY - 0.02, 0);
+        } else {
+          camera.position.set(0, lookAtY + 0.15, fitDistance);
+          camera.lookAt(0, lookAtY, 0);
+        }
         renderer.render(scene, camera);
         gl.endFrameEXP();
         return;
@@ -248,7 +258,18 @@ export function usePet3DScene({
 
       rafRef.current = requestAnimationFrame(loop);
     },
-    [autoRotate, backdrop, background, bodyColor, distRef, idle, pausedRef, simple, yawRef]
+    [
+      autoRotate,
+      backdrop,
+      background,
+      bodyColor,
+      cameraMode,
+      distRef,
+      idle,
+      pausedRef,
+      simple,
+      yawRef,
+    ]
   );
 
   return { onContextCreate, cleanup };

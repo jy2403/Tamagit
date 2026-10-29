@@ -11,6 +11,7 @@ type Pet3DViewProps = {
   autoRotate?: boolean;
   idle?: boolean;
   backdrop?: 'none' | 'egg';
+  camera?: 'full' | 'portrait';
   bodyColor?: string | null;
   background?: string;
 };
@@ -21,12 +22,14 @@ export function Pet3DView({
   autoRotate,
   idle = false,
   backdrop = 'none',
+  camera = 'full',
   bodyColor,
   background,
 }: Pet3DViewProps) {
   const yawRef = useRef(0);
   const distRef = useRef(backdrop === 'egg' ? 4.3 : 3.2);
-  const backgroundColor = background ?? (simple ? '#EDEDF0' : '#F4F4F6');
+  const backgroundColor =
+    background ?? (camera === 'portrait' ? '#F1EFF8' : simple ? '#EDEDF0' : '#F4F4F6');
 
   const { onContextCreate, cleanup } = usePet3DScene({
     simple,
@@ -35,6 +38,7 @@ export function Pet3DView({
     autoRotate,
     idle,
     backdrop,
+    camera,
     bodyColor,
     background: backgroundColor,
   });

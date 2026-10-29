@@ -22,15 +22,18 @@ import { ClayIconButton } from '@/components/clay/ClayIconButton';
 import { ClayPill } from '@/components/clay/ClayPill';
 import { ClaySurface } from '@/components/clay/ClaySurface';
 import { IconoImagen } from '@/components/clay/IconoImagen';
+import { StatDonut } from '@/components/clay/StatDonut';
 import { LineChart } from '@/components/clay/LineChart';
 import { PetArena } from '@/components/clay/PetArena';
 import { ScatterChart, type PuntoMascota } from '@/components/clay/ScatterChart';
+import { PetAvatar } from '@/components/project/PetAvatar';
 import { useDashboard, type DashboardDia } from '@/hooks/useDashboard';
 import { useProjects } from '@/hooks/useProjects';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { ArenaPet } from '@/hooks/usePetArenaScene';
 import type { DiaSemana, Gradiente } from '@/estilos';
-import { clay, colorMascotaPorId, fuentes, radios, SEMANA, sombras, tonoPorHex } from '@/estilos';
+import { clay, colorMascotaPorId, fuentes, radios, SEMANA, sombras } from '@/estilos';
+import { readableStatColor } from '@/lib/color';
 import type { Pet, Project } from '@/lib/types';
 
 type ProjectWithPet = Project & { pet: Pet };
@@ -202,13 +205,8 @@ function WeeklyHero({
                   justifyContent: 'space-between',
                 }}>
                 <Text style={{ fontSize: 10, fontWeight: '900', color: '#FFFFFF' }}>Mascotas</Text>
-                <Text style={{ fontSize: 8, color: '#B9B9C2' }}>Vida = batería</Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 3 }}>
-                <Legend color={clay.ambar[0]} label="Hambre" textColor="#D8D8DE" />
-                <Legend color={clay.verde[0]} label="Felicidad" textColor="#D8D8DE" />
-              </View>
-              <View style={{ marginTop: 4 }}>
+              <View style={{ marginTop: 7 }}>
                 {points.length > 0 ? (
                   <ScatterChart data={points} height={84} />
                 ) : (
@@ -287,6 +285,8 @@ function Legend({ color, label, textColor }: { color: string; label: string; tex
   );
 }
 
+const OBLONG_HEIGHT = 54;
+
 function PetCard({
   project,
   onOpen,
@@ -298,133 +298,132 @@ function PetCard({
 }) {
   const pet = project.pet;
   const petColor = pet.bodyColor ?? colorMascotaPorId(pet.id).hex;
-  const tones = tonoPorHex(petColor);
-  const healthColor = pet.healthColor ?? petColor;
-  const hungerColor = pet.hungerColor ?? tones[1];
-  const happinessColor = pet.happinessColor ?? tones[0];
-
-  const CIRCLE_SIZE = 38;
+  const statColor = readableStatColor(petColor);
+  const stats = [
+    { icon: 'hambre' as const, label: 'Comida', value: pet.hunger, zIndex: 3 },
+    { icon: 'vida' as const, label: 'Vida', value: pet.health, zIndex: 2 },
+    { icon: 'felicidad' as const, label: 'Felicidad', value: pet.happiness, zIndex: 1 },
+  ];
 
   return (
-    <View style={sombras.tarjeta}>
-      <ClaySurface colors={clay.blanco} radius={radios.pastilla} border>
-        <Pressable
-          onPress={onOpen}
-          accessibilityRole="button"
-          accessibilityLabel={`Abrir detalle de ${pet.name}, proyecto ${project.name}`}
-          style={({ pressed }) => [
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 10,
-              paddingHorizontal: 14,
-              gap: 12,
-              minHeight: 64,
-            },
-            pressed ? { opacity: 0.88 } : null,
-          ]}>
-          {/* Izquierda: Imagen circular de la mascota y los 3 indicadores con mismo diámetro */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {/* Preview circular estático sin sombra */}
-            <View
-              style={{
-                width: CIRCLE_SIZE,
-                height: CIRCLE_SIZE,
-                borderRadius: CIRCLE_SIZE / 2,
-                backgroundColor: '#F1F1F5',
+    <View style={[sombras.suave, { position: 'relative' }]}>
+      <ClaySurface
+        colors={clay.blanco}
+        radius={OBLONG_HEIGHT / 2}
+        border
+        style={{ height: OBLONG_HEIGHT, overflow: 'hidden' }}
+        contentStyle={{ height: OBLONG_HEIGHT }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: OBLONG_HEIGHT,
+            paddingRight: 10,
+          }}>
+          <Pressable
+            onPress={onOpen}
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir detalle de ${pet.name}, proyecto ${project.name}`}
+            style={({ pressed }) => [
+              {
+                flex: 1,
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}>
-              <Image
-                source={require('../../assets/mascota.png')}
-                style={{ width: CIRCLE_SIZE - 4, height: CIRCLE_SIZE - 4 }}
-                resizeMode="contain"
-              />
-            </View>
+                height: OBLONG_HEIGHT,
+                minWidth: 0,
+              },
+              pressed ? { opacity: 0.9 } : null,
+            ]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
+              <View style={{ zIndex: 4 }}>
+                <PetAvatar pet={pet} size={OBLONG_HEIGHT} shadow={false} />
+              </View>
 
-            {/* Indicador de vida con imagen de asset, sin sombra ni etiqueta */}
-            <View
-              style={{
-                width: CIRCLE_SIZE,
-                height: CIRCLE_SIZE,
-                borderRadius: CIRCLE_SIZE / 2,
-                backgroundColor: '#F7F7F9',
-                borderWidth: 1.5,
-                borderColor: healthColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <IconoImagen nombre="vida" size={18} tintColor={healthColor} />
+              {stats.map((stat) => (
+                <View key={stat.icon} style={{ marginLeft: -18, zIndex: stat.zIndex }}>
+                  <StatDonut
+                    value={stat.value}
+                    color={statColor}
+                    icon={stat.icon}
+                    label={stat.label}
+                    size={OBLONG_HEIGHT}
+                    strokeWidth={9}
+                    trackColor="#FFFFFF"
+                    innerBg="#E1E1EA"
+                    iconColor="#FFFFFF"
+                    shadow={false}
+                    linecap="butt"
+                  />
+                </View>
+              ))}
             </View>
+          </Pressable>
 
-            {/* Indicador de hambre con imagen de asset, sin sombra ni etiqueta */}
-            <View
-              style={{
-                width: CIRCLE_SIZE,
-                height: CIRCLE_SIZE,
-                borderRadius: CIRCLE_SIZE / 2,
-                backgroundColor: '#F7F7F9',
-                borderWidth: 1.5,
-                borderColor: hungerColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <IconoImagen nombre="hambre" size={18} tintColor={hungerColor} />
-            </View>
-
-            {/* Indicador de felicidad con imagen de asset, sin sombra ni etiqueta */}
-            <View
-              style={{
-                width: CIRCLE_SIZE,
-                height: CIRCLE_SIZE,
-                borderRadius: CIRCLE_SIZE / 2,
-                backgroundColor: '#F7F7F9',
-                borderWidth: 1.5,
-                borderColor: happinessColor,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <IconoImagen nombre="felicidad" size={18} tintColor={happinessColor} />
-            </View>
-          </View>
-
-          {/* Derecha dentro de la misma tarjeta: Pastilla vino de proyecto y nombre de mascota simple */}
-          <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-            <View style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
-              <ClayPill
-                label={project.name}
-                colors={clay.vino}
-                textColor="#FFFFFF"
-                accessibilityLabel={`Proyecto: ${project.name}`}
-              />
-            </View>
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: OBLONG_HEIGHT * 3 - 3 * 18 + 4,
+              right: 44,
+              top: 0,
+              bottom: 0,
+              justifyContent: 'center',
+              alignItems: 'flex-end',
+              zIndex: 30,
+            }}>
             <Text
               numberOfLines={1}
               style={{
-                marginTop: 3,
-                fontSize: 15,
+                width: '100%',
+                fontSize: 16,
                 fontWeight: '900',
-                color: clay.texto,
+                color: '#111115',
+                textAlign: 'right',
               }}>
               {pet.name}
             </Text>
+            <View
+              style={{
+                backgroundColor: '#111115',
+                borderRadius: 9999,
+                paddingHorizontal: 10,
+                paddingVertical: 2.5,
+                marginTop: 2,
+                maxWidth: '100%',
+              }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 12,
+                  fontWeight: '900',
+                }}>
+                {project.name}
+              </Text>
+            </View>
           </View>
-
-          {/* Botón de editar: imagen de editar de assets, sin círculo de fondo, en la esquina superior derecha */}
-          <Pressable
-            hitSlop={8}
-            onPress={onEdit}
-            accessibilityRole="button"
-            accessibilityLabel={`Editar ${pet.name}`}
-            style={({ pressed }) => [
-              { alignSelf: 'flex-start', marginTop: 2 },
-              pressed ? { opacity: 0.6 } : null,
-            ]}>
-            <IconoImagen nombre="editar" size={20} tintColor={clay.texto} />
-          </Pressable>
-        </Pressable>
+        </View>
       </ClaySurface>
+
+      {/* Botón editar: arriba a la derecha, sin recuadro */}
+      <Pressable
+  hitSlop={10}
+  onPress={onEdit}
+  accessibilityRole="button"
+  accessibilityLabel={`Editar ${pet.name}`}
+  style={{
+    position: 'absolute',
+    top: 4,
+    right: 12,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    zIndex: 40,
+  }}>
+  <IconoImagen nombre="editar" size={18} tintColor="#333338" />
+</Pressable>
     </View>
   );
 }
@@ -437,6 +436,9 @@ export default function ProjectsScreen() {
     const drawer = navigation as unknown as { openDrawer?: () => void };
     drawer.openDrawer?.();
   }, [navigation]);
+  const openProfile = useCallback(() => {
+    router.push('/profile' as Href);
+  }, [router]);
   const authStatus = useRequireAuth();
   const insets = useSafeAreaInsets();
   const { height: viewportHeight } = useWindowDimensions();
@@ -541,7 +543,15 @@ export default function ProjectsScreen() {
           size={50}
         />
         <View style={{ flex: 1 }} />
-        <View style={{ alignItems: 'flex-end', maxWidth: 190 }}>
+        <Pressable
+          onPress={openProfile}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir mi perfil"
+          style={({ pressed }) => [
+            { alignItems: 'flex-end', flexShrink: 1, minWidth: 0, maxWidth: 155 },
+            pressed ? { opacity: 0.7 } : null,
+          ]}>
           <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: '900', color: clay.texto }}>
             {user?.name || user?.githubUsername || 'TamaGit'}
           </Text>
@@ -553,41 +563,53 @@ export default function ProjectsScreen() {
               accessibilityLabel={`Rol: ${role}`}
             />
           </View>
-        </View>
-        <View
-          style={[
-            sombras.suave,
-            {
-              width: 54,
-              height: 54,
-              borderRadius: 27,
-              padding: 3,
-              backgroundColor: '#FFFFFF',
-            },
-          ]}>
+        </Pressable>
+        <View style={{ width: 54, height: 54, flexShrink: 0 }}>
           <View
-            style={{
-              flex: 1,
-              borderRadius: 24,
-              overflow: 'hidden',
-              backgroundColor: '#F0F0F3',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            {user?.avatarUrl ? (
-              <Image
-                source={{ uri: user.avatarUrl }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
-            ) : (
-              <Image
-                source={require('../../assets/github-icon.webp')}
-                style={{ width: '80%', height: '80%' }}
-                resizeMode="contain"
-              />
-            )}
+            style={[
+              sombras.suave,
+              {
+                flex: 1,
+                borderRadius: 27,
+                padding: 3,
+                backgroundColor: '#FFFFFF',
+              },
+            ]}>
+            <View
+              style={{
+                flex: 1,
+                borderRadius: 24,
+                overflow: 'hidden',
+                backgroundColor: '#F0F0F3',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              {user?.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Image
+                  source={require('../../assets/github-icon.webp')}
+                  style={{ width: '80%', height: '80%' }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
           </View>
+          <Pressable
+            onPress={openProfile}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir mi perfil"
+            style={({ pressed }) => [
+              StyleSheet.absoluteFill,
+              { borderRadius: 27 },
+              pressed ? { opacity: 0.7 } : null,
+            ]}
+          />
         </View>
       </View>
     </View>
@@ -662,7 +684,7 @@ export default function ProjectsScreen() {
           data={withPet}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12 }}>
               <PetCard
                 project={item}
                 onOpen={() => openProject(item)}
