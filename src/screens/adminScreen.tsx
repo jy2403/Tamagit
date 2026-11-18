@@ -1,9 +1,10 @@
 import { Redirect, useRouter, type Href } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ClayBackground } from '@/components/clay/ClayBackground';
-import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClayHeader } from '@/components/clay/ClayHeader';
+import { ClayForbiddenScreen, ClayLoadingScreen } from '@/components/clay/ClayStates';
 import { ClaySurface } from '@/components/clay/ClaySurface';
 import { IconoImagen, type NombreIcono } from '@/components/clay/IconoImagen';
 import { clay, paleta, radios, sombras } from '@/estilos';
@@ -71,78 +72,16 @@ function AdminLink({ href, icon, title, description }: AdminLinkProps) {
 }
 
 export default function AdminScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const authStatus = useRequireAuth({ admin: true });
 
-  if (authStatus === 'loading') {
-    return (
-      <ClayBackground>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={paleta.fucsia.base} />
-        </View>
-      </ClayBackground>
-    );
-  }
-
+  if (authStatus === 'loading') return <ClayLoadingScreen />;
   if (authStatus === 'anonymous') return <Redirect href="/login" />;
-
-  if (authStatus === 'forbidden') {
-    return (
-      <ClayBackground>
-        <View
-          style={{
-            paddingTop: insets.top + 8,
-            paddingHorizontal: 16,
-            paddingBottom: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}>
-          <ClayIconButton
-            icon="←"
-            accessibilityLabel="Volver"
-            onPress={() => router.back()}
-            size={48}
-          />
-          <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>Admin</Text>
-        </View>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 }}>
-          <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: '800', color: clay.texto }}>
-            No tienes permisos de administrador.
-          </Text>
-          <Text style={{ textAlign: 'center', fontSize: 12, color: clay.textoSuave }}>
-            Contacta al administrador para obtener acceso.
-          </Text>
-        </View>
-      </ClayBackground>
-    );
-  }
+  if (authStatus === 'forbidden') return <ClayForbiddenScreen />;
 
   return (
     <ClayBackground>
-      <View
-        style={{
-          paddingTop: insets.top + 8,
-          paddingHorizontal: 16,
-          paddingBottom: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}>
-        <ClayIconButton
-          icon="←"
-          accessibilityLabel="Volver"
-          onPress={() => router.back()}
-          size={48}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>
-            Panel de administrador
-          </Text>
-          <Text style={{ fontSize: 10, color: clay.textoSuave }}>Gestión de contenidos y usuarios</Text>
-        </View>
-      </View>
+      <ClayHeader title="Panel de administrador" subtitle="Gestión de contenidos y usuarios" />
 
       <ScrollView
         contentContainerStyle={{

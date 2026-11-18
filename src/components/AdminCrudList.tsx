@@ -1,14 +1,20 @@
-import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
-import { Field } from '@/components/Field';
+import { FlatList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayField } from '@/components/clay/ClayField';
+import { ClayHeader } from '@/components/clay/ClayHeader';
+import { ClayInput } from '@/components/clay/ClayInput';
+import { ClayRow } from '@/components/clay/ClayRow';
+import { ClayEmptyState } from '@/components/clay/ClayStates';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { FeedbackBanner, type Feedback } from '@/components/FeedbackBanner';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useConfirmDelete } from '@/hooks/useConfirmDelete';
 import { useCrudForm } from '@/hooks/useCrudForm';
 import { useCrudSearch } from '@/hooks/useCrudSearch';
-import { Button } from '@/layout/Button';
-import { boton, formulario, lista, pantalla, tarjeta, tipografia } from '@/estilos';
+import { clay, radios, sombras } from '@/estilos';
 
 export type CrudField = {
   key: string;
@@ -44,7 +50,7 @@ export function AdminCrudList({
   onUpdate,
   onDelete,
 }: AdminCrudListProps) {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [feedback, setFeedback] = useState<Feedback>(null);
   const onFeedbackDone = useCallback(() => setFeedback(null), []);
 
@@ -85,91 +91,131 @@ export function AdminCrudList({
   };
 
   const header = (
-    <View>
+    <View style={{ gap: 12, marginBottom: 12 }}>
       {form ? (
-        <View className={`mb-4 gap-3 ${tarjeta.grande}`}>
-          <Text className={tipografia.seccion}>
-            {editing ? 'Editar' : 'Nuevo'} {singular}
-          </Text>
-          {fields.map((f) => (
-            <Field
-              key={f.key}
-              label={f.label}
-              placeholder={f.placeholder}
-              required
-              maxLength={f.maxLength}
-              value={form[f.key]}
-              onChangeText={(text) => updateField(f.key, text)}
-              keyboardType={f.isNumber ? 'number-pad' : 'default'}
-              error={errors[f.key]}
-            />
-          ))}
-          <View className="flex-row gap-3">
-            <Button
-              title={saving ? 'Guardando...' : 'Guardar'}
-              onPress={() => void save()}
-              disabled={saving}
-              style={{ flex: 1 }}
-            />
-            <Button title="Cancelar" onPress={close} variant="secondary" style={{ flex: 1 }} />
-          </View>
+        <View style={sombras.tarjeta}>
+          <ClaySurface
+            colors={clay.blanco}
+            radius={radios.tarjetaGrande}
+            border
+            contentStyle={{ padding: 16, gap: 12 }}>
+            <Text style={{ fontSize: 15, fontWeight: '900', color: clay.texto }}>
+              {editing ? 'Editar' : 'Nuevo'} {singular}
+            </Text>
+            {fields.map((f) => (
+              <ClayField
+                key={f.key}
+                label={f.label}
+                placeholder={f.placeholder}
+                required
+                maxLength={f.maxLength}
+                value={form[f.key]}
+                onChangeText={(text) => updateField(f.key, text)}
+                keyboardType={f.isNumber ? 'number-pad' : 'default'}
+                error={errors[f.key]}
+              />
+            ))}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <ClayButton
+                title={saving ? 'Guardando...' : 'Guardar'}
+                onPress={() => void save()}
+                disabled={saving}
+                colors={clay.verde}
+                textColor={clay.oscuro}
+                pixel={false}
+                size="md"
+                style={{ flex: 1 }}
+              />
+              <ClayButton
+                title="Cancelar"
+                onPress={close}
+                colors={clay.blanco}
+                textColor={clay.texto}
+                pixel={false}
+                size="md"
+                style={{ flex: 1 }}
+              />
+            </View>
+          </ClaySurface>
         </View>
       ) : null}
-      <TextInput
+      <ClayInput
         value={query}
         onChangeText={setQuery}
         placeholder={`Buscar ${title.toLowerCase()}...`}
-        placeholderTextColor="#737373"
-        className={formulario.busqueda}
+        accessibilityLabel={`Buscar ${title.toLowerCase()}`}
       />
     </View>
   );
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className={tipografia.enlace}>Atras</Text>
-        </Pressable>
-        <Text className={tipografia.titulo}>{title}</Text>
-        <Button title="Nuevo" onPress={openCreate} variant="secondary" />
-      </View>
+    <ClayBackground>
+      <ClayHeader
+        title={title}
+        subtitle={`${rows.length} registrados`}
+        right={
+          <ClayButton
+            title="Nuevo"
+            onPress={openCreate}
+            colors={clay.fucsia}
+            pixel={false}
+            size="md"
+            style={{ alignSelf: 'center' }}
+          />
+        }
+      />
 
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom + 24, 36),
+          gap: 12,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={header}
         renderItem={({ item }) => (
-          <View className={lista.fila}>
-            <View className={lista.icono}>
-              <Text className="text-xl">{iconKey ? (item[iconKey] ?? '❓') : '•'}</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-sm font-semibold text-white" numberOfLines={1}>
-                {nameKey ? item[nameKey] : item[fields[0].key]}
-              </Text>
-              {extraKeys.length > 0 ? (
-                <Text className={tipografia.subtitulo} numberOfLines={1}>
-                  {extraKeys
+          <ClayRow
+            icon={<Text style={{ fontSize: 22 }}>{iconKey ? (item[iconKey] ?? '❓') : '•'}</Text>}
+            title={nameKey ? item[nameKey] : item[fields[0].key]}
+            subtitle={
+              extraKeys.length > 0
+                ? extraKeys
                     .map((k) => item[k])
                     .filter(Boolean)
-                    .join(' · ')}
-                </Text>
-              ) : null}
-            </View>
-            <Pressable className={boton.enlace} onPress={() => openEdit(item)}>
-              <Text className={tipografia.enlace}>Editar</Text>
-            </Pressable>
-            <Pressable className={boton.enlace} onPress={() => remove(item)}>
-              <Text className={tipografia.error}>Eliminar</Text>
-            </Pressable>
-          </View>
+                    .join(' · ')
+                : undefined
+            }
+            footer={
+              <>
+                <ClayButton
+                  title="Editar"
+                  onPress={() => openEdit(item)}
+                  colors={clay.blanco}
+                  textColor={clay.texto}
+                  pixel={false}
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+                <ClayButton
+                  title="Eliminar"
+                  onPress={() => remove(item)}
+                  colors={clay.rojo}
+                  pixel={false}
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+              </>
+            }
+          />
         )}
         ListEmptyComponent={
-          <Text className={lista.vacio}>
-            {rows.length === 0 ? emptyMessage : `Sin resultados para "${query}".`}
-          </Text>
+          <ClayEmptyState
+            title={rows.length === 0 ? emptyMessage : `Sin resultados para "${query}".`}
+          />
         }
       />
       <FeedbackBanner feedback={feedback} onDone={onFeedbackDone} />
@@ -183,6 +229,6 @@ export function AdminCrudList({
         onConfirm={() => void handleConfirmRemove()}
         onCancel={cancelRemove}
       />
-    </View>
+    </ClayBackground>
   );
 }

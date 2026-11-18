@@ -18,12 +18,12 @@ app/                    → RUTAS (Expo Router: archivo = pantalla)
   projects.tsx         → Lista de proyectos + sync + notificaciones
   project/[id].tsx     → Detalle: mascota (3D + stats) y commits
   profile.tsx          → Perfil del usuario
-  admin.tsx            → Menú admin (protege con user.isAdmin)
-  admin/items.tsx      → CRUD items (usa AdminCrudList)
-  admin/foods.tsx      → CRUD comidas (usa AdminCrudList)
-  admin/users.tsx      → Lista usuarios + ban
-  admin/users/[id].tsx → Mascotas de un usuario (feature en desarrollo)
-  admin/pets/[petId].tsx → Detalle mascota admin (feature en desarrollo)
+  (drawer)/admin.tsx            → Menú admin (protege con user.isAdmin)
+  (drawer)/admin/items.tsx      → CRUD items (usa AdminCrudList)
+  (drawer)/admin/foods.tsx      → CRUD comidas (usa AdminCrudList)
+  (drawer)/admin/users.tsx      → Lista usuarios + ban
+  (drawer)/admin/users/[id].tsx → Mascotas de un usuario (feature en desarrollo)
+  (drawer)/admin/pets/[petId].tsx → Detalle mascota admin (feature en desarrollo)
 
 src/
   context/AuthContext.tsx → CORAZÓN: sesión, OAuth, deep links, ban
@@ -31,8 +31,7 @@ src/
   lib/storage.ts         → Token/usuario en expo-secure-store
   lib/types.ts           → Tipos compartidos
   lib/notifications.ts   → Avisos del admin (endpoint no implementado aún)
-  components/            → Pet3DView, AdminCrudList, Field, Button, IntroAnimation, ReasonPrompt
-  layout/Button.tsx      → Botón con variantes primary/secondary/ghost
+  components/            → Pet3DView, AdminCrudList, ReasonPrompt, ConfirmModal, FeedbackBanner; clay/ (ClayHeader, ClayRow, ClayField, ClayButton...)
 ```
 
 ## 3. Flujo de autenticación (LA pregunta segura)

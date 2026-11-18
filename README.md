@@ -64,13 +64,12 @@ app/                   Pantallas (expo-router)
   projects.tsx         Lista de proyectos (con busqueda) y tarjetas de mascotas
   project/[id].tsx     Detalle del proyecto: mascota 3D, alimentar/entrenar/CRUD
   profile.tsx          Mi perfil
-  admin/               Panel admin: items, comidas, usuarios y mascotas
+  (drawer)/admin*      Panel admin: items, comidas, usuarios y mascotas (estilo clay)
 src/
-  components/          Button/Field derivados de ESTILOS.md y componentes reutilizables
+  components/          Componentes reutilizables; clay/ = sistema de diseno (ver ESTILOS.md)
   estilos/index.ts     Sistema de clases de Tailwind documentado en ESTILOS.md
   context/             AuthContext (sesion, token, errores en pantalla)
   lib/                 api.ts, types.ts, storage.ts, notifications.ts
-  layout/Button.tsx    Boton
 ESTILOS.md             Sistema de estilos (paleta, contenedores, formularios...)
 global.css             Directivas de Tailwind / NativeWind
 ```
@@ -80,8 +79,8 @@ global.css             Directivas de Tailwind / NativeWind
 | Entidad     | Pantalla                                                         | Crear | Buscar | Modificar | Eliminar |
 | ----------- | ---------------------------------------------------------------- | ----- | ------ | --------- | -------- |
 | **Mascota** | `project/[id].tsx` y tarjetas en `projects.tsx`                  | Si    | Si (busqueda por nombre/proyecto) | Si (nombre, alimentar, entrenar) | Si (con confirmacion) |
-| **Item**    | `admin/items.tsx` (componente `AdminCrudList`)                   | Si    | Si (buscar por texto) | Si (datos precargados) | Si (con confirmacion) |
-| **Comida**  | `admin/foods.tsx` (componente `AdminCrudList`)                   | Si    | Si (buscar por texto) | Si (datos precargados) | Si (con confirmacion) |
+| **Item**    | `admin/items` (componente `AdminCrudList`)                   | Si    | Si (buscar por texto) | Si (datos precargados) | Si (con confirmacion) |
+| **Comida**  | `admin/foods` (componente `AdminCrudList`)                   | Si    | Si (buscar por texto) | Si (datos precargados) | Si (con confirmacion) |
 
 Todas las operaciones se hacen contra el backend; ninguna entidad se maneja solo
 en memoria. El formulario de creacion valida campos (requeridos, numeros y maximo

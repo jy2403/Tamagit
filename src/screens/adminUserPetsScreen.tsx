@@ -1,105 +1,94 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayHeader } from '@/components/clay/ClayHeader';
+import { ClayPill } from '@/components/clay/ClayPill';
+import { ClayRow } from '@/components/clay/ClayRow';
+import {
+  ClayEmptyState,
+  ClayErrorState,
+  ClayForbiddenScreen,
+  ClayLoadingScreen,
+} from '@/components/clay/ClayStates';
 import { useUserPets } from '@/hooks/useUserPets';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { lista, pantalla, tarjeta, tipografia } from '@/estilos';
+import { clay, paleta } from '@/estilos';
 
 export default function AdminUserPetsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, loading, error, load } = useUserPets(id);
   const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
-  if (authStatus === 'loading') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
-    );
-  }
+  if (authStatus === 'loading') return <ClayLoadingScreen />;
   if (authStatus === 'anonymous') return <Redirect href="/login" />;
-  if (authStatus === 'forbidden') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
-      </View>
-    );
-  }
+  if (authStatus === 'forbidden') return <ClayForbiddenScreen title="Mascotas" />;
 
   const userName = data?.user.githubUsername ?? data?.user.name ?? 'Usuario';
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className={tipografia.enlace}>Atras</Text>
-        </Pressable>
-        <View className="flex-1">
-          <Text className={tipografia.titulo}>Mascotas de {userName}</Text>
-          <Text className={tipografia.subtitulo} numberOfLines={1}>
-            Gestiona sus mascotas desde aquí
-          </Text>
-        </View>
-      </View>
+    <ClayBackground>
+      <ClayHeader title={`Mascotas de ${userName}`} subtitle="Gestiona sus mascotas desde aquí" />
 
       {error ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-sm text-red-400">{error}</Text>
-          <Pressable onPress={() => void load()} className="mt-4 rounded-lg bg-white/10 px-4 py-2">
-            <Text className={tipografia.enlace}>Reintentar</Text>
-          </Pressable>
-        </View>
+        <ClayErrorState message={error} onRetry={() => void load()} />
       ) : (
         <FlatList
           data={data?.pets ?? []}
           keyExtractor={(item) => String(item.pet.id)}
-          contentContainerStyle={{ padding: 16, gap: 12 }}
-          ListEmptyComponent={
-            <View className="items-center justify-center px-6 py-16">
-              <Text className="text-center text-base text-neutral-400">
-                Este usuario no tiene mascotas todavía.
-              </Text>
-            </View>
-          }
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom + 24, 36),
+            gap: 12,
+          }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={<ClayEmptyState title="Este usuario no tiene mascotas todavía." />}
           renderItem={({ item }) => (
-            <Pressable
-              className={tarjeta.presionable}
+            <ClayRow
+              icon={<Text style={{ fontSize: 22 }}>{item.pet.imageUrl ? '🐾' : '🥚'}</Text>}
+              title={item.pet.name}
+              subtitle={item.pet.projectName}
               onPress={() =>
                 router.push({
                   pathname: '/admin/pets/[petId]',
                   params: { petId: String(item.pet.id) },
                 })
+              }
+              accessibilityLabel={`Gestionar a ${item.pet.name}`}
+              right={
+                <Text style={{ fontSize: 14, fontWeight: '900', color: paleta.fucsia.base }}>
+                  →
+                </Text>
               }>
-              <View className="flex-row items-center">
-                <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
-                  <Text className="text-xl">{item.pet.imageUrl ? '🐾' : '🥚'}</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-white">{item.pet.name}</Text>
-                  <Text className={tipografia.subtitulo} numberOfLines={1}>
-                    {item.pet.projectName}
-                  </Text>
-                </View>
-                <Text className={tipografia.enlace}>Gestionar</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                <ClayPill
+                  label={item.pet.species}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`${item.pet.health} salud`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`felicidad ${item.pet.happiness}`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`${item.pet.itemCount} items`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
               </View>
-              <View className="mt-3 flex-row flex-wrap gap-1.5">
-                <Pill label={`${item.pet.species}`} />
-                <Pill label={`${item.pet.health} salud`} />
-                <Pill label={`felicidad ${item.pet.happiness}`} />
-                <Pill label={`${item.pet.itemCount} items`} />
-              </View>
-            </Pressable>
+            </ClayRow>
           )}
         />
       )}
-    </View>
-  );
-}
-
-function Pill({ label }: { label: string }) {
-  return (
-    <View className={lista.pill}>
-      <Text className={lista.pillTexto}>{label}</Text>
-    </View>
+    </ClayBackground>
   );
 }

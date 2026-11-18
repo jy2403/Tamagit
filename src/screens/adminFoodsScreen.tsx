@@ -1,10 +1,9 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
+import { ClayForbiddenScreen, ClayLoadingScreen } from '@/components/clay/ClayStates';
 import { useAdminCrud } from '@/hooks/useAdminCrud';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Food } from '@/lib/types';
-import { pantalla } from '@/estilos';
 
 const fields: CrudField[] = [
   { key: 'name', label: 'Nombre', placeholder: 'Ej: Manzana' },
@@ -43,19 +42,11 @@ export default function AdminFoodsScreen() {
     toRow,
     fromRow,
   });
-  const authStatus = useRequireAuth({ extraLoading: loading });
+  const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
-  if (authStatus === 'loading') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
-    );
-  }
-
-  if (authStatus === 'anonymous') {
-    return <Redirect href="/login" />;
-  }
+  if (authStatus === 'loading') return <ClayLoadingScreen />;
+  if (authStatus === 'anonymous') return <Redirect href="/login" />;
+  if (authStatus === 'forbidden') return <ClayForbiddenScreen title="Comidas" />;
 
   return (
     <AdminCrudList

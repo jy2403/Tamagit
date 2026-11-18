@@ -55,7 +55,7 @@ Una sola función `apiFetch` en `src/lib/api.ts`: arma headers (Accept, Content-
 Por seguridad y centralización: el token de GitHub del usuario vive solo en el backend; el front pide `/github/...` a nuestro API. Así no exponemos tokens y podemos mapear/cachear/limitar.
 
 **¿Cómo organizas componentes reutilizables?**
-Button (variantes primary/secondary/ghost), Field (input con label, error y contador), AdminCrudList (CRUD genérico), ReasonPrompt (modal con motivo), IntroAnimation (overlay animado).
+Componentes clay (ClayButton, ClayHeader, ClayRow, ClayField: input con label, error y contador), AdminCrudList (CRUD genérico), ReasonPrompt (modal con motivo), IntroAnimation (overlay animado).
 
 ⚠️ **¿Cómo funciona el CRUD de items y comidas?**
 Ambas pantallas son casi idénticas y usan `AdminCrudList`, que recibe: `fields` (definición de columnas/inputs con validación), `rows`, y callbacks onCreate/onUpdate/onDelete que hacen las llamadas a la API y recargan. El componente maneja búsqueda, validación, edición y diff (en PATCH solo envía campos cambiados).
@@ -102,4 +102,4 @@ No: el front solo quiere UX (ocultar admin, confirmaciones). La autoridad está 
 try/catch en callbacks con setError y mensajes del servidor cuando existen (apiFetch los parsea). Alert para errores en flujos admin; el login muestra authError en pantalla.
 
 **¿Alguna validación?**
-AdminCrudList valida obligatorio, numérico y maxLength por campo; Field muestra el error bajo el input; el back también valida (400 si falta name, isBanned debe ser boolean, no puedes autobanearte...).
+AdminCrudList valida obligatorio, numérico y maxLength por campo; ClayField muestra el error bajo el input; el back también valida (400 si falta name, isBanned debe ser boolean, no puedes autobanearte...).

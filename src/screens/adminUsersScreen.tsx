@@ -1,91 +1,94 @@
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayHeader } from '@/components/clay/ClayHeader';
+import { ClayPill } from '@/components/clay/ClayPill';
+import { ClayRow } from '@/components/clay/ClayRow';
+import {
+  ClayEmptyState,
+  ClayForbiddenScreen,
+  ClayLoadingScreen,
+} from '@/components/clay/ClayStates';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { boton, lista, pantalla, tipografia } from '@/estilos';
+import { clay } from '@/estilos';
 
 export default function AdminUsersScreen() {
   const { user: currentUser } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { users, loading, toggleBan } = useAdminUsers();
   const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
-  if (authStatus === 'loading') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
-    );
-  }
+  if (authStatus === 'loading') return <ClayLoadingScreen />;
   if (authStatus === 'anonymous') return <Redirect href="/login" />;
-  if (authStatus === 'forbidden') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
-      </View>
-    );
-  }
+  if (authStatus === 'forbidden') return <ClayForbiddenScreen title="Usuarios" />;
+
+  const openPets = (id: number) =>
+    router.push({ pathname: '/admin/users/[id]', params: { id: String(id) } });
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Text className={tipografia.titulo}>Usuarios</Text>
-      </View>
+    <ClayBackground>
+      <ClayHeader title="Usuarios" subtitle={`${users.length} registrados`} />
       <FlatList
         data={users}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom + 24, 36),
+          gap: 12,
+        }}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const isSelf = item.id === currentUser?.id;
           return (
-            <View className={lista.fila}>
-              <Pressable
-                className="flex-1 flex-row items-center"
-                onPress={() =>
-                  router.push({ pathname: '/admin/users/[id]', params: { id: String(item.id) } })
-                }>
-                <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                  <Text className="text-lg">{item.avatarUrl ? '👤' : '❓'}</Text>
+            <ClayRow
+              icon={<Text style={{ fontSize: 22 }}>{item.avatarUrl ? '👤' : '❓'}</Text>}
+              title={item.githubUsername ?? item.name ?? 'Sin nombre'}
+              subtitle={item.email ?? '—'}
+              onPress={() => openPets(item.id)}
+              accessibilityLabel={`Ver mascotas de ${item.githubUsername ?? item.name ?? 'usuario'}`}
+              footer={
+                <>
+                  <ClayButton
+                    title="Mascotas"
+                    onPress={() => openPets(item.id)}
+                    colors={clay.blanco}
+                    textColor={clay.texto}
+                    pixel={false}
+                    size="md"
+                    style={{ flex: 1 }}
+                  />
+                  {!isSelf ? (
+                    <ClayButton
+                      title={item.isBanned ? 'Desbanear' : 'Banear'}
+                      onPress={() => void toggleBan(item)}
+                      colors={item.isBanned ? clay.menta : clay.rojo}
+                      textColor={item.isBanned ? clay.texto : '#FFFFFF'}
+                      pixel={false}
+                      size="md"
+                      style={{ flex: 1 }}
+                    />
+                  ) : null}
+                </>
+              }>
+              {item.isAdmin || item.isBanned ? (
+                <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+                  {item.isAdmin ? (
+                    <ClayPill label="Admin" colors={clay.ambar} textColor="#1A1A1C" />
+                  ) : null}
+                  {item.isBanned ? <ClayPill label="Baneado" colors={clay.rojo} /> : null}
                 </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-semibold text-white" numberOfLines={1}>
-                    {item.githubUsername ?? item.name ?? 'Sin nombre'}
-                  </Text>
-                  <Text className={tipografia.subtitulo} numberOfLines={1}>
-                    {item.email ?? '—'}
-                  </Text>
-                  <View className="mt-1 flex-row gap-2">
-                    {item.isAdmin ? (
-                      <View className="rounded bg-emerald-900/60 px-1.5 py-0.5">
-                        <Text className="text-[10px] text-emerald-300">Admin</Text>
-                      </View>
-                    ) : null}
-                    {item.isBanned ? (
-                      <View className="rounded bg-red-900/60 px-1.5 py-0.5">
-                        <Text className="text-[10px] text-red-300">Baneado</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </View>
-              </Pressable>
-              <Pressable
-                className={boton.enlace}
-                onPress={() =>
-                  router.push({ pathname: '/admin/users/[id]', params: { id: String(item.id) } })
-                }>
-                <Text className={tipografia.enlace}>Mascotas</Text>
-              </Pressable>
-              {!isSelf ? (
-                <Pressable className={boton.enlace} onPress={() => void toggleBan(item)}>
-                  <Text className={tipografia.error}>{item.isBanned ? 'Desbanear' : 'Banear'}</Text>
-                </Pressable>
               ) : null}
-            </View>
+            </ClayRow>
           );
         }}
-        ListEmptyComponent={<Text className={lista.vacio}>No hay usuarios registrados.</Text>}
+        ListEmptyComponent={<ClayEmptyState emoji="👥" title="No hay usuarios registrados." />}
       />
-    </View>
+    </ClayBackground>
   );
 }

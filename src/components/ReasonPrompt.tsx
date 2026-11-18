@@ -1,7 +1,9 @@
-import { Modal, Text, TextInput, View } from 'react-native';
-import { Button } from '@/layout/Button';
+import { Modal, Pressable, Text, View } from 'react-native';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayInput } from '@/components/clay/ClayInput';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { useReasonPrompt } from '@/hooks/useReasonPrompt';
-import { formulario, modal, tipografia } from '@/estilos';
+import { clay, radios, sombras, textoClay } from '@/estilos';
 
 type ReasonPromptProps = {
   visible: boolean;
@@ -28,34 +30,59 @@ export function ReasonPrompt({
       transparent
       animationType="fade"
       onRequestClose={() => cancel(onCancel)}>
-      <View className={modal.overlay}>
-        <View className={modal.fondo}>
-          <Text className={tipografia.seccion}>{title}</Text>
-          <TextInput
-            value={reason}
-            onChangeText={setReason}
-            placeholder={placeholder}
-            placeholderTextColor="#737373"
-            multiline
-            className={formulario.textarea}
-          />
-          <View className="mt-4 flex-row gap-3">
-            <Button
-              title={loading ? 'Enviando...' : 'Confirmar'}
-              onPress={() => confirm(onConfirm)}
-              disabled={loading}
-              style={{ flex: 1 }}
+      <Pressable
+        style={{
+          flex: 1,
+          backgroundColor: 'rgba(26,26,31,0.58)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+        onPress={() => cancel(onCancel)}
+        accessibilityLabel="Cerrar">
+        <Pressable
+          onPress={(event) => event.stopPropagation()}
+          style={[{ width: '100%', maxWidth: 420 }, sombras.tarjeta]}
+          accessibilityViewIsModal>
+          <ClaySurface
+            colors={clay.blanco}
+            radius={radios.tarjetaGrande}
+            border
+            contentStyle={{ padding: 20, gap: 14 }}>
+            <Text style={{ fontSize: textoClay.titulo, fontWeight: '900', color: clay.texto }}>
+              {title}
+            </Text>
+            <ClayInput
+              value={reason}
+              onChangeText={setReason}
+              placeholder={placeholder}
+              multiline
+              style={{ minHeight: 96, textAlignVertical: 'top' }}
             />
-            <Button
-              title="Cancelar"
-              onPress={() => cancel(onCancel)}
-              variant="secondary"
-              disabled={loading}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </View>
-      </View>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <ClayButton
+                title="Cancelar"
+                onPress={() => cancel(onCancel)}
+                colors={clay.blanco}
+                textColor={clay.texto}
+                pixel={false}
+                size="md"
+                disabled={loading}
+                style={{ flex: 1 }}
+              />
+              <ClayButton
+                title={loading ? 'Enviando...' : 'Confirmar'}
+                onPress={() => confirm(onConfirm)}
+                colors={clay.rojo}
+                pixel={false}
+                size="md"
+                disabled={loading}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </ClaySurface>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,19 +8,35 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { ReasonPrompt } from '@/components/ReasonPrompt';
-import { Button } from '@/layout/Button';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayHeader } from '@/components/clay/ClayHeader';
+import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClayPill } from '@/components/clay/ClayPill';
+import { ClayRow } from '@/components/clay/ClayRow';
+import {
+  ClayEmptyState,
+  ClayErrorState,
+  ClayForbiddenScreen,
+  ClayLoadingScreen,
+} from '@/components/clay/ClayStates';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { useAdminPet, usePetItems } from '@/hooks/useAdminPet';
 import { useReasonedAction } from '@/hooks/useReasonedAction';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { apiFetch } from '@/lib/api';
-import { lista, modal, pantalla, tarjeta, tipografia } from '@/estilos';
+import { clay, fuentes, radios, sombras, textoClay } from '@/estilos';
+
+// imageUrl de los items puede ser un emoji o una URL; solo los textos cortos se pintan como glifo.
+const itemGlyph = (imageUrl: string | null) => (imageUrl && imageUrl.length <= 4 ? imageUrl : '🎁');
 
 export default function AdminPetDetailScreen() {
   const { petId } = useLocalSearchParams<{ petId: string }>();
   const { token } = useAuth();
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pet, loading, error, load, deletePet } = useAdminPet(petId);
   const { pickerOpen, catalog, catalogLoading, openPicker, closePicker, addItem } = usePetItems(
     petId,
@@ -46,98 +62,117 @@ export default function AdminPetDetailScreen() {
     });
   };
 
-  if (authStatus === 'loading') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
-    );
-  }
-
-  if (authStatus === 'anonymous') {
-    return <Redirect href="/login" />;
-  }
-
-  if (authStatus === 'forbidden') {
-    return (
-      <View className={pantalla.rootCentered}>
-        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
-      </View>
-    );
-  }
+  if (authStatus === 'loading') return <ClayLoadingScreen />;
+  if (authStatus === 'anonymous') return <Redirect href="/login" />;
+  if (authStatus === 'forbidden') return <ClayForbiddenScreen title="Mascota" />;
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className={tipografia.enlace}>Atras</Text>
-        </Pressable>
-        <Text className={tipografia.titulo} numberOfLines={1}>
-          {pet?.name}
-        </Text>
-      </View>
+    <ClayBackground>
+      <ClayHeader title={pet?.name ?? 'Mascota'} subtitle="Gestión de mascota" />
 
       {error ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-sm text-red-400">{error}</Text>
-          <Pressable onPress={() => void load()} className="mt-4 rounded-lg bg-white/10 px-4 py-2">
-            <Text className={tipografia.enlace}>Reintentar</Text>
-          </Pressable>
-        </View>
+        <ClayErrorState message={error} onRetry={() => void load()} />
       ) : pet ? (
-        <ScrollView contentContainerStyle={pantalla.contenido}>
-          <View className={tarjeta.grande}>
-            <Text className="text-base font-bold text-white">Mascota</Text>
-            <Text className="mt-1 text-sm text-neutral-400">Especie: {pet.species}</Text>
-            <Text className="text-sm text-neutral-400">Proyecto: {pet.project.name}</Text>
-            <View className="mt-3 flex-row flex-wrap gap-1.5">
-              <Pill label={`${pet.health} salud`} />
-              <Pill label={`${pet.hunger} hambre`} />
-              <Pill label={`felicidad ${pet.happiness}`} />
-              <Pill label={`rama ${pet.lifeBranch}`} />
-            </View>
-            <Button
-              title="Eliminar mascota"
-              onPress={() => start({ kind: 'deletePet' })}
-              variant="ghost"
-              style={{ marginTop: 12 }}
-            />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom + 24, 36),
+            gap: 14,
+          }}
+          showsVerticalScrollIndicator={false}>
+          <View style={sombras.tarjeta}>
+            <ClaySurface
+              colors={clay.blanco}
+              radius={radios.tarjetaGrande}
+              border
+              contentStyle={{ padding: 16, gap: 10 }}>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: clay.texto }}>Mascota</Text>
+              <View>
+                <Text style={{ fontSize: 12, color: clay.textoSuave }}>Especie: {pet.species}</Text>
+                <Text style={{ fontSize: 12, color: clay.textoSuave }}>
+                  Proyecto: {pet.project.name}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                <ClayPill
+                  label={`${pet.health} salud`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`${pet.hunger} hambre`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`felicidad ${pet.happiness}`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+                <ClayPill
+                  label={`rama ${pet.lifeBranch}`}
+                  colors={clay.fondoClaro}
+                  textColor={clay.texto}
+                />
+              </View>
+              <ClayButton
+                title="Eliminar mascota"
+                onPress={() => start({ kind: 'deletePet' })}
+                colors={clay.rojo}
+                pixel={false}
+                size="md"
+              />
+            </ClaySurface>
           </View>
 
-          <View>
-            <View className="mb-2 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-white">Items ({pet.items.length})</Text>
-              <Pressable
-                className="rounded-lg bg-emerald-600 px-3 py-2"
-                onPress={() => void openPicker()}>
-                <Text className="text-sm font-medium text-white">Añadir</Text>
-              </Pressable>
+          <View style={{ gap: 12 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>
+                Items ({pet.items.length})
+              </Text>
+              <ClayButton
+                title="Añadir"
+                onPress={() => void openPicker()}
+                colors={clay.verde}
+                textColor={clay.oscuro}
+                pixel={false}
+                size="md"
+                style={{ alignSelf: 'center' }}
+              />
             </View>
 
             {pet.items.length === 0 ? (
-              <Text className={tipografia.muted}>
-                Esta mascota no tiene items. Usa «Añadir» para darle uno.
-              </Text>
+              <ClayEmptyState
+                emoji="🎁"
+                title="Esta mascota no tiene items."
+                message="Usa «Añadir» para darle uno."
+              />
             ) : (
               pet.items.map((pi) => (
-                <View key={pi.id} className={lista.fila}>
-                  <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                    <Text className="text-lg">{pi.item.imageUrl || '🎁'}</Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-white">{pi.item.name}</Text>
-                    <Text className={tipografia.subtitulo} numberOfLines={1}>
-                      {pi.item.category ?? 'General'} {pi.quantity > 1 ? `· x${pi.quantity}` : ''}
-                    </Text>
-                  </View>
-                  <Pressable
-                    className="rounded-lg bg-white/10 px-3 py-2"
-                    onPress={() =>
-                      start({ kind: 'removeItem', itemId: pi.itemId, itemName: pi.item.name })
-                    }>
-                    <Text className={tipografia.error}>Quitar</Text>
-                  </Pressable>
-                </View>
+                <ClayRow
+                  key={pi.id}
+                  icon={<Text style={{ fontSize: 22 }}>{itemGlyph(pi.item.imageUrl)}</Text>}
+                  title={pi.item.name}
+                  subtitle={`${pi.item.category ?? 'General'}${pi.quantity > 1 ? ` · x${pi.quantity}` : ''}`}
+                  footer={
+                    <ClayButton
+                      title="Quitar"
+                      onPress={() =>
+                        start({ kind: 'removeItem', itemId: pi.itemId, itemName: pi.item.name })
+                      }
+                      colors={clay.rojo}
+                      pixel={false}
+                      size="md"
+                      style={{ flex: 1 }}
+                    />
+                  }
+                />
               ))
             )}
           </View>
@@ -162,54 +197,78 @@ export default function AdminPetDetailScreen() {
       />
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={closePicker}>
-        <View className={modal.overlayInferior}>
-          <View className={modal.fondoInferior}>
-            <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-white">Elegir item</Text>
-              <Pressable onPress={closePicker} className="px-2 py-1">
-                <Text className={tipografia.enlace}>Cerrar</Text>
-              </Pressable>
-            </View>
-            {catalogLoading ? (
-              <View className="items-center py-10">
-                <ActivityIndicator color="#10b981" />
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(26,26,31,0.58)', justifyContent: 'flex-end' }}
+          onPress={closePicker}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar selector de items">
+          <Pressable
+            onPress={(event) => event.stopPropagation()}
+            style={{ width: '100%', paddingHorizontal: 12, paddingBottom: 12 }}
+            accessibilityViewIsModal>
+            <ClaySurface
+              colors={clay.fondoClaro}
+              radius={radios.tarjetaGrande}
+              border
+              style={sombras.tarjeta}
+              contentStyle={{ padding: 18, gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: fuentes.pixel,
+                      fontSize: 15,
+                      color: clay.texto,
+                      letterSpacing: 1,
+                    }}
+                    accessibilityRole="header">
+                    ELEGIR ITEM
+                  </Text>
+                  <Text
+                    style={{ marginTop: 6, color: clay.textoSuave, fontSize: textoClay.etiqueta }}>
+                    Toca un item para añadirlo a la mascota.
+                  </Text>
+                </View>
+                <ClayIconButton
+                  icon="✕"
+                  iconColor={clay.texto}
+                  size={44}
+                  onPress={closePicker}
+                  accessibilityLabel="Cerrar selector de items"
+                />
               </View>
-            ) : (
-              <FlatList
-                data={catalog}
-                keyExtractor={(item) => String(item.id)}
-                renderItem={({ item }) => (
-                  <Pressable
-                    className="mb-2 flex-row items-center rounded-xl border border-neutral-800 bg-neutral-950 p-3"
-                    onPress={() => void addItem(item)}>
-                    <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                      <Text className="text-lg">{item.imageUrl || '🎁'}</Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-white">{item.name}</Text>
-                      <Text className={tipografia.subtitulo}>
-                        {item.category ?? 'General'} · {item.price} coins
-                      </Text>
-                    </View>
-                    <Text className={tipografia.enlace}>Añadir</Text>
-                  </Pressable>
-                )}
-                ListEmptyComponent={
-                  <Text className={lista.vacio}>No hay items en el catálogo.</Text>
-                }
-              />
-            )}
-          </View>
-        </View>
+              {catalogLoading ? (
+                <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                  <ActivityIndicator color={clay.violeta[0]} size="large" />
+                </View>
+              ) : (
+                <FlatList
+                  data={catalog}
+                  keyExtractor={(item) => String(item.id)}
+                  style={{ maxHeight: 340 }}
+                  contentContainerStyle={{ paddingVertical: 4, gap: 8 }}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <ClayRow
+                      icon={<Text style={{ fontSize: 22 }}>{itemGlyph(item.imageUrl)}</Text>}
+                      title={item.name}
+                      subtitle={`${item.category ?? 'General'} · ${item.price} coins`}
+                      onPress={() => void addItem(item)}
+                      accessibilityLabel={`Añadir ${item.name}`}
+                      right={
+                        <Text style={{ fontSize: 10, fontWeight: '900', color: clay.textoSuave }}>
+                          Añadir
+                        </Text>
+                      }
+                    />
+                  )}
+                  ListEmptyComponent={<ClayEmptyState title="No hay items en el catálogo." />}
+                />
+              )}
+            </ClaySurface>
+          </Pressable>
+        </Pressable>
       </Modal>
-    </View>
-  );
-}
-
-function Pill({ label }: { label: string }) {
-  return (
-    <View className={lista.pill}>
-      <Text className={lista.pillTexto}>{label}</Text>
-    </View>
+    </ClayBackground>
   );
 }
