@@ -16,7 +16,7 @@ export default function DrawerLayout() {
       }}>
       <Drawer.Screen name="projects" options={{ title: 'Inicio' }} />
       <Drawer.Screen name="profile" options={{ title: 'Mi perfil' }} />
-      <Drawer.Screen name="admin" options={{ title: 'Admin' }} />
+      <Drawer.Screen name="admin" options={{ title: 'Admin', popToTopOnBlur: true }} />
     </Drawer>
   );
 }

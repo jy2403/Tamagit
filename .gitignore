@@ -26,3 +26,8 @@ android
 
 expo-env.d.ts
 # @end expo-cli
+
+# Firebase service account key (FCM V1). Never commit it; upload it with `eas credentials`.
+# google-services.json IS versioned.
+*-firebase-adminsdk-*.json
+service-account*.json

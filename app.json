@@ -24,7 +24,8 @@
       "expo-asset",
       "expo-font",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-notifications"
     ],
     "orientation": "portrait",
     "icon": "./assets/app-icon.png",

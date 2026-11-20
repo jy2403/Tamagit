@@ -4,6 +4,12 @@ import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-star
 import '../global.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { clay } from '@/estilos';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+
+function PushBridge() {
+  usePushNotifications();
+  return null;
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ PressStart2P_400Regular });
@@ -14,6 +20,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
+      <PushBridge />
       <StatusBar style="dark" />
       <Stack
         screenOptions={{

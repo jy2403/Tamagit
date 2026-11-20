@@ -10,6 +10,7 @@ import {
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { apiFetch, buildLoginUrl } from '@/lib/api';
+import { savePushToken } from '@/lib/push';
 import { clearSession, getToken, getUser, setToken, setUser } from '@/lib/storage';
 import type { User } from '@/lib/types';
 
@@ -48,10 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Unlink the device so it stops receiving push; offline logout still proceeds.
+    if (token) {
+      await savePushToken(token, null).catch(() => {});
+    }
     await clearSession();
     setTokenState(null);
     setUserState(null);
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     (async () => {

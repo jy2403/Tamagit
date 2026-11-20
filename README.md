@@ -107,6 +107,64 @@ intenta equipar algo invalido, muestra tal cual el motivo que devuelve el backen
 `No tienes permiso para equipar items en esta mascota`...) en un `FeedbackBanner`.
 Para que una mascota posea prendas, un admin las asigna desde el panel admin.
 
+## Notificaciones push
+
+Complementan a los avisos internos (`src/lib/notifications.ts`, que sigue mostrando
+`GET /notifications` en un `Alert`). Usan `expo-notifications`:
+
+- `src/lib/push.ts`: handler de primer plano, `getPushToken()` (crea el canal
+  `default` en Android, pide permiso y obtiene el Expo push token) y
+  `savePushToken()` (`PUT /auth/push-token` con `{ token }`).
+- `src/hooks/usePushNotifications.ts` (montado por `PushBridge` en `app/_layout.tsx`):
+  registra el dispositivo cuando hay sesion (tambien al arrancar con sesion guardada)
+  y, al tocar un aviso con `data.projectId`, abre `/project/[id]`.
+- `signOut` envia `{ token: null }` antes de borrar la sesion (si no hay red, cierra igual).
+
+En web el push no aplica: `getPushToken()` devuelve `null`.
+
+### Requisitos
+
+1. **Development build, no Expo Go**: Expo Go ya no soporta push remoto en Android.
+2. **Firebase**: crear un proyecto, agregar una app Android con el package
+   `com.juanf24steam.tamagit` y descargar `google-services.json` a la raiz del repo
+   (este archivo **si** se versiona).
+3. Referenciarlo en `app.json` (todavia no esta, se agrega cuando exista el archivo):
+
+   ```json
+   "android": { "googleServicesFile": "./google-services.json" }
+   ```
+
+4. **Clave FCM V1**: en Firebase > Configuracion del proyecto > Cuentas de servicio,
+   generar una clave privada (JSON) y subirla a EAS:
+
+   ```bash
+   npx eas-cli credentials   # Android > Google Service Account > FCM V1
+   ```
+
+   Esa clave **no** se versiona (`*-firebase-adminsdk-*.json` y
+   `service-account*.json` estan en `.gitignore`).
+5. Generar e instalar el development build:
+
+   ```bash
+   npx eas-cli build --profile development --platform android
+   npx expo start --dev-client
+   ```
+
+### Probar
+
+1. Abrir la app en el dispositivo, iniciar sesion y aceptar el permiso de notificaciones.
+2. Obtener el Expo push token (`ExponentPushToken[...]`) desde el backend (el que
+   guardo `PUT /auth/push-token`); la app no lo imprime en consola.
+3. En https://expo.dev/notifications pegar el token, escribir titulo/mensaje y, en
+   _Data (JSON)_, por ejemplo:
+
+   ```json
+   { "notificationId": "1", "type": "test", "projectId": "<id de un proyecto>" }
+   ```
+
+4. Con la app en primer plano se ve el banner; al tocarlo (en primer plano, segundo
+   plano o con la app cerrada) navega al detalle del proyecto. Sin `projectId` no navega.
+
 ## Estilos con Tailwind
 
 Tailwind/NativeWind esta configurado (preset de NativeWind, `content` apuntando a
