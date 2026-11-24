@@ -3,7 +3,13 @@ import type { CrudField, CrudRow } from '@/components/AdminCrudList';
 
 function validateField(field: CrudField, value: string): string | null {
   const trimmed = (value ?? '').trim();
-  if (!trimmed) {
+  if (field.options) {
+    if (!trimmed && field.options.some((option) => option.value === '')) return null;
+    if (trimmed && !field.options.some((option) => option.value === trimmed)) {
+      return `${field.label} no es válido`;
+    }
+  }
+  if (!trimmed && !field.optional) {
     return `${field.label} es obligatorio`;
   }
   if (field.isNumber && !Number.isFinite(Number(trimmed))) {
@@ -27,7 +33,10 @@ export function useCrudForm(
   const editing = form ? rows.some((r) => r.id === form.id) : false;
 
   const openCreate = () => {
-    setForm({ ...Object.fromEntries(fields.map((f) => [f.key, ''])), id: 'new' });
+    setForm({
+      ...Object.fromEntries(fields.map((f) => [f.key, f.defaultValue ?? ''])),
+      id: 'new',
+    });
     setErrors({});
   };
 

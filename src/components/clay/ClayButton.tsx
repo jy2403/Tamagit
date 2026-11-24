@@ -28,6 +28,7 @@ type ClayButtonProps = {
   accessibilityRole?: AccessibilityRole;
   testID?: string;
   size?: 'lg' | 'md';
+  glass?: boolean;
 };
 
 export function ClayButton({
@@ -46,6 +47,7 @@ export function ClayButton({
   accessibilityRole = 'button',
   testID,
   size = 'lg',
+  glass = true,
 }: ClayButtonProps) {
   const buttonHeight = size === 'lg' ? 52 : 46;
   const paddingVertical = size === 'lg' ? 14 : 10;
@@ -78,6 +80,7 @@ export function ClayButton({
       <ClaySurface
         colors={colors}
         radius={radios.boton}
+        glass={glass}
         style={{ width: '100%' }}
         contentStyle={[
           {

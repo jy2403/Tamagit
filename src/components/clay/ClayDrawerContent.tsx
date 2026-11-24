@@ -46,11 +46,7 @@ function Item({ icon, label, active = false, onPress }: ItemProps) {
             justifyContent: 'center',
             backgroundColor: active ? 'rgba(255,255,255,0.22)' : 'rgba(64,32,42,0.06)',
           }}>
-          <IconoImagen
-            nombre={icon}
-            size={19}
-            tintColor={active ? '#FFFFFF' : clay.texto}
-          />
+          <IconoImagen nombre={icon} size={19} tintColor={active ? '#FFFFFF' : clay.texto} />
         </View>
         <Text
           style={{
@@ -97,7 +93,11 @@ export function ClayDrawerContent(props: DrawerContentComponentProps) {
           { borderRadius: radios.tarjeta, marginBottom: 22 },
           pressed ? { opacity: 0.88, transform: [{ scale: 0.98 }] } : null,
         ]}>
-        <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border contentStyle={{ padding: 16 }}>
+        <ClaySurface
+          colors={clay.blanco}
+          radius={radios.tarjeta}
+          border
+          contentStyle={{ padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View
               style={{

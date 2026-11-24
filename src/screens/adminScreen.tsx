@@ -50,9 +50,7 @@ function AdminLink({ href, icon, title, description }: AdminLinkProps) {
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 16, fontWeight: '900', color: clay.texto }}>{title}</Text>
-          <Text style={{ marginTop: 2, fontSize: 11, color: clay.textoSuave }}>
-            {description}
-          </Text>
+          <Text style={{ marginTop: 2, fontSize: 11, color: clay.textoSuave }}>{description}</Text>
         </View>
         <View
           style={{
@@ -107,7 +105,8 @@ export default function AdminScreen() {
           />
           <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>Admin</Text>
         </View>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 }}>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 }}>
           <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: '800', color: clay.texto }}>
             No tienes permisos de administrador.
           </Text>
@@ -140,7 +139,9 @@ export default function AdminScreen() {
           <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>
             Panel de administrador
           </Text>
-          <Text style={{ fontSize: 10, color: clay.textoSuave }}>Gestión de contenidos y usuarios</Text>
+          <Text style={{ fontSize: 10, color: clay.textoSuave }}>
+            Gestión de contenidos y usuarios
+          </Text>
         </View>
       </View>
 

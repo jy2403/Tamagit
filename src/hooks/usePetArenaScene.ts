@@ -5,7 +5,7 @@ import { ExpoWebGLRenderingContext } from 'expo-gl';
 import { Renderer, THREE } from 'expo-three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { applyToonOutline } from '@/lib/toonOutline';
-import { colorMascotaPorId } from '@/estilos';
+import { colorMascotaPorId, fondo3D } from '@/estilos';
 import MODEL_ASSET from '../../assets/tamagit-mascota-base.glb';
 
 if (!(globalThis as { THREE?: unknown }).THREE) {
@@ -123,7 +123,7 @@ export function usePetArenaScene({
   pets,
   paused,
   onSelect,
-  background = '#E7E7EC',
+  background = fondo3D,
 }: UsePetArenaSceneOptions) {
   const rafRef = useRef<number | null>(null);
   const rendererRef = useRef<Renderer | null>(null);

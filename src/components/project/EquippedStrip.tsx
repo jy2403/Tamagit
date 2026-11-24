@@ -18,23 +18,37 @@ export function EquippedStrip({ appearance }: { appearance: Appearance }) {
           return (
             <View key={slot} style={{ flex: 1 }}>
               <ClaySurface
-                colors={clay.fondoClaro}
+                colors={item ? clay.menta : clay.fondoClaro}
                 radius={radios.chip}
                 border
+                shadow="suave"
                 contentStyle={{ padding: 9, minHeight: 58 }}>
                 <Text style={{ fontSize: 8, fontWeight: '900', color: clay.textoTenue }}>
                   {SLOT_LABELS[slot]}
                 </Text>
-                <Text
-                  numberOfLines={2}
-                  style={{
-                    marginTop: 3,
-                    fontSize: 10,
-                    fontWeight: '800',
-                    color: item ? clay.texto : clay.textoTenue,
-                  }}>
-                  {item ? `${itemEmoji(item)} ${item.name}` : 'Vacío'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 7,
+                      backgroundColor: 'rgba(255,255,255,0.7)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Text style={{ fontSize: 11 }}>{item ? itemEmoji(item) : '·'}</Text>
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontSize: 10,
+                      fontWeight: '900',
+                      color: item ? clay.texto : clay.textoTenue,
+                    }}>
+                    {item ? item.name : 'Vacío'}
+                  </Text>
+                </View>
               </ClaySurface>
             </View>
           );

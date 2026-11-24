@@ -167,6 +167,8 @@ export const confirmar = {
 
 export type Gradiente = readonly [string, string];
 
+export const fondo3D = '#E7E7EC';
+
 /**
  * Paleta tomada del mockup:
  * - índigo/violeta profundo de la portada

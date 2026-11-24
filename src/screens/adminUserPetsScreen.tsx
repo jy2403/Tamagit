@@ -1,105 +1,167 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClayPill } from '@/components/clay/ClayPill';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { useUserPets } from '@/hooks/useUserPets';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { lista, pantalla, tarjeta, tipografia } from '@/estilos';
+import { clay, radios, sombras } from '@/estilos';
 
 export default function AdminUserPetsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, loading, error, load } = useUserPets(id);
   const authStatus = useRequireAuth({ admin: true, extraLoading: loading });
 
   if (authStatus === 'loading') {
     return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
+      <ClayBackground>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={clay.violeta[0]} />
+        </View>
+      </ClayBackground>
     );
   }
   if (authStatus === 'anonymous') return <Redirect href="/login" />;
   if (authStatus === 'forbidden') {
     return (
-      <View className={pantalla.rootCentered}>
-        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
-      </View>
+      <ClayBackground>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ textAlign: 'center', fontSize: 14, color: clay.textoSuave }}>
+            Sin permisos de administrador.
+          </Text>
+        </View>
+      </ClayBackground>
     );
   }
 
   const userName = data?.user.githubUsername ?? data?.user.name ?? 'Usuario';
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className={tipografia.enlace}>Atras</Text>
-        </Pressable>
-        <View className="flex-1">
-          <Text className={tipografia.titulo}>Mascotas de {userName}</Text>
-          <Text className={tipografia.subtitulo} numberOfLines={1}>
+    <ClayBackground>
+      <View
+        style={{
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
+          paddingBottom: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        <ClayIconButton
+          icon="←"
+          accessibilityLabel="Volver a usuarios"
+          onPress={() => router.back()}
+          size={46}
+        />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={{ fontSize: 17, fontWeight: '900', color: clay.texto }}>
+            Mascotas de {userName}
+          </Text>
+          <Text style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
             Gestiona sus mascotas desde aquí
           </Text>
         </View>
       </View>
 
       {error ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-sm text-red-400">{error}</Text>
-          <Pressable onPress={() => void load()} className="mt-4 rounded-lg bg-white/10 px-4 py-2">
-            <Text className={tipografia.enlace}>Reintentar</Text>
-          </Pressable>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+          <Text style={{ textAlign: 'center', fontSize: 13, color: '#B4221B' }}>{error}</Text>
+          <ClayButton
+            title="Reintentar"
+            colors={clay.violeta}
+            pixel={false}
+            size="md"
+            onPress={() => void load()}
+          />
         </View>
       ) : (
         <FlatList
           data={data?.pets ?? []}
           keyExtractor={(item) => String(item.pet.id)}
-          contentContainerStyle={{ padding: 16, gap: 12 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: Math.max(insets.bottom + 24, 36),
+          }}
           ListEmptyComponent={
-            <View className="items-center justify-center px-6 py-16">
-              <Text className="text-center text-base text-neutral-400">
+            <ClaySurface
+              colors={clay.blanco}
+              radius={radios.tarjeta}
+              border
+              contentStyle={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ textAlign: 'center', fontSize: 13, color: clay.textoSuave }}>
                 Este usuario no tiene mascotas todavía.
               </Text>
-            </View>
+            </ClaySurface>
           }
           renderItem={({ item }) => (
             <Pressable
-              className={tarjeta.presionable}
               onPress={() =>
                 router.push({
                   pathname: '/admin/pets/[petId]',
                   params: { petId: String(item.pet.id) },
                 })
-              }>
-              <View className="flex-row items-center">
-                <View className="mr-3 h-11 w-11 items-center justify-center rounded-full bg-white/10">
-                  <Text className="text-xl">{item.pet.imageUrl ? '🐾' : '🥚'}</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-white">{item.pet.name}</Text>
-                  <Text className={tipografia.subtitulo} numberOfLines={1}>
-                    {item.pet.projectName}
+              }
+              style={({ pressed }) => [
+                { borderRadius: radios.tarjeta },
+                pressed ? { transform: [{ scale: 0.98 }] } : null,
+              ]}>
+              <ClaySurface
+                colors={clay.blanco}
+                radius={radios.tarjeta}
+                border
+                style={sombras.tarjeta}
+                contentStyle={{ padding: 14, gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: 'rgba(119,187,162,0.18)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Text style={{ fontSize: 16, fontWeight: '900', color: clay.menta[1] }}>
+                      {item.pet.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ fontSize: 15, fontWeight: '900', color: clay.texto }}>
+                      {item.pet.name}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={{ marginTop: 2, fontSize: 11, color: clay.textoSuave }}>
+                      {item.pet.projectName}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: clay.fucsia[0] }}>
+                    Gestionar
                   </Text>
                 </View>
-                <Text className={tipografia.enlace}>Gestionar</Text>
-              </View>
-              <View className="mt-3 flex-row flex-wrap gap-1.5">
-                <Pill label={`${item.pet.species}`} />
-                <Pill label={`${item.pet.health} salud`} />
-                <Pill label={`felicidad ${item.pet.happiness}`} />
-                <Pill label={`${item.pet.itemCount} items`} />
-              </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  <Pill label={item.pet.species} />
+                  <Pill label={`${item.pet.health} salud`} />
+                  <Pill label={`felicidad ${item.pet.happiness}`} />
+                  <Pill label={`${item.pet.itemCount} items`} />
+                </View>
+              </ClaySurface>
             </Pressable>
           )}
         />
       )}
-    </View>
+    </ClayBackground>
   );
 }
 
 function Pill({ label }: { label: string }) {
-  return (
-    <View className={lista.pill}>
-      <Text className={lista.pillTexto}>{label}</Text>
-    </View>
-  );
+  return <ClayPill label={label} colors={clay.blanco} textColor={clay.texto} />;
 }

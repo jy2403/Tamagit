@@ -41,6 +41,7 @@ export function ConfirmModal({
           <ClaySurface
             colors={clay.blanco}
             radius={radios.tarjetaGrande}
+            glass
             border
             style={sombras.tarjeta}>
             <View style={{ padding: 24, alignItems: 'center' }}>

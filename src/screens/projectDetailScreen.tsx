@@ -13,12 +13,13 @@ import { IconoImagen } from '@/components/clay/IconoImagen';
 import { StatDonut } from '@/components/clay/StatDonut';
 import { DishCarousel } from '@/components/project/DishCarousel';
 import { EquipMenu } from '@/components/project/EquipMenu';
+import { EquippedStrip } from '@/components/project/EquippedStrip';
 import { SpeechBubble } from '@/components/project/SpeechBubble';
 import { useAppearance } from '@/hooks/useAppearance';
 import { useProjectDetailScreen } from '@/hooks/useProjectDetailScreen';
 import { SLOTS } from '@/lib/appearance';
 import { readableStatColor } from '@/lib/color';
-import { clay, colorMascotaPorId, radios, sombras } from '@/estilos';
+import { clay, colorMascotaPorId, fondo3D, radios, sombras } from '@/estilos';
 
 const TIER_META = {
   small: { emoji: '🍇' },
@@ -31,17 +32,15 @@ function StatBig({
   iconNombre,
   value,
   color,
-  offset = 0,
 }: {
   label: string;
   iconNombre: 'vida' | 'hambre' | 'felicidad';
   value: number;
   color: string;
-  offset?: number;
 }) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)));
   return (
-    <View style={{ flex: 1, alignItems: 'center', marginTop: offset, gap: 6 }}>
+    <View style={{ flex: 1, alignItems: 'center', gap: 8 }}>
       <StatDonut
         value={clamped}
         color={color}
@@ -49,6 +48,7 @@ function StatBig({
         label={label}
         size={70}
         strokeWidth={7}
+        shadow={false}
       />
       <Text style={{ fontSize: 11, fontWeight: '900', color: clay.texto }}>
         {label} {clamped}%
@@ -103,9 +103,9 @@ export default function ProjectDetailScreen() {
   const shownColor = colorDraft ?? petColor;
   const lookKey = SLOTS.map((slot) => equippedBySlot[slot]?.id ?? '-').join('|');
   const statColor = readableStatColor(shownColor);
-  const healthColor = statColor;
-  const hungerColor = statColor;
-  const happinessColor = statColor;
+  const healthColor = colorDraft ? statColor : (petData?.healthColor ?? statColor);
+  const hungerColor = colorDraft ? statColor : (petData?.hungerColor ?? statColor);
+  const happinessColor = colorDraft ? statColor : (petData?.happinessColor ?? statColor);
 
   const openEquip = useCallback(() => {
     setColorDraft(null);
@@ -169,15 +169,20 @@ export default function ProjectDetailScreen() {
           accessibilityLabel={`Proyecto: ${projectName}`}
         />
         {petData ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: 19,
-              fontWeight: '900',
-              color: clay.texto,
-            }}>
-            {petData.name}
-          </Text>
+          <>
+            <Text
+              numberOfLines={1}
+              style={{
+                fontSize: 19,
+                fontWeight: '900',
+                color: clay.texto,
+              }}>
+              {petData.name}
+            </Text>
+            <Text style={{ fontSize: 10, color: clay.textoTenue }}>
+              Tu compañero de cada commit
+            </Text>
+          </>
         ) : null}
       </View>
     </View>
@@ -198,15 +203,12 @@ export default function ProjectDetailScreen() {
           <>
             <View
               ref={petAreaRef}
-              style={[
-                sombras.tarjeta,
-                {
-                  height: 360,
-                  borderRadius: 44,
-                  overflow: 'hidden',
-                  backgroundColor: '#EFEFF3',
-                },
-              ]}>
+              style={{
+                height: 360,
+                borderRadius: 44,
+                overflow: 'hidden',
+                backgroundColor: fondo3D,
+              }}>
               <Pet3DView
                 key={`${shownColor}-${lookKey}`}
                 species={petData.species}
@@ -214,9 +216,45 @@ export default function ProjectDetailScreen() {
                 backdrop="egg"
                 idle
                 autoRotate={false}
-                background={clay.fondo[0]}
+                background={fondo3D}
                 style={{ flex: 1 }}
               />
+              <View pointerEvents="none" style={{ position: 'absolute', top: 14, left: 14 }}>
+                <ClayPill
+                  label="✦ TU MASCOTA"
+                  colors={clay.vino}
+                  textColor="#FFFFFF"
+                  accessibilityLabel="Tu mascota"
+                />
+              </View>
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  right: 14,
+                  bottom: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(255,255,255,0.86)',
+                }}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: shownColor,
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
+                  }}
+                />
+                <Text style={{ fontSize: 10, fontWeight: '900', color: clay.texto }}>
+                  {shownColor}
+                </Text>
+              </View>
             </View>
             <Text
               style={{
@@ -228,26 +266,43 @@ export default function ProjectDetailScreen() {
               Desliza para girar · Pellizca para acercar
             </Text>
 
-            <View style={{ flexDirection: 'row', marginTop: 16, alignItems: 'flex-start' }}>
-              <StatBig
-                label="Hambre"
-                iconNombre="hambre"
-                value={petData.hunger}
-                color={hungerColor}
-              />
-              <StatBig
-                label="Vida"
-                iconNombre="vida"
-                value={petData.health}
-                color={healthColor}
-                offset={18}
-              />
-              <StatBig
-                label="Felicidad"
-                iconNombre="felicidad"
-                value={petData.happiness}
-                color={happinessColor}
-              />
+            <View style={{ marginTop: 16 }}>
+              <ClaySurface
+                colors={clay.blanco}
+                radius={radios.tarjeta}
+                glass
+                contentStyle={{ paddingVertical: 16, paddingHorizontal: 12 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-evenly',
+                    gap: 12,
+                  }}>
+                  <StatBig
+                    label="Hambre"
+                    iconNombre="hambre"
+                    value={petData.hunger}
+                    color={hungerColor}
+                  />
+                  <StatBig
+                    label="Vida"
+                    iconNombre="vida"
+                    value={petData.health}
+                    color={healthColor}
+                  />
+                  <StatBig
+                    label="Felicidad"
+                    iconNombre="felicidad"
+                    value={petData.happiness}
+                    color={happinessColor}
+                  />
+                </View>
+              </ClaySurface>
+            </View>
+
+            <View style={{ marginTop: 14 }}>
+              <EquippedStrip appearance={appearance} />
             </View>
 
             <View style={{ marginTop: 14 }}>
@@ -259,11 +314,11 @@ export default function ProjectDetailScreen() {
               style={{
                 flexDirection: 'row',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 16,
                 marginTop: 18,
               }}>
-              <View style={{ flex: 1, maxWidth: 140 }}>
+              <View style={{ flex: 1, maxWidth: 140, alignItems: 'center', gap: 6 }}>
                 <ClayButton
                   title=""
                   colors={clay.fucsia}
@@ -271,9 +326,13 @@ export default function ProjectDetailScreen() {
                   onPress={openFeed}
                   accessibilityLabel={feedOpen ? 'Cerrar platillos' : 'Alimentar'}
                   icon={<IconoImagen nombre="hambre" size={26} tintColor="#FFFFFF" />}
+                  style={{ width: '100%' }}
                 />
+                <Text style={{ fontSize: 10, fontWeight: '900', color: clay.textoSuave }}>
+                  {feedOpen ? 'CERRAR' : 'ALIMENTAR'}
+                </Text>
               </View>
-              <View style={{ flex: 1, maxWidth: 140 }}>
+              <View style={{ flex: 1, maxWidth: 140, alignItems: 'center', gap: 6 }}>
                 <ClayButton
                   title=""
                   colors={clay.menta}
@@ -281,7 +340,11 @@ export default function ProjectDetailScreen() {
                   onPress={openEquip}
                   accessibilityLabel="Vestir"
                   icon={<IconoImagen nombre="perchero" size={26} tintColor={clay.texto} />}
+                  style={{ width: '100%' }}
                 />
+                <Text style={{ fontSize: 10, fontWeight: '900', color: clay.textoSuave }}>
+                  VESTIR
+                </Text>
               </View>
             </View>
 

@@ -13,6 +13,7 @@ type ClayIconButtonProps = {
   size?: number;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  glass?: boolean;
 };
 
 const ICON_NAMES: ReadonlySet<string> = new Set<NombreIcono>([
@@ -46,6 +47,7 @@ export function ClayIconButton({
   size = 50,
   style,
   disabled = false,
+  glass = true,
 }: ClayIconButtonProps) {
   const iconContent =
     typeof icon === 'string' ? (
@@ -94,6 +96,7 @@ export function ClayIconButton({
       <ClaySurface
         colors={colors}
         radius={size}
+        glass={glass}
         style={{ width: size, height: size }}
         contentStyle={{
           width: size,

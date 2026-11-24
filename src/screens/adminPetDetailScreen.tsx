@@ -8,19 +8,25 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ClayBackground } from '@/components/clay/ClayBackground';
+import { ClayButton } from '@/components/clay/ClayButton';
+import { ClayIconButton } from '@/components/clay/ClayIconButton';
+import { ClayPill } from '@/components/clay/ClayPill';
+import { ClaySurface } from '@/components/clay/ClaySurface';
 import { ReasonPrompt } from '@/components/ReasonPrompt';
-import { Button } from '@/layout/Button';
+import { useAuth } from '@/context/AuthContext';
 import { useAdminPet, usePetItems } from '@/hooks/useAdminPet';
 import { useReasonedAction } from '@/hooks/useReasonedAction';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { apiFetch } from '@/lib/api';
-import { lista, modal, pantalla, tarjeta, tipografia } from '@/estilos';
+import { clay, radios, sombras } from '@/estilos';
 
 export default function AdminPetDetailScreen() {
   const { petId } = useLocalSearchParams<{ petId: string }>();
   const { token } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pet, loading, error, load, deletePet } = useAdminPet(petId);
   const { pickerOpen, catalog, catalogLoading, openPicker, closePicker, addItem } = usePetItems(
     petId,
@@ -48,9 +54,11 @@ export default function AdminPetDetailScreen() {
 
   if (authStatus === 'loading') {
     return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
+      <ClayBackground>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={clay.violeta[0]} />
+        </View>
+      </ClayBackground>
     );
   }
 
@@ -60,84 +68,184 @@ export default function AdminPetDetailScreen() {
 
   if (authStatus === 'forbidden') {
     return (
-      <View className={pantalla.rootCentered}>
-        <Text className="text-neutral-400">Sin permisos de administrador.</Text>
-      </View>
+      <ClayBackground>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ textAlign: 'center', fontSize: 14, color: clay.textoSuave }}>
+            Sin permisos de administrador.
+          </Text>
+        </View>
+      </ClayBackground>
     );
   }
 
   return (
-    <View className={pantalla.root}>
-      <View className={pantalla.header}>
-        <Pressable onPress={() => router.back()} className="pr-4">
-          <Text className={tipografia.enlace}>Atras</Text>
-        </Pressable>
-        <Text className={tipografia.titulo} numberOfLines={1}>
-          {pet?.name}
-        </Text>
+    <ClayBackground>
+      <View
+        style={{
+          paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
+          paddingBottom: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        <ClayIconButton
+          icon="←"
+          accessibilityLabel="Volver"
+          onPress={() => router.back()}
+          size={46}
+        />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>
+            {pet?.name ?? 'Mascota'}
+          </Text>
+          <Text style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
+            Gestión de mascota
+          </Text>
+        </View>
       </View>
 
       {error ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-sm text-red-400">{error}</Text>
-          <Pressable onPress={() => void load()} className="mt-4 rounded-lg bg-white/10 px-4 py-2">
-            <Text className={tipografia.enlace}>Reintentar</Text>
-          </Pressable>
+        <View
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+          <Text style={{ textAlign: 'center', fontSize: 13, color: '#B4221B' }}>{error}</Text>
+          <ClayButton
+            title="Reintentar"
+            colors={clay.violeta}
+            pixel={false}
+            size="md"
+            onPress={() => void load()}
+          />
         </View>
       ) : pet ? (
-        <ScrollView contentContainerStyle={pantalla.contenido}>
-          <View className={tarjeta.grande}>
-            <Text className="text-base font-bold text-white">Mascota</Text>
-            <Text className="mt-1 text-sm text-neutral-400">Especie: {pet.species}</Text>
-            <Text className="text-sm text-neutral-400">Proyecto: {pet.project.name}</Text>
-            <View className="mt-3 flex-row flex-wrap gap-1.5">
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: Math.max(insets.bottom + 24, 36),
+            gap: 16,
+          }}
+          showsVerticalScrollIndicator={false}>
+          <ClaySurface
+            colors={clay.blanco}
+            radius={radios.tarjetaGrande}
+            border
+            shadow="tarjeta"
+            contentStyle={{ padding: 18 }}>
+            <View
+              style={{ width: 42, height: 5, borderRadius: 3, backgroundColor: clay.fucsia[0] }}
+            />
+            <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '900', color: clay.texto }}>
+              Mascota
+            </Text>
+            <Text style={{ marginTop: 4, fontSize: 12, color: clay.textoSuave }}>
+              Especie: {pet.species}
+            </Text>
+            <Text style={{ marginTop: 2, fontSize: 12, color: clay.textoSuave }}>
+              Proyecto: {pet.project.name}
+            </Text>
+            <View style={{ marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               <Pill label={`${pet.health} salud`} />
               <Pill label={`${pet.hunger} hambre`} />
               <Pill label={`felicidad ${pet.happiness}`} />
               <Pill label={`rama ${pet.lifeBranch}`} />
             </View>
-            <Button
+            <ClayButton
               title="Eliminar mascota"
+              colors={clay.rosa}
+              textColor="#FFFFFF"
+              pixel={false}
+              size="md"
               onPress={() => start({ kind: 'deletePet' })}
-              variant="ghost"
-              style={{ marginTop: 12 }}
+              style={{ marginTop: 14 }}
             />
-          </View>
+          </ClaySurface>
 
           <View>
-            <View className="mb-2 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-white">Items ({pet.items.length})</Text>
-              <Pressable
-                className="rounded-lg bg-emerald-600 px-3 py-2"
-                onPress={() => void openPicker()}>
-                <Text className="text-sm font-medium text-white">Añadir</Text>
-              </Pressable>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 10,
+              }}>
+              <View>
+                <Text style={{ fontSize: 17, fontWeight: '900', color: clay.texto }}>
+                  Items ({pet.items.length})
+                </Text>
+                <Text style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
+                  Inventario asignado
+                </Text>
+              </View>
+              <ClayButton
+                title="Añadir"
+                colors={clay.fucsia}
+                textColor="#FFFFFF"
+                pixel={false}
+                size="md"
+                onPress={() => void openPicker()}
+              />
             </View>
 
             {pet.items.length === 0 ? (
-              <Text className={tipografia.muted}>
-                Esta mascota no tiene items. Usa «Añadir» para darle uno.
-              </Text>
+              <ClaySurface
+                colors={clay.blanco}
+                radius={radios.tarjeta}
+                border
+                contentStyle={{ padding: 22, alignItems: 'center' }}>
+                <Text style={{ textAlign: 'center', fontSize: 13, color: clay.textoSuave }}>
+                  Esta mascota no tiene items. Usa «Añadir» para darle uno.
+                </Text>
+              </ClaySurface>
             ) : (
               pet.items.map((pi) => (
-                <View key={pi.id} className={lista.fila}>
-                  <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                    <Text className="text-lg">{pi.item.imageUrl || '🎁'}</Text>
+                <ClaySurface
+                  key={pi.id}
+                  colors={clay.blanco}
+                  radius={radios.tarjeta}
+                  border
+                  style={{ marginBottom: 10, ...sombras.suave }}
+                  contentStyle={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 12,
+                    gap: 10,
+                  }}>
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: 'rgba(139,79,248,0.10)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Text style={{ fontSize: 15, fontWeight: '900', color: clay.violeta[0] }}>
+                      {pi.item.name.charAt(0).toUpperCase()}
+                    </Text>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-white">{pi.item.name}</Text>
-                    <Text className={tipografia.subtitulo} numberOfLines={1}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{ fontSize: 14, fontWeight: '900', color: clay.texto }}>
+                      {pi.item.name}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={{ marginTop: 2, fontSize: 11, color: clay.textoSuave }}>
                       {pi.item.category ?? 'General'} {pi.quantity > 1 ? `· x${pi.quantity}` : ''}
                     </Text>
                   </View>
-                  <Pressable
-                    className="rounded-lg bg-white/10 px-3 py-2"
+                  <ClayButton
+                    title="Quitar"
+                    colors={clay.blanco}
+                    textColor={clay.texto}
+                    pixel={false}
+                    size="md"
                     onPress={() =>
                       start({ kind: 'removeItem', itemId: pi.itemId, itemName: pi.item.name })
-                    }>
-                    <Text className={tipografia.error}>Quitar</Text>
-                  </Pressable>
-                </View>
+                    }
+                  />
+                </ClaySurface>
               ))
             )}
           </View>
@@ -157,59 +265,121 @@ export default function AdminPetDetailScreen() {
             : 'Motivo que verá el usuario (ej: item obtenido con trampa)...'
         }
         loading={submitting}
-        onConfirm={confirmWithReason}
+        onConfirm={(reason) => void confirmWithReason(reason)}
         onCancel={cancel}
       />
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={closePicker}>
-        <View className={modal.overlayInferior}>
-          <View className={modal.fondoInferior}>
-            <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-white">Elegir item</Text>
-              <Pressable onPress={closePicker} className="px-2 py-1">
-                <Text className={tipografia.enlace}>Cerrar</Text>
-              </Pressable>
-            </View>
-            {catalogLoading ? (
-              <View className="items-center py-10">
-                <ActivityIndicator color="#10b981" />
+        <Pressable
+          style={{
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(26,26,31,0.58)',
+          }}
+          onPress={closePicker}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar selector de items">
+          <Pressable onPress={(event) => event.stopPropagation()}>
+            <ClaySurface
+              colors={clay.blanco}
+              radius={radios.tarjetaGrande}
+              border
+              contentStyle={{
+                maxHeight: '70%',
+                padding: 16,
+                paddingBottom: Math.max(insets.bottom + 16, 20),
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: clay.texto }}>
+                  Elegir item
+                </Text>
+                <ClayButton
+                  title="Cerrar"
+                  colors={clay.blanco}
+                  textColor={clay.texto}
+                  pixel={false}
+                  size="md"
+                  onPress={closePicker}
+                />
               </View>
-            ) : (
-              <FlatList
-                data={catalog}
-                keyExtractor={(item) => String(item.id)}
-                renderItem={({ item }) => (
-                  <Pressable
-                    className="mb-2 flex-row items-center rounded-xl border border-neutral-800 bg-neutral-950 p-3"
-                    onPress={() => void addItem(item)}>
-                    <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                      <Text className="text-lg">{item.imageUrl || '🎁'}</Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-white">{item.name}</Text>
-                      <Text className={tipografia.subtitulo}>
-                        {item.category ?? 'General'} · {item.price} coins
-                      </Text>
-                    </View>
-                    <Text className={tipografia.enlace}>Añadir</Text>
-                  </Pressable>
-                )}
-                ListEmptyComponent={
-                  <Text className={lista.vacio}>No hay items en el catálogo.</Text>
-                }
-              />
-            )}
-          </View>
-        </View>
+              {catalogLoading ? (
+                <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color={clay.violeta[0]} />
+                </View>
+              ) : (
+                <FlatList
+                  data={catalog}
+                  keyExtractor={(item) => String(item.id)}
+                  contentContainerStyle={{ paddingTop: 12, gap: 8 }}
+                  renderItem={({ item }) => (
+                    <Pressable onPress={() => void addItem(item)}>
+                      <ClaySurface
+                        colors={clay.fondoClaro}
+                        radius={radios.tarjeta}
+                        border
+                        contentStyle={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          padding: 10,
+                          gap: 10,
+                        }}>
+                        <View
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: 19,
+                            backgroundColor: 'rgba(139,79,248,0.10)',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                          <Text style={{ fontSize: 14, fontWeight: '900', color: clay.violeta[0] }}>
+                            {item.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text
+                            numberOfLines={1}
+                            style={{ fontSize: 13, fontWeight: '900', color: clay.texto }}>
+                            {item.name}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{ marginTop: 2, fontSize: 10, color: clay.textoSuave }}>
+                            {item.category ?? 'General'} · {item.price} coins
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 11, fontWeight: '900', color: clay.fucsia[0] }}>
+                          Añadir
+                        </Text>
+                      </ClaySurface>
+                    </Pressable>
+                  )}
+                  ListEmptyComponent={
+                    <Text
+                      style={{
+                        paddingVertical: 24,
+                        textAlign: 'center',
+                        fontSize: 13,
+                        color: clay.textoSuave,
+                      }}>
+                      No hay items en el catálogo.
+                    </Text>
+                  }
+                />
+              )}
+            </ClaySurface>
+          </Pressable>
+        </Pressable>
       </Modal>
-    </View>
+    </ClayBackground>
   );
 }
 
 function Pill({ label }: { label: string }) {
-  return (
-    <View className={lista.pill}>
-      <Text className={lista.pillTexto}>{label}</Text>
-    </View>
-  );
+  return <ClayPill label={label} colors={clay.blanco} textColor={clay.texto} />;
 }

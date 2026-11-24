@@ -32,13 +32,7 @@ type IconoImagenProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-export function IconoImagen({
-  nombre,
-  size = 24,
-  tintColor,
-  color,
-  style,
-}: IconoImagenProps) {
+export function IconoImagen({ nombre, size = 24, tintColor, color, style }: IconoImagenProps) {
   const c = tintColor ?? color ?? paleta.vino.base;
 
   switch (nombre) {

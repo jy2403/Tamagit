@@ -11,6 +11,7 @@ type ClayCardProps = {
   contentStyle?: StyleProp<ViewStyle>;
   padding?: number;
   shadow?: 'tarjeta' | 'boton' | 'suave' | 'hundido' | false;
+  glass?: boolean;
 };
 
 export function ClayCard({
@@ -21,12 +22,14 @@ export function ClayCard({
   contentStyle,
   padding = 18,
   shadow = 'tarjeta',
+  glass = true,
 }: ClayCardProps) {
   return (
     <ClaySurface
       colors={colors}
       radius={radius}
       shadow={shadow}
+      glass={glass}
       style={style}
       contentStyle={[{ padding }, contentStyle]}>
       {children}

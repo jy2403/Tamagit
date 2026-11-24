@@ -1,5 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClayBackground } from '@/components/clay/ClayBackground';
@@ -189,123 +198,129 @@ export default function NewPetScreen() {
     return (
       <ClayBackground>
         {header}
-        <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 28 }}
-          keyboardShouldPersistTaps="handled">
-          <View style={sombras.tarjeta}>
-            <ClaySurface colors={clay.blanco} radius={radios.tarjetaGrande} border>
-              <View style={{ padding: 16 }}>
-                <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave }}>
-                  REPOSITORIO
-                </Text>
-                <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: clay.texto }}>
-                  {selected.name}
-                </Text>
-                <Text style={{ fontSize: 10, color: clay.textoSuave }}>
-                  {selected.fullName ?? 'GitHub'}
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    setSelected(null);
-                    setError(null);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Elegir otro repositorio"
-                  style={{ alignSelf: 'flex-start', marginTop: 8, paddingVertical: 8 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '900', color: clay.violeta[1] }}>
-                    Cambiar repositorio
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView
+            contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 28 }}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled">
+            <View style={sombras.tarjeta}>
+              <ClaySurface colors={clay.blanco} radius={radios.tarjetaGrande} border>
+                <View style={{ padding: 16 }}>
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: clay.textoSuave }}>
+                    REPOSITORIO
                   </Text>
-                </Pressable>
-              </View>
-            </ClaySurface>
-          </View>
-
-          <Text
-            style={{
-              marginTop: 18,
-              marginBottom: 8,
-              fontSize: 12,
-              fontWeight: '900',
-              color: clay.texto,
-            }}>
-            Nombre de la mascota
-          </Text>
-          <ClayInput
-            value={name}
-            onChangeText={setName}
-            placeholder={selected.name}
-            autoCapitalize="words"
-            maxLength={30}
-            accessibilityLabel="Nombre de la mascota"
-          />
-
-          <Text
-            style={{
-              marginTop: 18,
-              marginBottom: 8,
-              fontSize: 12,
-              fontWeight: '900',
-              color: clay.texto,
-            }}>
-            Rama de vida
-          </Text>
-          <Text style={{ marginBottom: 8, fontSize: 10, color: clay.textoSuave }}>
-            Desde esta rama se calcula el daño por commits.
-          </Text>
-          {loadingBranches ? (
-            <ActivityIndicator color={clay.violeta[0]} style={{ alignSelf: 'flex-start' }} />
-          ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {branches.map((item) => {
-                const active = branch === item;
-                return (
+                  <Text
+                    style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: clay.texto }}>
+                    {selected.name}
+                  </Text>
+                  <Text style={{ fontSize: 10, color: clay.textoSuave }}>
+                    {selected.fullName ?? 'GitHub'}
+                  </Text>
                   <Pressable
-                    key={item}
-                    onPress={() => setBranch(item)}
+                    onPress={() => {
+                      setSelected(null);
+                      setError(null);
+                    }}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={`${item}${active ? ', seleccionada' : ''}`}
-                    style={({ pressed }) => [
-                      { minHeight: 48, justifyContent: 'center' },
-                      pressed ? { opacity: 0.8 } : null,
-                    ]}>
-                    <ClaySurface
-                      colors={active ? clay.violeta : clay.fondoClaro}
-                      radius={radios.pastilla}
-                      shadow={active ? 'suave' : false}
-                      border
-                      contentStyle={{ paddingHorizontal: 14, paddingVertical: 10 }}>
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          fontWeight: '900',
-                          color: active ? '#FFFFFF' : clay.texto,
-                        }}>
-                        {active ? '✓ ' : ''}
-                        {item}
-                      </Text>
-                    </ClaySurface>
+                    accessibilityLabel="Elegir otro repositorio"
+                    style={{ alignSelf: 'flex-start', marginTop: 8, paddingVertical: 8 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: clay.violeta[1] }}>
+                      Cambiar repositorio
+                    </Text>
                   </Pressable>
-                );
-              })}
+                </View>
+              </ClaySurface>
             </View>
-          )}
 
-          {error ? (
-            <Text style={{ marginTop: 12, fontSize: 11, color: '#B4221B' }}>{error}</Text>
-          ) : null}
-
-          <View style={{ marginTop: 24 }}>
-            <ClayButton
-              title={creating ? 'Creando…' : 'Crear mascota'}
-              colors={clay.verde}
-              textColor="#FFFFFF"
-              disabled={creating}
-              onPress={() => void create()}
-              accessibilityLabel="Crear mascota"
+            <Text
+              style={{
+                marginTop: 18,
+                marginBottom: 8,
+                fontSize: 12,
+                fontWeight: '900',
+                color: clay.texto,
+              }}>
+              Nombre de la mascota
+            </Text>
+            <ClayInput
+              value={name}
+              onChangeText={setName}
+              placeholder={selected.name}
+              autoCapitalize="words"
+              maxLength={30}
+              accessibilityLabel="Nombre de la mascota"
             />
-          </View>
-        </ScrollView>
+
+            <Text
+              style={{
+                marginTop: 18,
+                marginBottom: 8,
+                fontSize: 12,
+                fontWeight: '900',
+                color: clay.texto,
+              }}>
+              Rama de vida
+            </Text>
+            <Text style={{ marginBottom: 8, fontSize: 10, color: clay.textoSuave }}>
+              Desde esta rama se calcula el daño por commits.
+            </Text>
+            {loadingBranches ? (
+              <ActivityIndicator color={clay.violeta[0]} style={{ alignSelf: 'flex-start' }} />
+            ) : (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {branches.map((item) => {
+                  const active = branch === item;
+                  return (
+                    <Pressable
+                      key={item}
+                      onPress={() => setBranch(item)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={`${item}${active ? ', seleccionada' : ''}`}
+                      style={({ pressed }) => [
+                        { minHeight: 48, justifyContent: 'center' },
+                        pressed ? { opacity: 0.8 } : null,
+                      ]}>
+                      <ClaySurface
+                        colors={active ? clay.violeta : clay.fondoClaro}
+                        radius={radios.pastilla}
+                        shadow={active ? 'suave' : false}
+                        border
+                        contentStyle={{ paddingHorizontal: 14, paddingVertical: 10 }}>
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '900',
+                            color: active ? '#FFFFFF' : clay.texto,
+                          }}>
+                          {active ? '✓ ' : ''}
+                          {item}
+                        </Text>
+                      </ClaySurface>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            {error ? (
+              <Text style={{ marginTop: 12, fontSize: 11, color: '#B4221B' }}>{error}</Text>
+            ) : null}
+
+            <View style={{ marginTop: 24 }}>
+              <ClayButton
+                title={creating ? 'Creando…' : 'Crear mascota'}
+                colors={clay.verde}
+                textColor="#FFFFFF"
+                disabled={creating}
+                onPress={() => void create()}
+                accessibilityLabel="Crear mascota"
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ClayBackground>
     );
   }

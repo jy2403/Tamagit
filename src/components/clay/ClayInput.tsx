@@ -8,6 +8,7 @@ export function ClayInput(props: TextInputProps) {
       colors={clay.fondoClaro}
       radius={radios.input}
       shadow="suave"
+      glass
       border
       contentStyle={{ paddingHorizontal: 16, paddingVertical: 2 }}>
       <TextInput

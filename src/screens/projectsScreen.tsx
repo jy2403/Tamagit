@@ -32,7 +32,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { ArenaPet } from '@/hooks/usePetArenaScene';
 import type { DiaSemana, Gradiente } from '@/estilos';
-import { clay, colorMascotaPorId, fuentes, radios, SEMANA, sombras } from '@/estilos';
+import { clay, colorMascotaPorId, fondo3D, fuentes, radios, SEMANA, sombras } from '@/estilos';
 import { readableStatColor } from '@/lib/color';
 import type { Pet, Project } from '@/lib/types';
 
@@ -286,6 +286,7 @@ function Legend({ color, label, textColor }: { color: string; label: string; tex
 }
 
 const OBLONG_HEIGHT = 54;
+const DONUT_GAP = 2;
 
 function PetCard({
   project,
@@ -306,7 +307,7 @@ function PetCard({
   ];
 
   return (
-    <View style={[sombras.suave, { position: 'relative' }]}>
+    <View style={{ position: 'relative' }}>
       <ClaySurface
         colors={clay.blanco}
         radius={OBLONG_HEIGHT / 2}
@@ -340,7 +341,7 @@ function PetCard({
               </View>
 
               {stats.map((stat) => (
-                <View key={stat.icon} style={{ marginLeft: -18, zIndex: stat.zIndex }}>
+                <View key={stat.icon} style={{ marginLeft: DONUT_GAP, zIndex: stat.zIndex }}>
                   <StatDonut
                     value={stat.value}
                     color={statColor}
@@ -363,7 +364,7 @@ function PetCard({
             pointerEvents="none"
             style={{
               position: 'absolute',
-              left: OBLONG_HEIGHT * 3 - 3 * 18 + 4,
+              left: OBLONG_HEIGHT * 4 + 3 * DONUT_GAP + 4,
               right: 44,
               top: 0,
               bottom: 0,
@@ -407,23 +408,23 @@ function PetCard({
 
       {/* Botón editar: arriba a la derecha, sin recuadro */}
       <Pressable
-  hitSlop={10}
-  onPress={onEdit}
-  accessibilityRole="button"
-  accessibilityLabel={`Editar ${pet.name}`}
-  style={{
-    position: 'absolute',
-    top: 4,
-    right: 12,
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    zIndex: 40,
-  }}>
-  <IconoImagen nombre="editar" size={18} tintColor="#333338" />
-</Pressable>
+        hitSlop={10}
+        onPress={onEdit}
+        accessibilityRole="button"
+        accessibilityLabel={`Editar ${pet.name}`}
+        style={{
+          position: 'absolute',
+          top: 4,
+          right: 12,
+          width: 30,
+          height: 30,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'transparent',
+          zIndex: 40,
+        }}>
+        <IconoImagen nombre="editar" size={18} tintColor="#333338" />
+      </Pressable>
     </View>
   );
 }
@@ -441,7 +442,7 @@ export default function ProjectsScreen() {
   }, [router]);
   const authStatus = useRequireAuth();
   const insets = useSafeAreaInsets();
-  const { height: viewportHeight } = useWindowDimensions();
+  const { width: viewportWidth, height: viewportHeight } = useWindowDimensions();
   const { projects, pets: projectPets, loading, refreshing, error, onRefresh } = useProjects();
   const {
     days,
@@ -625,6 +626,34 @@ export default function ProjectsScreen() {
       {error ? <Text style={{ marginTop: 6, fontSize: 10, color: '#B4221B' }}>{error}</Text> : null}
 
       <View
+        onLayout={(event) => {
+          arenaRef.current = {
+            y: event.nativeEvent.layout.y,
+            height: event.nativeEvent.layout.height,
+          };
+        }}
+        style={{
+          width: viewportWidth,
+          alignSelf: 'center',
+          marginHorizontal: -16,
+          marginVertical: 4,
+          backgroundColor: fondo3D,
+        }}>
+        <View style={{ height: 214, overflow: 'hidden' }}>
+          {arenaPets.length > 0 ? (
+            <PetArena pets={arenaPets} paused={!arenaVisible} onSelect={openArenaPet} />
+          ) : (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IconoImagen nombre="huevo" size={36} tintColor={clay.textoSuave} />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: clay.textoSuave }}>
+                El escenario está esperando mascotas
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -635,7 +664,7 @@ export default function ProjectsScreen() {
         <View>
           <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>Mis mascotas</Text>
           <Text style={{ fontSize: 10, color: clay.textoSuave, marginTop: 2 }}>
-            Toca una para verla de cerca
+            Proyectos activos
           </Text>
         </View>
         <ClayPill
@@ -644,30 +673,6 @@ export default function ProjectsScreen() {
           textColor="#FFFFFF"
           accessibilityLabel={`${projectPets.length} mascotas`}
         />
-      </View>
-
-      <View
-        onLayout={(event) => {
-          arenaRef.current = {
-            y: event.nativeEvent.layout.y,
-            height: event.nativeEvent.layout.height,
-          };
-        }}
-        style={{
-          height: 214,
-          overflow: 'hidden',
-          marginVertical: 4,
-        }}>
-        {arenaPets.length > 0 ? (
-          <PetArena pets={arenaPets} paused={!arenaVisible} onSelect={openArenaPet} />
-        ) : (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <IconoImagen nombre="huevo" size={36} tintColor={clay.textoSuave} />
-            <Text style={{ fontSize: 12, fontWeight: '800', color: clay.textoSuave }}>
-              El escenario está esperando mascotas
-            </Text>
-          </View>
-        )}
       </View>
     </View>
   );

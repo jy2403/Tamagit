@@ -53,7 +53,9 @@ export default function ProfileScreen() {
         />
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 18, fontWeight: '900', color: clay.texto }}>Mi perfil</Text>
-          <Text style={{ fontSize: 10, color: clay.textoSuave }}>Detalles de tu cuenta de GitHub</Text>
+          <Text style={{ fontSize: 10, color: clay.textoSuave }}>
+            Detalles de tu cuenta de GitHub
+          </Text>
         </View>
       </View>
 
@@ -88,7 +90,11 @@ export default function ProfileScreen() {
 
         {/* Tarjeta de avatar y nombre */}
         <View style={sombras.tarjeta}>
-          <ClaySurface colors={clay.blanco} radius={radios.tarjetaGrande} border contentStyle={{ padding: 20, alignItems: 'center' }}>
+          <ClaySurface
+            colors={clay.blanco}
+            radius={radios.tarjetaGrande}
+            border
+            contentStyle={{ padding: 20, alignItems: 'center' }}>
             <View
               style={{
                 width: 88,
@@ -134,7 +140,11 @@ export default function ProfileScreen() {
 
         {/* Datos del perfil */}
         <View style={sombras.tarjeta}>
-          <ClaySurface colors={clay.blanco} radius={radios.tarjeta} border contentStyle={{ padding: 16, gap: 10 }}>
+          <ClaySurface
+            colors={clay.blanco}
+            radius={radios.tarjeta}
+            border
+            contentStyle={{ padding: 16, gap: 10 }}>
             <ProfileRow label="Email" value={profile?.email ?? '—'} />
             <ProfileRow label="Usuario GitHub" value={profile?.githubUsername ?? '—'} />
             <ProfileRow label="Nombre completo" value={profile?.name ?? '—'} />
@@ -162,7 +172,15 @@ export default function ProfileScreen() {
   );
 }
 
-function ProfileRow({ label, value, isLast = false }: { label: string; value: string; isLast?: boolean }) {
+function ProfileRow({
+  label,
+  value,
+  isLast = false,
+}: {
+  label: string;
+  value: string;
+  isLast?: boolean;
+}) {
   return (
     <View
       style={{

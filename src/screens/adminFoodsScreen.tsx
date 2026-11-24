@@ -1,18 +1,23 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { AdminCrudList, type CrudField, type CrudRow } from '@/components/AdminCrudList';
+import { ClayBackground } from '@/components/clay/ClayBackground';
 import { useAdminCrud } from '@/hooks/useAdminCrud';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Food } from '@/lib/types';
-import { pantalla } from '@/estilos';
+import { clay } from '@/estilos';
 
 const fields: CrudField[] = [
   { key: 'name', label: 'Nombre', placeholder: 'Ej: Manzana' },
   {
     key: 'size',
     label: 'Tamaño',
-    placeholder: 'small | medium | large',
-    maxLength: 10,
+    defaultValue: 'medium',
+    options: [
+      { label: 'Pequeña', value: 'small' },
+      { label: 'Mediana', value: 'medium' },
+      { label: 'Grande', value: 'large' },
+    ],
   },
   { key: 'hungerRestore', label: 'Hambre restaurada', placeholder: 'Ej: 30', isNumber: true },
   { key: 'price', label: 'Precio', placeholder: 'Ej: 50', isNumber: true },
@@ -47,9 +52,11 @@ export default function AdminFoodsScreen() {
 
   if (authStatus === 'loading') {
     return (
-      <View className={pantalla.rootCentered}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
+      <ClayBackground>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={clay.violeta[0]} />
+        </View>
+      </ClayBackground>
     );
   }
 

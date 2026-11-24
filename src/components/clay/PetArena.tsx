@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { GLView } from 'expo-gl';
 import { usePetArenaScene, type ArenaPet } from '@/hooks/usePetArenaScene';
+import { fondo3D } from '@/estilos';
 
 type PetArenaProps = {
   pets: ArenaPet[];
@@ -51,7 +52,7 @@ export function PetArena({ pets, paused = false, onSelect, style }: PetArenaProp
 
   return (
     <View
-      style={[{ flex: 1, overflow: 'hidden', backgroundColor: '#E7E7EC' }, style]}
+      style={[{ flex: 1, overflow: 'hidden', backgroundColor: fondo3D }, style]}
       onLayout={(event) =>
         setSize({
           width: event.nativeEvent.layout.width,
